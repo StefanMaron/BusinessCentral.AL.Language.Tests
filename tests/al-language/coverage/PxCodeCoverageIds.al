@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/system/system-codecoveragelog-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); declares codeunits 86163-86165; calls test procedures of codeunit 67334 "W6 Code Coverage Ids"
+// Fixtures used: Probe Observer (codeunit 69160); declares codeunits 86163-86165 (writer PX), tables 86785-86786 and codeunits 86780-86784, 86787 (writer QH); calls test procedures of codeunit 67334 "W6 Code Coverage Ids"
 // Probe: writer PX, probes-needed "Platform tables and session facts": Code Coverage Test Lookup "Method ID" of procedures with different and
 // equal signatures, in one codeunit and in two; Tests Run "Method ID" and "Test ID" in a second test codeunit and across recordings.
 // Line numbers in lines_a/lines_b count from the first line of the object text (for the first object of the file, the file start).
@@ -43,7 +43,14 @@ codeunit 86165 "LT PX CC Target B"
 }
 
 // Writer QH (2026-10-21), al-runtime-rs PR 384 "needs probe": the Method ID of overloads, parameter kinds (var, Record subtype, List, Code
-// and Text lengths), return types, casing, parameter names, access modifiers, events and triggers. Objects 86780-86782, 86785-86786.
+// and Text lengths), return types, casing, parameter names, access modifiers, events and triggers. Objects 86780-86784, 86785-86787.
+// Measured on BC 27.5, 28.5 and 29.0 (same values; the number comes from the compiler and does not depend on the object): the id depends on
+// the name (case-insensitive: OVL() = Ovl()), the return type (RetInt(): Integer <> RetInt(): Decimal; a named return value counts as its
+// type), each parameter's position, var and type kind (Ovl(X) <> Ovl(var X); parameter names, Code[10]/Code[20] and Text[30]/Text do not
+// count), and for Record and List parameters the table id / element type (Ovl(Record A) <> Ovl(Record B)). Local, internal and global make
+// no difference. Triggers add their name: OnRun is equal in two codeunits, a field OnValidate depends on the field name, not the table.
+// A Trigger/Function row of Code Coverage shows the id only when a code line of the procedure ran, or when a test started while
+// recording entered it; otherwise -1. Calling only empty procedures logs no row of the object at all; an integration event shows -1.
 table 86785 "LT QH CC Row"
 {
     DataClassification = SystemMetadata;
@@ -526,7 +533,10 @@ codeunit 86163 "LT PX Code Coverage Ids"
         Observer.Observe('twin', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Twin"));
         Observer.Observe('third', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Third"));
         Initialize();
-        Observer.Finish();
+        Observer.Expect('ovl', 'L4=-1/h0 L8=-1/h0 L12=-1/h0 L16=-1/h0 L20=-1/h0 L24=-1/h0 L28=2073861131/h0 L33=1592026275/h0 L38=-790694941/h0 L43=-1/h0 L47=-1/h0 L51=-1/h0 L55=-1/h0 L59=-1/h0 L63=-1/h0 L68=-1/h0 L72=457030962/h0');
+        Observer.Expect('twin', 'L4=-1/h0 L8=-1/h0 L12=-1/h0 L16=-1/h0 L20=2073861131/h0 L25=457030962/h0');
+        Observer.Expect('third', 'L4=-1/h0 L8=-1/h0 L12=2073861129/h0 L17=-1/h0 L21=-1/h0 L25=457030962/h0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -554,7 +564,9 @@ codeunit 86163 "LT PX Code Coverage Ids"
         Initialize();
         Row.DeleteAll();
         Row2.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('row', 'L13=1296184244/h0 L20=1790022933/h0 L32=1439348877/h0');
+        Observer.Expect('row2', 'L11=1296184244/h0 L23=1439348877/h0');
+        Observer.Verify();
     end;
 
     // helper test: calls every QH target procedure directly; a recording test runs it while recording (a test started while recording)
@@ -611,7 +623,11 @@ codeunit 86163 "LT PX Code Coverage Ids"
         Observer.Observe('third', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Third"));
         Observer.Observe('runs', DumpRuns('QhRunsTargets'));
         Initialize();
-        Observer.Finish();
+        Observer.Expect('ovl', 'L4=-401248892/h0 L8=-765555753/h0 L12=1794275157/h0 L16=1790080857/h0 L20=530574815/h0 L24=-1281880384/h0 L28=2073861131/h0 L33=1592026275/h0 L38=-790694941/h0 L43=-1/h0 L47=920500989/h0 L51=1530650492/h0 L55=-842372418/h0 L59=-1644936586/h0 L63=1613418327/h0 L68=-1/h0 L72=-1/h0');
+        Observer.Expect('twin', 'L4=-401248892/h0 L8=-765555753/h0 L12=1794275157/h0 L16=-1281880384/h0 L20=2073861131/h0 L25=-1/h0');
+        Observer.Expect('third', 'L4=1794275188/h0 L8=-1281880381/h0 L12=2073861129/h0 L17=1530650492/h0 L21=-842372418/h0 L25=-1/h0');
+        Observer.Expect('runs', '[QhRunsTargets obj=86163 methodid=-686142487: Codeunit 86780 -1644936586 Codeunit 86780 -1281880384 Codeunit 86780 -842372418 Codeunit 86780 -790694941 Codeunit 86780 -765555753 Codeunit 86780 -401248892 Codeunit 86780 530574815 Codeunit 86780 920500989 Codeunit 86780 1530650492 Codeunit 86780 1592026275 Codeunit 86780 1613418327 Codeunit 86780 1790080857 Codeunit 86780 1794275157 Codeunit 86780 2073861131 Codeunit 86781 -1281880384 Codeunit 86781 -765555753 Codeunit 86781 -401248892 Codeunit 86781 1794275157 Codeunit 86781 2073861131 Codeunit 86782 -1281880381 Codeunit 86782 -842372418 Codeunit 86782 1530650492 Codeunit 86782 1794275188 Codeunit 86782 2073861129] rows=1 testids_distinct=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -663,6 +679,11 @@ codeunit 86163 "LT PX Code Coverage Ids"
         Observer.Observe('c_after_test_e1', QhAllRows(Codeunit::"LT QH CC Empty C"));
         Observer.Observe('c_runs', DumpRuns('QhRunsEmptyCE1'));
         Initialize();
-        Observer.Finish();
+        Observer.Expect('a_after_e1 =', '');
+        Observer.Expect('a_after_c1', 'L0:Object=-1/h0 L7:Trigger/Function=-1/h0 L8:Empty=-1/h0 L9:Empty=-1/h0 L11:Trigger/Function=-1/h0 L12:Empty=-1/h0 L13:Empty=-1/h0 L15:Trigger/Function=1576847985/h0 L16:Empty=-1/h0 L17:Code=1576847985/h1 L18:Code=1576847985/h1 L19:Empty=-1/h0');
+        Observer.Expect('b_after_c1', 'L0:Object=-1/h0 L7:Trigger/Function=-1/h0 L8:Empty=-1/h0 L9:Empty=-1/h0 L11:Trigger/Function=-1/h0 L12:Empty=-1/h0 L13:Empty=-1/h0 L15:Trigger/Function=1576847985/h0 L16:Empty=-1/h0 L17:Code=1576847985/h1 L18:Code=1576847985/h1 L19:Empty=-1/h0');
+        Observer.Expect('c_after_test_e1', 'L0:Object=-1/h0 L4:Trigger/Function=-1167141193/h0 L5:Empty=-1/h0 L6:Empty=-1/h0 L8:Trigger/Function=-1/h0 L9:Empty=-1/h0 L10:Empty=-1/h0');
+        Observer.Expect('c_runs', '[QhRunsEmptyCE1 obj=86163 methodid=-959447659: Codeunit 86787 -1167141193] rows=1 testids_distinct=Yes');
+        Observer.Verify();
     end;
 }

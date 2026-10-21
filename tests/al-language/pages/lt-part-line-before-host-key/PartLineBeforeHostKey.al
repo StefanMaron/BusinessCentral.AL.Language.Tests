@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own tables 67573 and 67576, pages 67577 and 67578, log codeunit 67579, test codeunit 67582
+// Fixtures used: Probe Observer (69160); own tables 67573 and 67576, pages 67577 and 67578, log codeunit 67579, test codeunit 67582; pages 85183-85190 (writer PY-B); pages 86760-86766 and codeunit 86767 (writer QH)
 // Probe: a document page (header "No." is the key) with a lines ListPart linked by SourceTableLink. A line is entered while the header key is still blank, then the key is typed. Which table triggers run (header and line: OnInsert, OnValidate), in which order, which page triggers run, what the card and the part show afterwards and what is stored. The same with the key typed first, for comparison (issue 581 item 2).
 // BC versions: 27+ (the key-typed-after-a-line test: 28+; BC 27 raises an uncatchable NullReferenceException there)
 
@@ -431,7 +431,19 @@ page 85190 "LT PYB DL Doc Const"
 
 // Writer QH (2026-10-21): pages 86760-86766 and manual subscriber codeunit 86767 for the part trigger probes of al-runtime-rs PR 384
 // (OnAfterGetCurrRecord among the three OnNewRecord runs, OpenView on a host with no row, the const-link relation error, the host
-// insert at Close). All log into "LT DL Log" and are used by test codeunit 67582 only.
+// insert at Close). All log into "LT DL Log" and are used by test codeunit 67582 only. Measured on BC 27.5, 28.5 and 29.0 (same values):
+// - An empty part of an editable host (OpenNew, OpenEdit, host Next, host key typed) runs OnAfterGetCurrRecord right after EACH of its
+//   three OnNewRecord runs: validate, new, curr, new, curr, validate, new, curr. A part with only OnAfterGetCurrRecord runs it 3 times.
+//   A part with rows runs OnAfterGetRecord 4 times (first, second, first, first) and OnAfterGetCurrRecord once.
+// - OpenView on a host that shows no row (empty table, or a filter that removes the row) runs the part's OnNewRecord once and then its
+//   OnAfterGetCurrRecord once, without validation; the host runs no OnNewRecord and nothing is inserted.
+// - A const() link whose value the relation rejects: the part runs OnOpenPage, OnNewRecord and OnAfterGetCurrRecord once, then OpenNew or
+//   OpenEdit fails (TestWrapped) before any OnBeforeValidate event of the link field. When the related row exists, the const link
+//   validates like a field link (OnBeforeValidate event, OnValidate, OnAfterValidate event, then the new/curr runs).
+// - The host insert is not done by Close: the FIRST read or move in a part (a part control's Value, Lines.First) on a new, unsaved host
+//   inserts the host (page OnInsertRecord, table OnInsert) whether the part shows rows or not, then relinks the part. Reading a host
+//   control, Close, OK, host New() and a host OnNewRecord that sets a field insert nothing. (PYB_OpenNew_LinkedPart_BlankKeyRowsExist
+//   reads a part control before Close, which is why its close log shows the insert.)
 page 86760 "LT QH DL Lines Cur"
 {
     PageType = ListPart;
@@ -1333,7 +1345,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[CP.OnOpenPage | L.OnValidate(Document No.): | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0 | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0 | L.OnValidate(Document No.): | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1347,7 +1361,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[TH.OnOpenPage | CP.OnOpenPage | TH.OnNewRecord | TH.OnAfterGetCurrRecord: | L.OnValidate(Document No.): | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0 | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0 | L.OnValidate(Document No.): | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0]');
+        Observer.Expect('close', '[TH.OnQueryClosePage | TH.OnClosePage]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1362,7 +1378,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_edit');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_edit', '[CP.OnOpenPage | L.OnValidate(Document No.):D8 | CP.OnNewRecord:D8 below=Yes | CP.OnAfterGetCurrRecord:D8/0 | CP.OnNewRecord:D8 below=Yes | CP.OnAfterGetCurrRecord:D8/0 | L.OnValidate(Document No.):D8 | CP.OnNewRecord:D8 below=Yes | CP.OnAfterGetCurrRecord:D8/0]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1377,7 +1395,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_edit');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_edit', '[TH.OnOpenPage | CP.OnOpenPage | TH.OnAfterGetRecord:D8 | TH.OnAfterGetCurrRecord:D8 | L.OnValidate(Document No.):D8 | CP.OnNewRecord:D8 below=Yes | CP.OnAfterGetCurrRecord:D8/0 | CP.OnNewRecord:D8 below=Yes | CP.OnAfterGetCurrRecord:D8/0 | L.OnValidate(Document No.):D8 | CP.OnNewRecord:D8 below=Yes | CP.OnAfterGetCurrRecord:D8/0]');
+        Observer.Expect('close', '[TH.OnQueryClosePage | TH.OnClosePage]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1393,7 +1413,15 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
         TakeLog(Observer, 'close');
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[CP.OnOpenPage | L.OnValidate(Document No.): | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0 | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0 | L.OnValidate(Document No.): | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0]');
+        Observer.Expect('type_key', 'Yes');
+        Observer.Expect('type_key_log', '[H.OnValidate(No.):Q1 | L.OnValidate(Document No.): | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0 | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0 | L.OnValidate(Document No.): | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0]');
+        Observer.Expect('close', '[H.OnInsert:Q1]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[Q1|]');
+        Observer.Expect('after_close_lines', '0');
+        Observer.Expect('after_close_line_rows =', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1407,7 +1435,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[L.OnValidate(Document No.): | OP.OnAfterGetCurrRecord:/0 | OP.OnAfterGetCurrRecord:/0 | L.OnValidate(Document No.): | OP.OnAfterGetCurrRecord:/0]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1422,7 +1452,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_edit');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_edit', '[L.OnValidate(Document No.):D8 | OP.OnAfterGetCurrRecord:D8/0 | OP.OnAfterGetCurrRecord:D8/0 | L.OnValidate(Document No.):D8 | OP.OnAfterGetCurrRecord:D8/0]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1439,7 +1471,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_edit');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_edit', '[CP.OnOpenPage | CP.OnAfterGetRecord:D8/10000 | CP.OnAfterGetRecord:D8/20000 | CP.OnAfterGetRecord:D8/10000 | CP.OnAfterGetRecord:D8/10000 | CP.OnAfterGetCurrRecord:D8/10000]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1457,7 +1491,11 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'next_log');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_edit', '[CP.OnOpenPage | L.OnValidate(Document No.):D1 | CP.OnNewRecord:D1 below=Yes | CP.OnAfterGetCurrRecord:D1/0 | CP.OnNewRecord:D1 below=Yes | CP.OnAfterGetCurrRecord:D1/0 | L.OnValidate(Document No.):D1 | CP.OnNewRecord:D1 below=Yes | CP.OnAfterGetCurrRecord:D1/0]');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_log', '[L.OnValidate(Document No.):D2 | CP.OnNewRecord:D2 below=Yes | CP.OnAfterGetCurrRecord:D2/0 | CP.OnNewRecord:D2 below=Yes | CP.OnAfterGetCurrRecord:D2/0 | L.OnValidate(Document No.):D2 | CP.OnNewRecord:D2 below=Yes | CP.OnAfterGetCurrRecord:D2/0]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     // Item 2: OpenView on a host that shows no row.
@@ -1476,7 +1514,16 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
         TakeLog(Observer, 'close');
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_view', '[LP.OnNewRecord:]');
+        Observer.Expect('card_no', '[]');
+        Observer.Expect('part_description', '[]');
+        Observer.Expect('read_log', '[]');
+        Observer.Expect('close', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '0');
+        Observer.Expect('after_close_line_rows =', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1490,7 +1537,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_view');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_view', '[TH.OnOpenPage | CP.OnOpenPage | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0]');
+        Observer.Expect('close', '[TH.OnQueryClosePage | TH.OnClosePage]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1504,7 +1553,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_view');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_view', '[OP.OnAfterGetCurrRecord:/0]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1518,7 +1569,9 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_view');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_view', '[LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1535,7 +1588,14 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
         TakeLog(Observer, 'close');
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_view', '[TH.OnOpenPage | CP.OnOpenPage | CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0]');
+        Observer.Expect('part_description', '[]');
+        Observer.Expect('close', '[TH.OnQueryClosePage | TH.OnClosePage]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1552,7 +1612,12 @@ codeunit 67582 "LT DL Tests"
         Observer.Observe('card_no', '[' + Host."No.".Value() + ']');
         Host.Close();
         TakeLog(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open_view', '[TH.OnOpenPage | CP.OnOpenPage | TH.OnAfterGetRecord:D6 | TH.OnAfterGetCurrRecord:D6 | CP.OnNewRecord:D6 below=Yes | CP.OnAfterGetCurrRecord:D6/0]');
+        Observer.Expect('filter_away', 'Yes');
+        Observer.Expect('filter_away_log', '[CP.OnNewRecord: below=Yes | CP.OnAfterGetCurrRecord:/0]');
+        Observer.Expect('card_no', '[]');
+        Observer.Expect('close', '[TH.OnQueryClosePage | TH.OnClosePage]');
+        Observer.Verify();
     end;
 
     // Item 3: a const-linked part whose relation rejects the link value; where the error comes among the part's triggers.
@@ -1568,7 +1633,15 @@ codeunit 67582 "LT DL Tests"
         QhResult(Observer, 'open_new', QhTryOpenNewConst(Host));
         UnbindSubscription(Events);
         Stored(Observer, 'after');
-        Observer.Finish();
+        Observer.Expect('open_new', 'No');
+        Observer.Expect('open_new_error|text', 'The field Document No. of table LT DL Line contains a value (D9) that cannot be found in the related table (LT DL Header).');
+        Observer.Expect('open_new_error|code', 'TestWrapped');
+        Observer.Expect('open_new_log', '[CP.OnOpenPage | CP.OnNewRecord:D9 below=Yes | CP.OnAfterGetCurrRecord:D9/0]');
+        Observer.Expect('after_headers', '0');
+        Observer.Expect('after_header_rows =', '');
+        Observer.Expect('after_lines', '0');
+        Observer.Expect('after_line_rows =', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1582,7 +1655,11 @@ codeunit 67582 "LT DL Tests"
         BindSubscription(Events);
         QhResult(Observer, 'open_new', TryOpenConst(Host));
         UnbindSubscription(Events);
-        Observer.Finish();
+        Observer.Expect('open_new', 'No');
+        Observer.Expect('open_new_error|text', 'The field Document No. of table LT DL Line contains a value (D9) that cannot be found in the related table (LT DL Header).');
+        Observer.Expect('open_new_error|code', 'TestWrapped');
+        Observer.Expect('open_new_log', '[LP.OnNewRecord:D9]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1597,7 +1674,11 @@ codeunit 67582 "LT DL Tests"
         BindSubscription(Events);
         QhResult(Observer, 'open_edit', QhTryOpenEditConst(Host));
         UnbindSubscription(Events);
-        Observer.Finish();
+        Observer.Expect('open_edit', 'No');
+        Observer.Expect('open_edit_error|text', 'The field Document No. of table LT DL Line contains a value (D9) that cannot be found in the related table (LT DL Header).');
+        Observer.Expect('open_edit_error|code', 'TestWrapped');
+        Observer.Expect('open_edit_log', '[CP.OnOpenPage | CP.OnNewRecord:D9 below=Yes | CP.OnAfterGetCurrRecord:D9/0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1614,7 +1695,10 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
         TakeLog(Observer, 'close');
         UnbindSubscription(Events);
-        Observer.Finish();
+        Observer.Expect('open_new', 'Yes');
+        Observer.Expect('open_new_log', '[CP.OnOpenPage | E.OnBeforeValidate(Document No.):D9 x= curr=0 | L.OnValidate(Document No.):D9 | E.OnAfterValidate(Document No.):D9 | CP.OnNewRecord:D9 below=Yes | CP.OnAfterGetCurrRecord:D9/0 | CP.OnNewRecord:D9 below=Yes | CP.OnAfterGetCurrRecord:D9/0 | E.OnBeforeValidate(Document No.):D9 x= curr=0 | L.OnValidate(Document No.):D9 | E.OnAfterValidate(Document No.):D9 | CP.OnNewRecord:D9 below=Yes | CP.OnAfterGetCurrRecord:D9/0]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1631,7 +1715,9 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
         TakeLog(Observer, 'close');
         UnbindSubscription(Events);
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord | E.OnBeforeValidate(Document No.): x= curr=0 | L.OnValidate(Document No.): | E.OnAfterValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | E.OnBeforeValidate(Document No.): x= curr=0 | L.OnValidate(Document No.): | E.OnAfterValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', '[]');
+        Observer.Verify();
     end;
 
     // Item 4: a new host whose field-linked part shows rows of the blank key; what Close does and what is stored.
@@ -1648,7 +1734,14 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         QhResult(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '2');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0][|20000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1666,7 +1759,16 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'read_log');
         QhResult(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord]');
+        Observer.Expect('part_first_description', 'seeded');
+        Observer.Expect('read_log', '[HP.OnInsertRecord: | H.OnInsert:]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[|]');
+        Observer.Expect('after_close_lines', '2');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0][|20000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1682,7 +1784,13 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
         TakeLog(Observer, 'close');
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[]');
+        Observer.Expect('close', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1698,7 +1806,14 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         QhResult(Observer, 'close', QhTryCloseTrace(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[TH.OnOpenPage | CP.OnOpenPage | TH.OnNewRecord | TH.OnAfterGetCurrRecord: | CP.OnAfterGetRecord:/10000 | CP.OnAfterGetRecord:/20000 | CP.OnAfterGetRecord:/10000 | CP.OnAfterGetRecord:/10000 | CP.OnAfterGetCurrRecord:/10000]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[TH.OnQueryClosePage | TH.OnClosePage]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '2');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0][|20000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1714,7 +1829,13 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
         TakeLog(Observer, 'close');
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[]');
+        Observer.Expect('close', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1730,7 +1851,13 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
         TakeLog(Observer, 'close');
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[]');
+        Observer.Expect('close', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1746,7 +1873,13 @@ codeunit 67582 "LT DL Tests"
         Host.Close();
         TakeLog(Observer, 'close');
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[]');
+        Observer.Expect('close', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1762,7 +1895,14 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         QhResult(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[|]');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1779,7 +1919,20 @@ codeunit 67582 "LT DL Tests"
         Stored(Observer, 'after_new');
         QhResult(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord]');
+        Observer.Expect('host_new', 'Yes');
+        Observer.Expect('host_new_log', '[HP.OnNewRecord]');
+        Observer.Expect('after_new_headers', '0');
+        Observer.Expect('after_new_header_rows =', '');
+        Observer.Expect('after_new_lines', '1');
+        Observer.Expect('after_new_line_rows', '[|10000|seeded|0]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1794,7 +1947,14 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         QhResult(Observer, 'ok', QhTryOk(Host));
         Stored(Observer, 'after_ok');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord]');
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('ok_log', '[]');
+        Observer.Expect('after_ok_headers', '0');
+        Observer.Expect('after_ok_header_rows =', '');
+        Observer.Expect('after_ok_lines', '1');
+        Observer.Expect('after_ok_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1809,7 +1969,14 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         QhResult(Observer, 'close', QhTryCloseSetName(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[SH.OnNewRecord]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1823,7 +1990,14 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         QhResult(Observer, 'close', QhTryCloseSetName(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[SH.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '0');
+        Observer.Expect('after_close_line_rows =', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1838,7 +2012,14 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'open_new');
         QhResult(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[X1|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -1860,7 +2041,16 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'read_log');
         QhResult(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('part_description', '[]');
+        Observer.Expect('read_log', '[HP.OnInsertRecord: | H.OnInsert: | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[|]');
+        Observer.Expect('after_close_lines', '0');
+        Observer.Expect('after_close_line_rows =', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1877,7 +2067,16 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'read_log');
         QhResult(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('part_description', '[]');
+        Observer.Expect('read_log', '[HP.OnInsertRecord: | H.OnInsert: | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[|]');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[X1|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1896,7 +2095,21 @@ codeunit 67582 "LT DL Tests"
         Stored(Observer, 'after_first');
         QhResult(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord]');
+        Observer.Expect('part_first', 'Yes');
+        Observer.Expect('part_first_log', '[HP.OnInsertRecord: | H.OnInsert:]');
+        Observer.Expect('part_first_found', 'Yes');
+        Observer.Expect('after_first_headers', '1');
+        Observer.Expect('after_first_header_rows', '[|]');
+        Observer.Expect('after_first_lines', '1');
+        Observer.Expect('after_first_line_rows', '[|10000|seeded|0]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[|]');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1913,7 +2126,16 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'read_log');
         QhResult(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[HP.OnNewRecord]');
+        Observer.Expect('card_name', '[]');
+        Observer.Expect('read_log', '[]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[]');
+        Observer.Expect('after_close_headers', '0');
+        Observer.Expect('after_close_header_rows =', '');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1932,6 +2154,17 @@ codeunit 67582 "LT DL Tests"
         TakeLog(Observer, 'read_again_log');
         QhResult(Observer, 'close', QhTryCloseTrace(Host));
         Stored(Observer, 'after_close');
-        Observer.Finish();
+        Observer.Expect('open_new', '[TH.OnOpenPage | CP.OnOpenPage | TH.OnNewRecord | TH.OnAfterGetCurrRecord: | CP.OnAfterGetRecord:/10000 | CP.OnAfterGetRecord:/10000 | CP.OnAfterGetCurrRecord:/10000]');
+        Observer.Expect('part_description', '[seeded]');
+        Observer.Expect('read_log', '[TH.OnInsertRecord: | H.OnInsert: | CP.OnAfterGetRecord:/10000 | CP.OnAfterGetRecord:/10000 | CP.OnAfterGetCurrRecord:/10000]');
+        Observer.Expect('part_description_again', '[seeded]');
+        Observer.Expect('read_again_log', '[]');
+        Observer.Expect('close', 'Yes');
+        Observer.Expect('close_log', '[TH.OnQueryClosePage | TH.OnClosePage]');
+        Observer.Expect('after_close_headers', '1');
+        Observer.Expect('after_close_header_rows', '[|]');
+        Observer.Expect('after_close_lines', '1');
+        Observer.Expect('after_close_line_rows', '[|10000|seeded|0]');
+        Observer.Verify();
     end;
 }

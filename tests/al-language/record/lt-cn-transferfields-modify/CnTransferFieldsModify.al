@@ -480,6 +480,10 @@ codeunit 84886 "LT CN TF Modify"
 
     // ── Added by writer QH (2026-10-21), al-runtime-rs PR 382 "needs probe": SystemCreatedBy and SystemModifiedBy after a TransferFields
     // from another table, and the four audit fields when the source row was built in memory or is a temporary row.
+    // Measured on BC 27.5, 28.5 and 29.0: TransferFields from another table copies all four audit fields from the source as they are.
+    // A source built in memory, and a temporary row after Insert, hold blank At fields and null By fields (a temporary Insert stamps
+    // nothing), and the buffer gets those blanks. A temporary row filled from a database row keeps that row's stamps. Modify then stamps
+    // SystemModifiedAt/By on the buffer and in the database; SystemCreatedAt/By stay blank on the buffer but the database keeps its own.
     local procedure QhAudit(var Observer: Codeunit "Probe Observer"; Name: Text; CreatedAt: DateTime; ModifiedAt: DateTime; CreatedBy: Guid; ModifiedBy: Guid; OwnCreatedAt: DateTime; OwnModifiedAt: DateTime)
     begin
         Observer.Observe(Name + ' createdat blank', Format(CreatedAt = 0DT));
@@ -508,7 +512,8 @@ codeunit 84886 "LT CN TF Modify"
         OwnCreatedBy := R1.SystemCreatedBy;
         OwnModifiedBy := R1.SystemModifiedBy;
         O.Get(1);
-        QhAudit(Observer, 'source', O.SystemCreatedAt, O.SystemModifiedAt, O.SystemCreatedBy, O.SystemModifiedBy, R1.SystemCreatedAt, R1.SystemModifiedAt);
+        // the source and the own row are stamped in the same test, maybe in the same millisecond: the own timestamps are not compared here
+        QhAudit(Observer, 'source', O.SystemCreatedAt, O.SystemModifiedAt, O.SystemCreatedBy, O.SystemModifiedBy, 0DT, 0DT);
         R1.TransferFields(O);
         Observer.Observe('buffer createdby = own', Format(R1.SystemCreatedBy = OwnCreatedBy));
         Observer.Observe('buffer createdby = other', Format(R1.SystemCreatedBy = O.SystemCreatedBy));
@@ -516,7 +521,22 @@ codeunit 84886 "LT CN TF Modify"
         Observer.Observe('buffer modifiedby = other', Format(R1.SystemModifiedBy = O.SystemModifiedBy));
         Observer.Observe('buffer createdby null', Format(IsNullGuid(R1.SystemCreatedBy)));
         Observer.Observe('buffer modifiedby null', Format(IsNullGuid(R1.SystemModifiedBy)));
-        Observer.Finish();
+        Observer.Expect('source createdat blank', 'No');
+        Observer.Expect('source createdat', 'own = No');
+        Observer.Expect('source modifiedat blank', 'No');
+        Observer.Expect('source modifiedat', 'own = No');
+        Observer.Expect('source createdby null', 'No');
+        Observer.Expect('source createdby', 'user = Yes');
+        Observer.Expect('source modifiedby null', 'No');
+        Observer.Expect('source modifiedby', 'user = Yes');
+        Observer.Expect('source createdby', 'modifiedby = Yes');
+        Observer.Expect('buffer createdby', 'own = Yes');
+        Observer.Expect('buffer createdby', 'other = Yes');
+        Observer.Expect('buffer modifiedby', 'own = Yes');
+        Observer.Expect('buffer modifiedby', 'other = Yes');
+        Observer.Expect('buffer createdby null', 'No');
+        Observer.Expect('buffer modifiedby null', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -547,7 +567,45 @@ codeunit 84886 "LT CN TF Modify"
         QhAudit(Observer, 'db', R4.SystemCreatedAt, R4.SystemModifiedAt, R4.SystemCreatedBy, R4.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
         Observer.Observe('db modifiedat > own', Format(R4.SystemModifiedAt > OwnModifiedAt));
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('source createdat blank', 'Yes');
+        Observer.Expect('source createdat', 'own = No');
+        Observer.Expect('source modifiedat blank', 'Yes');
+        Observer.Expect('source modifiedat', 'own = No');
+        Observer.Expect('source createdby null', 'Yes');
+        Observer.Expect('source createdby', 'user = No');
+        Observer.Expect('source modifiedby null', 'Yes');
+        Observer.Expect('source modifiedby', 'user = No');
+        Observer.Expect('source createdby', 'modifiedby = Yes');
+        Observer.Expect('buffer createdat blank', 'Yes');
+        Observer.Expect('buffer createdat', 'own = No');
+        Observer.Expect('buffer modifiedat blank', 'Yes');
+        Observer.Expect('buffer modifiedat', 'own = No');
+        Observer.Expect('buffer createdby null', 'Yes');
+        Observer.Expect('buffer createdby', 'user = No');
+        Observer.Expect('buffer modifiedby null', 'Yes');
+        Observer.Expect('buffer modifiedby', 'user = No');
+        Observer.Expect('buffer createdby', 'modifiedby = Yes');
+        Observer.Expect('buffer after modify createdat blank', 'Yes');
+        Observer.Expect('buffer after modify createdat', 'own = No');
+        Observer.Expect('buffer after modify modifiedat blank', 'No');
+        Observer.Expect('buffer after modify modifiedat', 'own = No');
+        Observer.Expect('buffer after modify createdby null', 'Yes');
+        Observer.Expect('buffer after modify createdby', 'user = No');
+        Observer.Expect('buffer after modify modifiedby null', 'No');
+        Observer.Expect('buffer after modify modifiedby', 'user = Yes');
+        Observer.Expect('buffer after modify createdby', 'modifiedby = No');
+        Observer.Expect('db createdat blank', 'No');
+        Observer.Expect('db createdat', 'own = Yes');
+        Observer.Expect('db modifiedat blank', 'No');
+        Observer.Expect('db modifiedat', 'own = No');
+        Observer.Expect('db createdby null', 'No');
+        Observer.Expect('db createdby', 'user = Yes');
+        Observer.Expect('db modifiedby null', 'No');
+        Observer.Expect('db modifiedby', 'user = Yes');
+        Observer.Expect('db createdby', 'modifiedby = Yes');
+        Observer.Expect('db modifiedat > own', 'Yes');
+        Observer.Expect('db', 'mem/4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -576,7 +634,35 @@ codeunit 84886 "LT CN TF Modify"
         R4.Get(1);
         QhAudit(Observer, 'db', R4.SystemCreatedAt, R4.SystemModifiedAt, R4.SystemCreatedBy, R4.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
         Observer.Observe('db', NameInDb());
-        Observer.Finish();
+        Observer.Expect('source createdat blank', 'Yes');
+        Observer.Expect('source createdat', 'own = No');
+        Observer.Expect('source modifiedat blank', 'Yes');
+        Observer.Expect('source modifiedat', 'own = No');
+        Observer.Expect('source createdby null', 'Yes');
+        Observer.Expect('source createdby', 'user = No');
+        Observer.Expect('source modifiedby null', 'Yes');
+        Observer.Expect('source modifiedby', 'user = No');
+        Observer.Expect('source createdby', 'modifiedby = Yes');
+        Observer.Expect('buffer createdat blank', 'Yes');
+        Observer.Expect('buffer createdat', 'own = No');
+        Observer.Expect('buffer modifiedat blank', 'Yes');
+        Observer.Expect('buffer modifiedat', 'own = No');
+        Observer.Expect('buffer createdby null', 'Yes');
+        Observer.Expect('buffer createdby', 'user = No');
+        Observer.Expect('buffer modifiedby null', 'Yes');
+        Observer.Expect('buffer modifiedby', 'user = No');
+        Observer.Expect('buffer createdby', 'modifiedby = Yes');
+        Observer.Expect('db createdat blank', 'No');
+        Observer.Expect('db createdat', 'own = Yes');
+        Observer.Expect('db modifiedat blank', 'No');
+        Observer.Expect('db modifiedat', 'own = No');
+        Observer.Expect('db createdby null', 'No');
+        Observer.Expect('db createdby', 'user = Yes');
+        Observer.Expect('db modifiedby null', 'No');
+        Observer.Expect('db modifiedby', 'user = Yes');
+        Observer.Expect('db createdby', 'modifiedby = Yes');
+        Observer.Expect('db', 'temp/5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -604,7 +690,29 @@ codeunit 84886 "LT CN TF Modify"
         Observer.Observe('buffer createdat = db source', Format(R1.SystemCreatedAt = O.SystemCreatedAt));
         Observer.Observe('buffer modifiedat = db source', Format(R1.SystemModifiedAt = O.SystemModifiedAt));
         QhAudit(Observer, 'buffer', R1.SystemCreatedAt, R1.SystemModifiedAt, R1.SystemCreatedBy, R1.SystemModifiedBy, OwnCreatedAt, OwnModifiedAt);
-        Observer.Finish();
+        Observer.Expect('temp createdat', 'db source = Yes');
+        Observer.Expect('temp modifiedat', 'db source = Yes');
+        Observer.Expect('source createdat blank', 'No');
+        Observer.Expect('source createdat', 'own = No');
+        Observer.Expect('source modifiedat blank', 'No');
+        Observer.Expect('source modifiedat', 'own = No');
+        Observer.Expect('source createdby null', 'No');
+        Observer.Expect('source createdby', 'user = Yes');
+        Observer.Expect('source modifiedby null', 'No');
+        Observer.Expect('source modifiedby', 'user = Yes');
+        Observer.Expect('source createdby', 'modifiedby = Yes');
+        Observer.Expect('buffer createdat', 'db source = Yes');
+        Observer.Expect('buffer modifiedat', 'db source = Yes');
+        Observer.Expect('buffer createdat blank', 'No');
+        Observer.Expect('buffer createdat', 'own = No');
+        Observer.Expect('buffer modifiedat blank', 'No');
+        Observer.Expect('buffer modifiedat', 'own = No');
+        Observer.Expect('buffer createdby null', 'No');
+        Observer.Expect('buffer createdby', 'user = Yes');
+        Observer.Expect('buffer modifiedby null', 'No');
+        Observer.Expect('buffer modifiedby', 'user = Yes');
+        Observer.Expect('buffer createdby', 'modifiedby = Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -619,6 +727,15 @@ codeunit 84886 "LT CN TF Modify"
         O.Id := 7;
         R3.TransferFields(O);
         QhAudit(Observer, 'buffer', R3.SystemCreatedAt, R3.SystemModifiedAt, R3.SystemCreatedBy, R3.SystemModifiedBy, Blank, Blank);
-        Observer.Finish();
+        Observer.Expect('buffer createdat blank', 'Yes');
+        Observer.Expect('buffer createdat', 'own = Yes');
+        Observer.Expect('buffer modifiedat blank', 'Yes');
+        Observer.Expect('buffer modifiedat', 'own = Yes');
+        Observer.Expect('buffer createdby null', 'Yes');
+        Observer.Expect('buffer createdby', 'user = No');
+        Observer.Expect('buffer modifiedby null', 'Yes');
+        Observer.Expect('buffer modifiedby', 'user = No');
+        Observer.Expect('buffer createdby', 'modifiedby = Yes');
+        Observer.Verify();
     end;
 }
