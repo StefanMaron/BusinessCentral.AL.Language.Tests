@@ -30,6 +30,8 @@ codeunit 87203 "LT QQ Bound Props"
         Observer: Codeunit "Probe Observer";
         Card: TestPage "LT QQ Bound Card";
     begin
+        // BC 27.5, 28.5 and 29.0: a property bound to a procedure call reads No whatever the procedure returns, also on an action inside
+        // a group bound that way, and the procedure never runs (the log holds only OnOpenPage).
         Setup();
         Card.OpenView();
         Observer.Observe('log after open', Log.Read());
@@ -50,15 +52,33 @@ codeunit 87203 "LT QQ Bound Props"
         Observer.Observe('InGroupVisibleVariable visible', Format(Card.InGroupVisibleVariable.Visible()));
         Observer.Observe('log after reads', Log.Read());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log after open', 'OnOpenPage');
+        Observer.Expect('VisibleTrueProc visible', 'No');
+        Observer.Expect('VisibleTrueProc enabled', 'Yes');
+        Observer.Expect('VisibleFalseProc visible', 'No');
+        Observer.Expect('VisibleFalseProc enabled', 'Yes');
+        Observer.Expect('EnabledTrueProc visible', 'Yes');
+        Observer.Expect('EnabledTrueProc enabled', 'No');
+        Observer.Expect('EnabledFalseProc visible', 'Yes');
+        Observer.Expect('EnabledFalseProc enabled', 'No');
+        Observer.Expect('VisibleVariable visible', 'Yes');
+        Observer.Expect('EnabledVariable enabled', 'Yes');
+        Observer.Expect('NoProperty visible', 'Yes');
+        Observer.Expect('NoProperty enabled', 'Yes');
+        Observer.Expect('InGroupVisibleProc visible', 'No');
+        Observer.Expect('InGroupVisibleProc enabled', 'Yes');
+        Observer.Expect('InGroupVisibleVariable visible', 'Yes');
+        Observer.Expect('log after reads', 'OnOpenPage');
+        Observer.Verify();
     end;
 
     [Test]
-    procedure QQ_ProcBound_Invoke()
+    procedure QQ_Invoke_VisibleTrueProc()
     var
         Observer: Codeunit "Probe Observer";
         Card: TestPage "LT QQ Bound Card";
     begin
+        // An error in asserterror closes the test page, so every Invoke has a test of its own.
         Setup();
         Card.OpenView();
         Log.Clear();
@@ -66,44 +86,103 @@ codeunit 87203 "LT QQ Bound Props"
             Card.VisibleTrueProc.Invoke();
             Error('');
         end;
-        Observer.ObserveError('invoke VisibleTrueProc');
-        Observer.Observe('log VisibleTrueProc', Log.Read());
+        Observer.ObserveError('invoke');
+        Observer.Observe('log', Log.Read());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QQ_Invoke_VisibleFalseProc()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT QQ Bound Card";
+    begin
+        // An error in asserterror closes the test page, so every Invoke has a test of its own.
+        Setup();
+        Card.OpenView();
         Log.Clear();
         asserterror begin
             Card.VisibleFalseProc.Invoke();
             Error('');
         end;
-        Observer.ObserveError('invoke VisibleFalseProc');
-        Observer.Observe('log VisibleFalseProc', Log.Read());
+        Observer.ObserveError('invoke');
+        Observer.Observe('log', Log.Read());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QQ_Invoke_EnabledTrueProc()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT QQ Bound Card";
+    begin
+        // An error in asserterror closes the test page, so every Invoke has a test of its own.
+        Setup();
+        Card.OpenView();
         Log.Clear();
         asserterror begin
             Card.EnabledTrueProc.Invoke();
             Error('');
         end;
-        Observer.ObserveError('invoke EnabledTrueProc');
-        Observer.Observe('log EnabledTrueProc', Log.Read());
+        Observer.ObserveError('invoke');
+        Observer.Observe('log', Log.Read());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QQ_Invoke_EnabledFalseProc()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT QQ Bound Card";
+    begin
+        // An error in asserterror closes the test page, so every Invoke has a test of its own.
+        Setup();
+        Card.OpenView();
         Log.Clear();
         asserterror begin
             Card.EnabledFalseProc.Invoke();
             Error('');
         end;
-        Observer.ObserveError('invoke EnabledFalseProc');
-        Observer.Observe('log EnabledFalseProc', Log.Read());
+        Observer.ObserveError('invoke');
+        Observer.Observe('log', Log.Read());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QQ_Invoke_InGroupVisibleProc()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT QQ Bound Card";
+    begin
+        // An error in asserterror closes the test page, so every Invoke has a test of its own.
+        Setup();
+        Card.OpenView();
         Log.Clear();
         asserterror begin
             Card.InGroupVisibleProc.Invoke();
             Error('');
         end;
-        Observer.ObserveError('invoke InGroupVisibleProc');
-        Observer.Observe('log InGroupVisibleProc', Log.Read());
+        Observer.ObserveError('invoke');
+        Observer.Observe('log', Log.Read());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QQ_Invoke_NoProperty()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT QQ Bound Card";
+    begin
+        // An error in asserterror closes the test page, so every Invoke has a test of its own.
+        Setup();
+        Card.OpenView();
         Log.Clear();
         asserterror begin
             Card.NoProperty.Invoke();
             Error('');
         end;
-        Observer.ObserveError('invoke NoProperty');
-        Observer.Observe('log NoProperty', Log.Read());
-        Card.Close();
+        Observer.ObserveError('invoke');
+        Observer.Observe('log', Log.Read());
         Observer.Finish();
     end;
 
@@ -124,6 +203,12 @@ codeunit 87203 "LT QQ Bound Props"
         Observer.Observe('InGroupVisibleProc visible', Format(Card.InGroupVisibleProc.Visible()));
         Observer.Observe('log', Log.Read());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('VisibleTrueProc visible', 'No');
+        Observer.Expect('VisibleFalseProc visible', 'No');
+        Observer.Expect('EnabledTrueProc enabled', 'No');
+        Observer.Expect('EnabledFalseProc enabled', 'No');
+        Observer.Expect('InGroupVisibleProc visible', 'No');
+        Observer.Expect('log', 'OnOpenPage');
+        Observer.Verify();
     end;
 }
