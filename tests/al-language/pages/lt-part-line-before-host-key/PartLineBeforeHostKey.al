@@ -1840,4 +1840,98 @@ codeunit 67582 "LT DL Tests"
         Stored(Observer, 'after_close');
         Observer.Finish();
     end;
+
+    [TryFunction]
+    local procedure QhTryPartFirst(var Host: TestPage "LT DL Document"; var Found: Boolean)
+    begin
+        Found := Host.Lines.First();
+    end;
+
+    [Test]
+    procedure QH_NoRows_ReadPartControl()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Observer.Observe('part_description', '[' + Host.Lines.Description.Value() + ']');
+        TakeLog(Observer, 'read_log');
+        QhResult(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_OtherKeyRows_ReadPartControl()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        SeedLine('X1', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Observer.Observe('part_description', '[' + Host.Lines.Description.Value() + ']');
+        TakeLog(Observer, 'read_log');
+        QhResult(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_PartFirst()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+        Found: Boolean;
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        QhResult(Observer, 'part_first', QhTryPartFirst(Host, Found));
+        Observer.Observe('part_first_found', Format(Found));
+        Stored(Observer, 'after_first');
+        QhResult(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_ReadHostControl()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT DL Document";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Observer.Observe('card_name', '[' + Host.Name.Value() + ']');
+        TakeLog(Observer, 'read_log');
+        QhResult(Observer, 'close', TryClose(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QH_BlankRows_ReadPartControl_TwiceThenHostNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: TestPage "LT QH DL Doc Trace";
+    begin
+        Seed();
+        SeedLine('', 10000);
+        Host.OpenNew();
+        TakeLog(Observer, 'open_new');
+        Observer.Observe('part_description', '[' + Host.Lines.Description.Value() + ']');
+        TakeLog(Observer, 'read_log');
+        Observer.Observe('part_description_again', '[' + Host.Lines.Description.Value() + ']');
+        TakeLog(Observer, 'read_again_log');
+        QhResult(Observer, 'close', QhTryCloseTrace(Host));
+        Stored(Observer, 'after_close');
+        Observer.Finish();
+    end;
 }
