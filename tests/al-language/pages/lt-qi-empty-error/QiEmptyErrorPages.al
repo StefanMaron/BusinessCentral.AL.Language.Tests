@@ -175,6 +175,17 @@ codeunit 86853 "LT QI EE Tests"
         exit(Result);
     end;
 
+    // asserterror rolls back every write of the test method, Seed() included, so the rows the previous test method left are back
+    // (seen on BC 29): ask only for the row the trigger wrote before its error.
+    local procedure Kept(MarkerId: Integer; MarkerName: Text): Text
+    var
+        Row: Record "LT QI EE Row";
+    begin
+        if not Row.Get(MarkerId) then
+            exit(Format(false));
+        exit(Format(Row.Name = MarkerName));
+    end;
+
     // ---- action Invoke ----
 
     [Test]
@@ -209,12 +220,12 @@ codeunit 86853 "LT QI EE Tests"
         Card.OpenEdit();
         asserterror Card.TextAct.Invoke();
         Observer.ObserveError('invoke');
-        Observer.Observe('rows', Rows());
+        Observer.Observe('marker-kept', Kept(101, 'text action ran'));
         Observer.Observe('name-after', Card.NameCtl.Value());
         Card.Close();
         Observer.Expect('invoke|text', 'LT QI action error');
         Observer.Expect('invoke|code', 'TestWrapped:Dialog');
-        Observer.Expect('rows', '');
+        Observer.Expect('marker-kept', 'No');
         Observer.Expect('name-after', 'seed');
         Observer.Verify();
     end;
@@ -273,15 +284,15 @@ codeunit 86853 "LT QI EE Tests"
         Card.OpenEdit();
         asserterror Card.NameCtl.SetValue('text');
         Observer.ObserveError('setvalue');
-        Observer.Observe('rows', Rows());
+        Observer.Observe('marker-kept', Kept(300, 'validate text'));
         Observer.Observe('name-after', Card.NameCtl.Value());
         Card.Close();
-        Observer.Observe('rows-after-close', Rows());
+        Observer.Observe('marker-kept-after-close', Kept(300, 'validate text'));
         Observer.Expect('setvalue|text', 'Validation error for Field: NameCtl,  Message = ''LT QI validate error (Select Refresh to discard errors)''');
         Observer.Expect('setvalue|code', 'TestValidation');
-        Observer.Expect('rows', '');
+        Observer.Expect('marker-kept', 'No');
         Observer.Expect('name-after', 'seed');
-        Observer.Expect('rows-after-close', '');
+        Observer.Expect('marker-kept-after-close', 'No');
         Observer.Verify();
     end;
 
@@ -296,10 +307,10 @@ codeunit 86853 "LT QI EE Tests"
         Seed();
         asserterror Card.OpenEdit();
         Observer.ObserveError('open');
-        Observer.Observe('rows', Rows());
+        Observer.Observe('marker-kept', Kept(200, 'open ran'));
         Observer.Expect('open|text', '');
         Observer.Expect('open|code', 'Dialog');
-        Observer.Expect('rows', '');
+        Observer.Expect('marker-kept', 'No');
         Observer.Verify();
     end;
 }
