@@ -203,7 +203,20 @@ codeunit 70176 "LT PnG Show Row"
         List.Close();
         Observer.Observe('close_log', Log.Dump());
         Observer.Observe('stored_after_close', Format(Item.Count()));
-        Observer.Finish();
+        Observer.Expect('open_log', 'List.OnInit;List.OnOpenPage;List.OnNewRecord;List.AGCR(,);List.OnNewRecord;List.AGCR(,)');
+        Observer.Expect('action_log', 'List.AGR(NEW1,Created);List.AGR(NEW1,Created);List.AGR(NEW1,Created);List.AGCR(NEW1,NEW1)');
+        Observer.Expect('stored', '1');
+        Observer.Expect('no', 'NEW1');
+        Observer.Expect('no_log', '');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'NEW1');
+        Observer.Expect('first_log', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_no', '');
+        Observer.Expect('next_log', 'List.OnNewRecord;List.AGCR(,)');
+        Observer.Expect('close_log', '');
+        Observer.Expect('stored_after_close', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -237,7 +250,20 @@ codeunit 70176 "LT PnG Show Row"
         List.Close();
         Observer.Observe('close_log', Log.Dump());
         Observer.Observe('stored_after_close', Format(Item.Count()));
-        Observer.Finish();
+        Observer.Expect('open_log', 'List.OnInit;List.OnOpenPage;List.OnNewRecord;List.AGCR(,);List.OnNewRecord;List.AGCR(,)');
+        Observer.Expect('action_log', 'List.AGR(NEW2,Created);List.AGR(NEW2,Created);List.AGCR(NEW2,);List.OnNewRecord;List.AGCR(,)');
+        Observer.Expect('stored', '1');
+        Observer.Expect('no', '');
+        Observer.Expect('no_log', '');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'NEW2');
+        Observer.Expect('first_log', 'List.AGR(NEW2,Created);List.AGR(NEW2,Created);List.AGCR(NEW2,NEW2)');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_no', '');
+        Observer.Expect('next_log', 'List.OnNewRecord;List.AGCR(,)');
+        Observer.Expect('close_log', '');
+        Observer.Expect('stored_after_close', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -271,7 +297,20 @@ codeunit 70176 "LT PnG Show Row"
         List.Close();
         Observer.Observe('close_log', Log.Dump());
         Observer.Observe('stored_after_close', Format(Item.Count()));
-        Observer.Finish();
+        Observer.Expect('open_log', 'List.OnInit;List.OnOpenPage;List.OnNewRecord;List.AGCR(,);List.OnNewRecord;List.AGCR(,)');
+        Observer.Expect('action_log', 'List.AGR(NEW3,Created);List.AGR(NEW3,Created);List.AGR(NEW3,Created);List.AGCR(NEW3,NEW3)');
+        Observer.Expect('stored', '1');
+        Observer.Expect('no', 'NEW3');
+        Observer.Expect('no_log', '');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'NEW3');
+        Observer.Expect('first_log', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next_no', '');
+        Observer.Expect('next_log', 'List.OnNewRecord;List.AGCR(,)');
+        Observer.Expect('close_log', '');
+        Observer.Expect('stored_after_close', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -305,7 +344,20 @@ codeunit 70176 "LT PnG Show Row"
         List.Close();
         Observer.Observe('close_log', Log.Dump());
         Observer.Observe('stored_after_close', Format(Item.Count()));
-        Observer.Finish();
+        Observer.Expect('open_log', 'List.OnInit;List.OnOpenPage;List.OnNewRecord;List.AGCR(,);List.OnNewRecord;List.AGCR(,)');
+        Observer.Expect('action_log', 'ReadTable(,No);List.OnNewRecord;List.AGCR(,);List.OnNewRecord;List.AGCR(,)');
+        Observer.Expect('stored', '0');
+        Observer.Expect('no', '');
+        Observer.Expect('no_log', '');
+        Observer.Expect('first', 'No');
+        Observer.Expect('first_no', '');
+        Observer.Expect('first_log', '');
+        Observer.Expect('next', 'No');
+        Observer.Expect('next_no', '');
+        Observer.Expect('next_log', '');
+        Observer.Expect('close_log', '');
+        Observer.Expect('stored_after_close', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,7 +391,20 @@ codeunit 70176 "LT PnG Show Row"
         List.Close();
         Observer.Observe('close_log', Log.Dump());
         Observer.Observe('stored_after_close', Format(Item.Count()));
-        Observer.Finish();
+        Observer.Expect('open_log', 'List.OnInit;List.OnOpenPage');
+        Observer.Expect('action_log', 'List.AGR(NEW1,Created);List.AGR(NEW1,Created);List.AGR(NEW1,Created);List.AGCR(NEW1,)');
+        Observer.Expect('stored', '1');
+        Observer.Expect('no', 'NEW1');
+        Observer.Expect('no_log', '');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'NEW1');
+        Observer.Expect('first_log', '');
+        Observer.Expect('next', 'No');
+        Observer.Expect('next_no', 'NEW1');
+        Observer.Expect('next_log', '');
+        Observer.Expect('close_log', '');
+        Observer.Expect('stored_after_close', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -373,7 +438,20 @@ codeunit 70176 "LT PnG Show Row"
         List.Close();
         Observer.Observe('close_log', Log.Dump());
         Observer.Observe('stored_after_close', Format(Item.Count()));
-        Observer.Finish();
+        Observer.Expect('open_log', 'List.OnInit;List.OnOpenPage');
+        Observer.Expect('action_log', 'List.AGR(NEW2,Created);List.AGR(NEW2,Created);List.AGCR(NEW2,)');
+        Observer.Expect('stored', '1');
+        Observer.Expect('no', 'NEW2');
+        Observer.Expect('no_log', '');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'NEW2');
+        Observer.Expect('first_log', '');
+        Observer.Expect('next', 'No');
+        Observer.Expect('next_no', 'NEW2');
+        Observer.Expect('next_log', '');
+        Observer.Expect('close_log', '');
+        Observer.Expect('stored_after_close', '1');
+        Observer.Verify();
     end;
 
     // A row stored by the test itself (not by page code) while the empty list is open: is it shown by a field read, First, or only after an action?
@@ -402,7 +480,14 @@ codeunit 70176 "LT PnG Show Row"
         Observer.Observe('first_no', List.NoCtl.Value());
         Observer.Observe('first_log', Log.Dump());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('no', '');
+        Observer.Expect('no_log', '');
+        Observer.Expect('action_log', 'List.AGR(,);ReadTable(,No);List.AGR(T1,ByTest);List.AGR(T1,ByTest);List.AGCR(T1,)');
+        Observer.Expect('no_after_action', 'T1');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('first_no', 'T1');
+        Observer.Expect('first_log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -423,6 +508,9 @@ codeunit 70176 "LT PnG Show Row"
         Observer.Observe('first_no', List.NoCtl.Value());
         Observer.Observe('first_log', Log.Dump());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('first', 'No');
+        Observer.Expect('first_no', '');
+        Observer.Expect('first_log', '');
+        Observer.Verify();
     end;
 }

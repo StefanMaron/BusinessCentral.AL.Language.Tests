@@ -240,7 +240,14 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Log.Clear();
         P.Close();
         Observer.Observe('close_log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('no', 'R1003');
+        Observer.Expect('no_log', '');
+        Observer.Expect('qty', '3');
+        Observer.Expect('qty_log', '');
+        Observer.Expect('close_log', 'R:R1003');
+        Observer.Verify();
     end;
 
     [Test]
@@ -261,7 +268,10 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Log.Clear();
         P.Close();
         Observer.Observe('close_log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('setvalue_log', '');
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003;R:R1002;R:R1001');
+        Observer.Expect('close_log', 'R:R1003');
+        Observer.Verify();
     end;
 
     [Test]
@@ -276,7 +286,8 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Log.Clear();
         P.Close();
         Observer.Observe('close_log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('close_log', 'R:R1003');
+        Observer.Verify();
     end;
 
     [Test]
@@ -298,7 +309,12 @@ codeunit 86703 "LT QG GoToKey Next Call"
         P.Act.Invoke();
         Observer.Observe('action_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('previous', 'Yes');
+        Observer.Expect('previous_log', '');
+        Observer.Expect('no', 'R1002');
+        Observer.Expect('no_log', '');
+        Observer.Expect('action_log', 'R:R1002;R:R1002;A:act=R1002;R:R1002;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1002;R:R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -318,7 +334,9 @@ codeunit 86703 "LT QG GoToKey Next Call"
         P.Act.Invoke();
         Observer.Observe('action_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('runobject_log', 'T:open;H:target');
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003;R:R1002;R:R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -337,7 +355,9 @@ codeunit 86703 "LT QG GoToKey Next Call"
         P.Act.Invoke();
         Observer.Observe('second_action_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003;R:R1002;R:R1001');
+        Observer.Expect('second_action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003;R:R1002;R:R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -355,7 +375,9 @@ codeunit 86703 "LT QG GoToKey Next Call"
         P.Act.Invoke();
         Observer.Observe('action_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('no', 'R1003');
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003;R:R1002;R:R1001');
+        Observer.Verify();
     end;
 
     [Test]
@@ -373,7 +395,10 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Observer.Observe('action_log', Log.Dump());
         Observer.Observe('current', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('no', 'R1003');
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:update;A:done;R:R1003;R:R1003;R:R1004;R:R1005;R:R1006;R:R1003;R:R1002;R:R1001');
+        Observer.Expect('current', 'R1003');
+        Observer.Verify();
     end;
 
     [Test]
@@ -390,7 +415,10 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Observer.Observe('log', Log.Dump());
         P.GetRecord(Row);
         Observer.Observe('selected', Row."No.");
-        Observer.Finish();
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('log', 'R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001;H:opened;H:goto;R:R1003;H:ok');
+        Observer.Expect('selected', 'R1003');
+        Observer.Verify();
     end;
 
     [Test]
@@ -407,7 +435,10 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Observer.Observe('log', Log.Dump());
         P.GetRecord(Row);
         Observer.Observe('selected', Row."No.");
-        Observer.Finish();
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('log', 'R:R1001;R:R1002;R:R1003;R:R1004;R:R1005;R:R1006;R:R1001;H:opened;H:goto;H:value=R1003;R:R1003;H:ok');
+        Observer.Expect('selected', 'R1003');
+        Observer.Verify();
     end;
 
     // ---- Nav: OnFindRecord, OnNextRecord and OnAfterGetRecord ----
@@ -432,7 +463,14 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Log.Clear();
         P.Close();
         Observer.Observe('close_log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('goto', 'Yes');
+        Observer.Expect('goto_log', '');
+        Observer.Expect('no', 'R1003');
+        Observer.Expect('no_log', '');
+        Observer.Expect('qty', '3');
+        Observer.Expect('qty_log', '');
+        Observer.Expect('close_log', 'R:R1003');
+        Observer.Verify();
     end;
 
     [Test]
@@ -453,7 +491,10 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Log.Clear();
         P.Close();
         Observer.Observe('close_log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('setvalue_log', '');
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;F:=>=Yes;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('close_log', 'R:R1003');
+        Observer.Verify();
     end;
 
     [Test]
@@ -468,7 +509,8 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Log.Clear();
         P.Close();
         Observer.Observe('close_log', Log.Dump());
-        Observer.Finish();
+        Observer.Expect('close_log', 'R:R1003');
+        Observer.Verify();
     end;
 
     [Test]
@@ -490,7 +532,12 @@ codeunit 86703 "LT QG GoToKey Next Call"
         P.Act.Invoke();
         Observer.Observe('action_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('previous', 'Yes');
+        Observer.Expect('previous_log', '');
+        Observer.Expect('no', 'R1002');
+        Observer.Expect('no_log', '');
+        Observer.Expect('action_log', 'R:R1002;R:R1002;A:act=R1002;R:R1002;F:=>=Yes;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -510,7 +557,9 @@ codeunit 86703 "LT QG GoToKey Next Call"
         P.Act.Invoke();
         Observer.Observe('action_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('runobject_log', 'T:open;H:target');
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;F:=>=Yes;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -529,7 +578,9 @@ codeunit 86703 "LT QG GoToKey Next Call"
         P.Act.Invoke();
         Observer.Observe('second_action_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;F:=>=Yes;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('second_action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;F:=>=Yes;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -547,7 +598,9 @@ codeunit 86703 "LT QG GoToKey Next Call"
         P.Act.Invoke();
         Observer.Observe('action_log', Log.Dump());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('no', 'R1003');
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:act=R1003;R:R1003;F:=>=Yes;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -565,7 +618,10 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Observer.Observe('action_log', Log.Dump());
         Observer.Observe('current', P.NoCtl.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('no', 'R1003');
+        Observer.Expect('action_log', 'R:R1003;R:R1003;A:update;A:done;R:R1003;F:=>=Yes;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1003;N:-1=-1;R:R1002;N:-1=-1;R:R1001;N:-1=0');
+        Observer.Expect('current', 'R1003');
+        Observer.Verify();
     end;
 
     [Test]
@@ -582,6 +638,9 @@ codeunit 86703 "LT QG GoToKey Next Call"
         Observer.Observe('log', Log.Dump());
         P.GetRecord(Row);
         Observer.Observe('selected', Row."No.");
-        Observer.Finish();
+        Observer.Expect('action', 'LookupOK');
+        Observer.Expect('log', 'F:=>=Yes;R:R1001;N:1=1;R:R1002;N:1=1;R:R1003;N:1=1;R:R1004;N:1=1;R:R1005;N:1=1;R:R1006;N:1=0;R:R1001;N:-1=0;H:opened;H:goto;R:R1003;H:ok');
+        Observer.Expect('selected', 'R1003');
+        Observer.Verify();
     end;
 }

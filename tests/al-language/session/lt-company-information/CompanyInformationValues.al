@@ -65,7 +65,24 @@ codeunit 67858 "LT Company Information Values"
         Observer.Observe('picture_hasvalue_before_calcfields', Format(Info.Picture.HasValue()));
         Info.CalcFields(Picture);
         Observer.Observe('picture_hasvalue', Format(Info.Picture.HasValue()));
-        Observer.Finish();
+        Observer.Expect('count', '1');
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('primary_key', '');
+        Observer.Expect('name', '<Company>');
+        Observer.Expect('name_equals_company_name', 'Yes');
+        Observer.Expect('name_2', '');
+        Observer.Expect('address', '5 The Ring');
+        Observer.Expect('address_2', 'Westminster');
+        Observer.Expect('city', 'London');
+        Observer.Expect('post_code', 'W2 8HG');
+        Observer.Expect('county', '');
+        Observer.Expect('country_region_code', 'GB');
+        Observer.Expect('phone_no', '0666-666-6666');
+        Observer.Expect('vat_registration_no', '777777777');
+        Observer.Expect('registration_no', '');
+        Observer.Expect('picture_hasvalue_before_calcfields', 'Yes');
+        Observer.Expect('picture_hasvalue', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -88,7 +105,15 @@ codeunit 67858 "LT Company Information Values"
         Period.SetRange("New Fiscal Year");
         Period.SetRange(Closed, true);
         Observer.Observe('closed_count', Format(Period.Count()));
-        Observer.Finish();
+        Observer.Expect('count', '36');
+        Observer.Expect('isempty', 'No');
+        Observer.Expect('first_starting_date', '2025-01-01');
+        Observer.Expect('first_new_fiscal_year', 'Yes');
+        Observer.Expect('first_closed', 'Yes');
+        Observer.Expect('last_starting_date', '2027-12-01');
+        Observer.Expect('fiscal_year_starts', '3');
+        Observer.Expect('closed_count', '12');
+        Observer.Verify();
     end;
 
     [Test]

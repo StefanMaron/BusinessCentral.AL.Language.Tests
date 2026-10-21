@@ -393,7 +393,7 @@ codeunit 70011 "LT P146 Page Expr SetValue"
 
     // Writer QG (runtime PR 380, lane-old-fails): P146_NoSourceTable_SetValue_And_Action shows OnAfterGetCurrRecord after each action on a
     // card without a source table. These pin, per step, which of OnAfterGetRecord, OnAfterGetCurrRecord and OnNewRecord such a page runs on
-    // open (edit, view, new), after an action that does nothing, after an action with CurrPage.Update(false), after SetValue and at Close.
+    // open (edit, view; OpenNew fails), after an action that does nothing, after an action with CurrPage.Update(false), after SetValue and at Close.
     local procedure QGNoSourceSteps(var Observer: Codeunit "Probe Observer"; var P: TestPage "LT QG NoSource Card")
     var
         Log: Codeunit "LT P146 Page Log";
@@ -426,7 +426,14 @@ codeunit 70011 "LT P146 Page Expr SetValue"
         Log.Clear();
         P.OpenEdit();
         QGNoSourceSteps(Observer, P);
-        Observer.Finish();
+        Observer.Expect('log after open', 'qg open;qg agcr;');
+        Observer.Expect('txt', 'start');
+        Observer.Expect('log after read', '');
+        Observer.Expect('log after noop', 'qg action;qg agcr;');
+        Observer.Expect('log after second noop', 'qg action;qg agcr;');
+        Observer.Expect('log after update action', 'qg update;qg update done;qg agcr;');
+        Observer.Expect('log after close', 'qg close;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -439,7 +446,14 @@ codeunit 70011 "LT P146 Page Expr SetValue"
         Log.Clear();
         P.OpenView();
         QGNoSourceSteps(Observer, P);
-        Observer.Finish();
+        Observer.Expect('log after open', 'qg open;qg agcr;');
+        Observer.Expect('txt', 'start');
+        Observer.Expect('log after read', '');
+        Observer.Expect('log after noop', 'qg action;qg agcr;');
+        Observer.Expect('log after second noop', 'qg action;qg agcr;');
+        Observer.Expect('log after update action', 'qg update;qg update done;qg agcr;');
+        Observer.Expect('log after close', 'qg close;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -450,8 +464,10 @@ codeunit 70011 "LT P146 Page Expr SetValue"
         P: TestPage "LT QG NoSource Card";
     begin
         Log.Clear();
-        P.OpenNew();
-        QGNoSourceSteps(Observer, P);
+        asserterror P.OpenNew();
+        Observer.Observe('open new error', GetLastErrorText());
+        Observer.Observe('open new error code', GetLastErrorCode());
+        Observer.Observe('log after open new', Log.GetEntries());
         Observer.Finish();
     end;
 
@@ -474,7 +490,11 @@ codeunit 70011 "LT P146 Page Expr SetValue"
         Log.Clear();
         P.Close();
         Observer.Observe('log after close', Log.GetEntries());
-        Observer.Finish();
+        Observer.Expect('log after setvalue', 'qg validate=typed;');
+        Observer.Expect('log after noop', 'qg action;qg agcr;');
+        Observer.Expect('txt', 'typed');
+        Observer.Expect('log after close', 'qg close;');
+        Observer.Verify();
     end;
 }
 

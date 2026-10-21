@@ -255,7 +255,17 @@ codeunit 73770 "LT P165 Page Globals"
         Observer.Observe('row count', Format(Row.Count()));
         if Row.Get('N1') then
             Observer.Observe('N1 Seen', Row.Seen);
-        Observer.Finish();
+        Observer.Expect('stored after the action', 'Yes');
+        Observer.Expect('LastCount read', '1');
+        Observer.Expect('No. read', 'N1');
+        Observer.Expect('Seen read', 'I0');
+        Observer.Expect('stored after the reads', 'Yes');
+        Observer.Expect('stored after the second action', 'Yes');
+        Observer.Expect('Seen after the second action', 'I0');
+        Observer.Expect('LastCount after the second action', '0');
+        Observer.Expect('row count', '2');
+        Observer.Expect('N1 Seen', 'I0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,7 +283,10 @@ codeunit 73770 "LT P165 Page Globals"
         Observer.Observe('N1 exists', Format(Row.Get('N1')));
         if Row.Get('N1') then
             Observer.Observe('N1 Seen', Row.Seen);
-        Observer.Finish();
+        Observer.Expect('row count', '2');
+        Observer.Expect('N1 exists', 'Yes');
+        Observer.Expect('N1 Seen', 'I0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -294,7 +307,11 @@ codeunit 73770 "LT P165 Page Globals"
         Observer.Observe('row count', Format(Row.Count()));
         if Row.Get('N1') then
             Observer.Observe('N1 Seen', Row.Seen);
-        Observer.Finish();
+        Observer.Expect('LastCount after BumpOnly', '1');
+        Observer.Expect('LastCount after ReadCount', '2');
+        Observer.Expect('row count', '2');
+        Observer.Expect('N1 Seen', 'I0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -318,7 +335,13 @@ codeunit 73770 "LT P165 Page Globals"
         Observer.Observe('row count', Format(Row.Count()));
         if Row.Get('N3') then
             Observer.Observe('N3 Seen', Row.Seen);
-        Observer.Finish();
+        Observer.Expect('stored after the SetValue', 'No');
+        Observer.Expect('stored after BumpOnly', 'Yes');
+        Observer.Expect('Seen after BumpOnly', 'I0');
+        Observer.Expect('LastCount after ReadCount', '2');
+        Observer.Expect('row count', '2');
+        Observer.Expect('N3 Seen', 'I0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -336,6 +359,9 @@ codeunit 73770 "LT P165 Page Globals"
         Observer.Observe('LastCount after ReadCount', Card.LastCount.Value());
         Card.Close();
         Observer.Observe('row count', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('LastCount after BumpOnly', '1');
+        Observer.Expect('LastCount after ReadCount', '2');
+        Observer.Expect('row count', '1');
+        Observer.Verify();
     end;
 }

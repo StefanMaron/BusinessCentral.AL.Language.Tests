@@ -396,7 +396,12 @@ codeunit 85721 "LT DB Http Content Leads"
         QGObserveRespText(Observer, 'text_again', Resp);
         Resp.Content().ReadAs(InS2);
         Observer.Observe('fresh_stream', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('part', 'ab');
+        Observer.Expect('text', 'abcdef');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Expect('text_again', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -414,7 +419,11 @@ codeunit 85721 "LT DB Http Content Leads"
         QGObserveRespText(Observer, 'text_again', Resp);
         Resp.Content().ReadAs(InS2);
         Observer.Observe('fresh_stream', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('text', 'abcdef');
+        Observer.Expect('first_stream', '1:<abcdef>');
+        Observer.Expect('text_again', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -436,7 +445,13 @@ codeunit 85721 "LT DB Http Content Leads"
         QGObserveRespText(Observer, 'resp_text', Resp);
         Content.ReadAs(InS2);
         Observer.Observe('fresh_stream', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('part', 'ab');
+        Observer.Expect('text', '');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Expect('text_again', '');
+        Observer.Expect('resp_text', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -457,7 +472,12 @@ codeunit 85721 "LT DB Http Content Leads"
         QGObserveRespText(Observer, 'resp_text', Resp);
         Content.ReadAs(InS2);
         Observer.Observe('fresh_stream', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('text', '');
+        Observer.Expect('first_stream', '1:<abcdef>');
+        Observer.Expect('text_again', '');
+        Observer.Expect('resp_text', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -475,7 +495,11 @@ codeunit 85721 "LT DB Http Content Leads"
         QGObserveContentText(Observer, 'copy_text', Content);
         QGObserveRespText(Observer, 'resp_text', Resp);
         Observer.Observe('rest_of_first', ReadAll(InS));
-        Observer.Finish();
+        Observer.Expect('part', 'ab');
+        Observer.Expect('copy_text', 'abcdef');
+        Observer.Expect('resp_text', 'abcdef');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Verify();
     end;
 
     [Test]
@@ -494,7 +518,12 @@ codeunit 85721 "LT DB Http Content Leads"
         QGObserveContentText(Observer, 'text_again', Content);
         Content.ReadAs(InS2);
         Observer.Observe('fresh_stream', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('part', 'ab');
+        Observer.Expect('text', 'abcdef');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Expect('text_again', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -512,7 +541,11 @@ codeunit 85721 "LT DB Http Content Leads"
         QGObserveContentText(Observer, 'text_again', Content);
         Content.ReadAs(InS2);
         Observer.Observe('fresh_stream', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('text', 'abcdef');
+        Observer.Expect('first_stream', '1:<abcdef>');
+        Observer.Expect('text_again', 'abcdef');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -534,7 +567,12 @@ codeunit 85721 "LT DB Http Content Leads"
         QGObserveContentText(Observer, 'text_again', Content);
         Content.ReadAs(InS2);
         Observer.Observe('fresh_stream', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('part', 'ab');
+        Observer.Expect('text', '');
+        Observer.Expect('rest_of_first', '1:<cdef>');
+        Observer.Expect('text_again', '');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
     end;
 
     [Test]
@@ -555,6 +593,10 @@ codeunit 85721 "LT DB Http Content Leads"
         QGObserveContentText(Observer, 'text_again', Content);
         Content.ReadAs(InS2);
         Observer.Observe('fresh_stream', ReadAll(InS2));
-        Observer.Finish();
+        Observer.Expect('text', '');
+        Observer.Expect('first_stream', '1:<abcdef>');
+        Observer.Expect('text_again', '');
+        Observer.Expect('fresh_stream', '0:');
+        Observer.Verify();
     end;
 }
