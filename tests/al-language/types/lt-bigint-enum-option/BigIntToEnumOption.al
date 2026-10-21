@@ -353,48 +353,111 @@ codeunit 74064 "LT BigInt To Option"
     procedure QO_Variant_ToOptionVariable()
     begin
         QoProbe(1);
-        Obs.Finish();
+        Obs.Expect('int1', 'One|1');
+        Obs.Expect('int3', '3|3');
+        Obs.Expect('int7', '7|7');
+        Obs.Expect('intm1', '-1|-1');
+        Obs.Expect('big2', 'Two|2');
+        Obs.Expect('big7', '7|7');
+        Obs.Expect('bigm1', '-1|-1');
+        Obs.Expect('bigover|text', 'The expression Variant cannot be type-converted to a Integer value.');
+        Obs.Expect('bigover|code', 'TypeConversion:Overflow');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Variant_ToOptionField_Assign()
     begin
         QoProbe(3);
-        Obs.Finish();
+        Obs.Expect('int1', 'One|1|');
+        Obs.Expect('int3', '3|3|');
+        Obs.Expect('int7', '7|7|');
+        Obs.Expect('intm1', '-1|-1|');
+        Obs.Expect('big2', 'Two|2|');
+        Obs.Expect('big7', '7|7|');
+        Obs.Expect('bigm1', '-1|-1|');
+        Obs.Expect('bigover|text', 'The expression Variant cannot be type-converted to a Integer value.');
+        Obs.Expect('bigover|code', 'TypeConversion:Overflow');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Variant_ToOptionField_Validate()
     begin
         QoProbe(4);
-        Obs.Finish();
+        Obs.Expect('int1', 'One|1|opt 1');
+        Obs.Expect('int3', '3|3|opt 3');
+        Obs.Expect('int7', '7|7|opt 7');
+        Obs.Expect('intm1', '-1|-1|opt -1');
+        Obs.Expect('big2', 'Two|2|opt 2');
+        Obs.Expect('big7', '7|7|opt 7');
+        Obs.Expect('bigm1', '-1|-1|opt -1');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Variant_ToOptionFieldRef_Value()
     begin
         QoProbe(7);
-        Obs.Finish();
+        Obs.Expect('int1', 'One|1|');
+        Obs.Expect('int3', '3|3|');
+        Obs.Expect('int7', '7|7|');
+        Obs.Expect('intm1', '-1|-1|');
+        Obs.Expect('big2', 'Two|2|');
+        Obs.Expect('big7', '7|7|');
+        Obs.Expect('bigm1', '-1|-1|');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Variant_ToOptionFieldRef_Validate()
     begin
         QoProbe(8);
-        Obs.Finish();
+        Obs.Expect('int1', 'One|1|opt 1');
+        Obs.Expect('int3', '3|3|opt 3');
+        Obs.Expect('int7', '7|7|opt 7');
+        Obs.Expect('intm1', '-1|-1|opt -1');
+        Obs.Expect('big2', 'Two|2|opt 2');
+        Obs.Expect('big7', '7|7|opt 7');
+        Obs.Expect('bigm1', '-1|-1|opt -1');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Variant_ToEnumFieldRef_Value()
     begin
         QoProbe(9);
-        Obs.Finish();
+        Obs.Expect('int1', 'One|1|');
+        Obs.Expect('int3', '3|3|');
+        Obs.Expect('int7', 'Seven|7|');
+        Obs.Expect('intm1', '-1|-1|');
+        Obs.Expect('big2', 'Two|2|');
+        Obs.Expect('big7', 'Seven|7|');
+        Obs.Expect('bigm1', '-1|-1|');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Variant_ToEnumFieldRef_Validate()
     begin
         QoProbe(10);
-        Obs.Finish();
+        Obs.Expect('int1', 'One|1|enum 1');
+        Obs.Expect('int3', '3|3|enum 3');
+        Obs.Expect('int7', 'Seven|7|enum 7');
+        Obs.Expect('intm1', '-1|-1|enum -1');
+        Obs.Expect('big2', 'Two|2|enum 2');
+        Obs.Expect('big7', 'Seven|7|enum 7');
+        Obs.Expect('bigm1', '-1|-1|enum -1');
+        Obs.Expect('bigover|text', 'Arithmetic operation resulted in an overflow.');
+        Obs.Expect('bigover|code', 'AL:Overflow');
+        Obs.Verify();
     end;
 }

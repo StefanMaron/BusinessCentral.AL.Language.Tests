@@ -10,8 +10,14 @@
 //   before Type is stamped: "cannot be found in the related table"); the exception is not catchable, so no test can assert it.
 // Writer QO (al-runtime-rs assumption new-line-stamps-all-before-validating, Microsoft's shape: Service Order / Service Order Subform):
 //   a host Card with SourceTableView where(Type = const(B)) (page 87101) holding the B part above and a copy of it with DelayedInsert = true
-//   (page 87100), for a header of type B (OpenEdit) and a new header (OpenNew): the blank line the part shows before New(), the line after
-//   New(), what the OnValidate of "Document No." saw, the stored rows. QO_ tests in codeunit 74141.
+//   (page 87100), for a new header (OpenNew): the blank line the part shows, the line after the header No. is set, what the OnValidate
+//   of "Document No." saw, the stored rows. QO_ tests in codeunit 74141.
+//   Not pinned (uncatchable, same on 27.5, 28.5 and 29.0): on that host opened OpenEdit on a header of type B (HB), typing into the blank
+//   line of either part (DelayedInsert or not, with or without New() first) ends the test with "Unexpected CLR exception thrown.:
+//   Microsoft.Dynamics.Framework.UI.FormAbortException: Page LT QO NL Host B - HB has to close." caused by
+//   NavCSideValidateTableRelationException "The field Document No. of table LT NL Line contains a value (HB) that cannot be found in the
+//   related table (LT NL Header)." So the blank line validates Document No. while its Type is still A, even with DelayedInsert and a host
+//   view of Type = B; no test can assert it.
 // BC versions: 27, 28, 29 by CI
 
 enum 74135 "LT NL Type"
@@ -489,15 +495,6 @@ codeunit 74141 "LT New Line Stamps Filters"
     end;
 
     [TryFunction]
-    local procedure QoNew(var Host: TestPage "LT QO NL Host B"; Delayed: Boolean)
-    begin
-        if Delayed then
-            Host.LinesBD.New()
-        else
-            Host.LinesB.New();
-    end;
-
-    [TryFunction]
     local procedure QoType(var Host: TestPage "LT QO NL Host B"; Delayed: Boolean)
     begin
         if Delayed then
@@ -528,45 +525,6 @@ codeunit 74141 "LT New Line Stamps Filters"
             Obs.ObserveError(Name);
     end;
 
-    local procedure QoExisting(Delayed: Boolean; WithNew: Boolean)
-    var
-        Host: TestPage "LT QO NL Host B";
-    begin
-        Seed('HB', "LT NL Type"::B);
-        Host.OpenEdit();
-        Obs.Observe('card', '[' + Host."No.".Value() + '|' + Host.Type.Value() + ']');
-        QoDraft('blank', Host, Delayed);
-        if WithNew then begin
-            Step('new', QoNew(Host, Delayed));
-            QoDraft('draft', Host, Delayed);
-        end;
-        Step('type', QoType(Host, Delayed));
-        QoDraft('typed', Host, Delayed);
-        Step('close', QoClose(Host));
-        ObserveLines('db');
-    end;
-
-    [Test]
-    procedure QO_HostB_HeaderB_DelayedPart_TypeOnBlankLine()
-    begin
-        QoExisting(true, false);
-        Obs.Finish();
-    end;
-
-    [Test]
-    procedure QO_HostB_HeaderB_DelayedPart_NewThenType()
-    begin
-        QoExisting(true, true);
-        Obs.Finish();
-    end;
-
-    [Test]
-    procedure QO_HostB_HeaderB_PartB_TypeOnBlankLine()
-    begin
-        QoExisting(false, false);
-        Obs.Finish();
-    end;
-
     [Test]
     procedure QO_HostB_OpenNew_DelayedPart_NoThenType()
     var
@@ -584,7 +542,18 @@ codeunit 74141 "LT New Line Stamps Filters"
         Step('close', QoClose(Host));
         Obs.Observe('after_close.headers', Headers());
         ObserveLines('db');
-        Obs.Finish();
+        Obs.Expect('card', '[|A]');
+        Obs.Expect('blank', '|A|A');
+        Obs.Expect('set_no', 'ok');
+        Obs.Expect('after_no.headers', '1 [|A]');
+        Obs.Expect('after_no.blank', '|A|A');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', '|A|A');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('after_close.headers', '1 [|A]');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', '|A|A|x');
+        Obs.Verify();
     end;
 
     [Test]
@@ -604,7 +573,18 @@ codeunit 74141 "LT New Line Stamps Filters"
         Step('close', QoClose(Host));
         Obs.Observe('after_close.headers', Headers());
         ObserveLines('db');
-        Obs.Finish();
+        Obs.Expect('card', '[|A]');
+        Obs.Expect('blank', '|A|A');
+        Obs.Expect('set_no', 'ok');
+        Obs.Expect('after_no.headers', '1 [|A]');
+        Obs.Expect('after_no.blank', '|A|A');
+        Obs.Expect('type', 'ok');
+        Obs.Expect('typed', '|A|A');
+        Obs.Expect('close', 'ok');
+        Obs.Expect('after_close.headers', '1 [|A]');
+        Obs.Expect('db.count', '1');
+        Obs.Expect('db.first', '|A|A|x');
+        Obs.Verify();
     end;
 }
 

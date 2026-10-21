@@ -995,7 +995,17 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'exprB', H.Lines.ExprB.Caption());
         H.Close();
         QoStep(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open', 'empty>0=Yes fields0=60,70,71, same=Yes rest=60@1;70@1;71@1;');
+        Observer.Expect('head', 'Head 1');
+        Observer.Expect('head_calls', '');
+        Observer.Expect('row', '1');
+        Observer.Expect('row_calls', '');
+        Observer.Expect('exprA', 'Line 1');
+        Observer.Expect('exprA_calls', '');
+        Observer.Expect('exprB', 'Amount Excl. VAT');
+        Observer.Expect('exprB_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1015,7 +1025,15 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'next_exprA', H.Lines.ExprA.Caption());
         H.Close();
         QoStep(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('part_setvalue', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Expect('part_next', 'Yes');
+        Observer.Expect('part_next', 'empty>0=No fields0= same=Yes rest=70@1;71@1;');
+        Observer.Expect('next_row', '2');
+        Observer.Expect('next_row_calls', '');
+        Observer.Expect('next_exprA', 'Line 1');
+        Observer.Expect('next_exprA_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1039,7 +1057,20 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'host_next_exprA', H.Lines.ExprA.Caption());
         H.Close();
         QoStep(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('host_setvalue', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Expect('update', 'empty>0=No fields0= same=Yes rest=60@1;60@1;60@1;70@1;71@1;');
+        Observer.Expect('update_exprA', 'Line 1');
+        Observer.Expect('update_exprA_calls', '');
+        Observer.Expect('host_next', 'Yes');
+        Observer.Expect('host_next', 'empty>0=No fields0= same=Yes rest=70@3;71@3;');
+        Observer.Expect('host_next_head', 'Head 1');
+        Observer.Expect('host_next_head_calls', '');
+        Observer.Expect('host_next_row', '3');
+        Observer.Expect('host_next_row_calls', '');
+        Observer.Expect('host_next_exprA', 'Line 3');
+        Observer.Expect('host_next_exprA_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1059,7 +1090,16 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'no_exprA', H.Lines.ExprA.Caption());
         H.Close();
         QoStep(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('head', 'Head 0');
+        Observer.Expect('head_calls', '');
+        Observer.Expect('exprA', 'Line 0');
+        Observer.Expect('no_setvalue', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Expect('no_row', '0');
+        Observer.Expect('no_row_calls', '');
+        Observer.Expect('no_exprA', 'Line 0');
+        Observer.Expect('no_exprA_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1080,7 +1120,18 @@ codeunit 86504 "LT QD CaptionClass Areas"
         Cap(Observer, 'next_exprId', QfNoCall(P.ExprId.Caption()));
         P.Close();
         QoStep(Observer, 'close');
-        Observer.Finish();
+        Observer.Expect('open', 'empty>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('exprId', 'Id 3');
+        Observer.Expect('exprId_calls', '');
+        Observer.Expect('setvalue', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Expect('setvalue_exprId', 'Id 3');
+        Observer.Expect('setvalue_exprId_calls', '');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('next', 'empty>0=No fields0= same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('next_exprId', 'Id 3');
+        Observer.Expect('next_exprId_calls', '');
+        Observer.Expect('close', 'empty>0=No fields0= same=Yes rest=');
+        Observer.Verify();
     end;
 
     // The empty-record counts of the same open repeated in one test.
@@ -1098,7 +1149,10 @@ codeunit 86504 "LT QD CaptionClass Areas"
             P.Close();
             Log.Take();
         end;
-        Observer.Finish();
+        Observer.Expect('open1', 'empty>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('open2', 'empty>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Expect('open3', 'empty>0=Yes fields0=20,21,22,23,24,25,26,27,28,29,30,31, same=Yes rest=20@3;21@3;22@3;23@3;24@3;25@3;26@3;27@3;28@3;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1115,7 +1169,9 @@ codeunit 86504 "LT QD CaptionClass Areas"
             H.Close();
             Log.Take();
         end;
-        Observer.Finish();
+        Observer.Expect('open1', 'empty>0=Yes fields0=60,70,71, same=Yes rest=60@1;70@1;71@1;');
+        Observer.Expect('open2', 'empty>0=Yes fields0=60,70,71, same=Yes rest=60@1;70@1;71@1;');
+        Observer.Verify();
     end;
 }
 

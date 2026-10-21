@@ -279,48 +279,120 @@ codeunit 74068 "LT Table Relation Quotes"
     procedure QO_Validate_KindRange_QuotedUpper()
     begin
         QoProbeField(2);
-        Obs.Finish();
+        Obs.Expect('v_R1', 'ok');
+        Obs.Expect('v_R2', 'ok');
+        Obs.Expect('v_R3|text', 'The field Kind Range AB of table LT QO TQ Src contains a value (R3) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R3|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R4', 'ok');
+        Obs.Expect('v_R5|text', 'The field Kind Range AB of table LT QO TQ Src contains a value (R5) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R5|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Kind Range AB of table LT QO TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_NOPE|code', 'DB:NothingInsideFilter');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Validate_KindRange_QuotedLower()
     begin
         QoProbeField(3);
-        Obs.Finish();
+        Obs.Expect('v_R1|text', 'The field Kind Range BD of table LT QO TQ Src contains a value (R1) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R1|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R2', 'ok');
+        Obs.Expect('v_R3', 'ok');
+        Obs.Expect('v_R4|text', 'The field Kind Range BD of table LT QO TQ Src contains a value (R4) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R4|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R5', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Kind Range BD of table LT QO TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_NOPE|code', 'DB:NothingInsideFilter');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Validate_KindAnd_Quoted()
     begin
         QoProbeField(4);
-        Obs.Finish();
+        Obs.Expect('v_R1|text', 'The field Kind And of table LT QO TQ Src contains a value (R1) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R1|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R2|text', 'The field Kind And of table LT QO TQ Src contains a value (R2) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R2|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R3', 'ok');
+        Obs.Expect('v_R4|text', 'The field Kind And of table LT QO TQ Src contains a value (R4) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R4|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R5', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Kind And of table LT QO TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_NOPE|code', 'DB:NothingInsideFilter');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Validate_OptRange_QuotedUpper()
     begin
         QoProbeField(5);
-        Obs.Finish();
+        Obs.Expect('v_R1', 'ok');
+        Obs.Expect('v_R2', 'ok');
+        Obs.Expect('v_R3|text', 'The field Opt Range AB of table LT QO TQ Src contains a value (R3) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R3|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R4|text', 'The field Opt Range AB of table LT QO TQ Src contains a value (R4) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R4|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R5', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Opt Range AB of table LT QO TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_NOPE|code', 'DB:NothingInsideFilter');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Validate_OptRange_QuotedLower()
     begin
         QoProbeField(6);
-        Obs.Finish();
+        Obs.Expect('v_R1|text', 'The field Opt Range BD of table LT QO TQ Src contains a value (R1) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R1|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R2', 'ok');
+        Obs.Expect('v_R3', 'ok');
+        Obs.Expect('v_R4', 'ok');
+        Obs.Expect('v_R5|text', 'The field Opt Range BD of table LT QO TQ Src contains a value (R5) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R5|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Opt Range BD of table LT QO TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_NOPE|code', 'DB:NothingInsideFilter');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Validate_OptAnd_Quoted()
     begin
         QoProbeField(7);
-        Obs.Finish();
+        Obs.Expect('v_R1', 'ok');
+        Obs.Expect('v_R2|text', 'The field Opt And of table LT QO TQ Src contains a value (R2) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R2|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R3|text', 'The field Opt And of table LT QO TQ Src contains a value (R3) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R3|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R4|text', 'The field Opt And of table LT QO TQ Src contains a value (R4) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R4|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R5', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Opt And of table LT QO TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_NOPE|code', 'DB:NothingInsideFilter');
+        Obs.Verify();
     end;
 
     [Test]
     procedure QO_Validate_KindOpenRange_Quoted()
     begin
         QoProbeField(8);
-        Obs.Finish();
+        Obs.Expect('v_R1|text', 'The field Kind Open of table LT QO TQ Src contains a value (R1) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R1|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R2', 'ok');
+        Obs.Expect('v_R3', 'ok');
+        Obs.Expect('v_R4|text', 'The field Kind Open of table LT QO TQ Src contains a value (R4) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_R4|code', 'DB:NothingInsideFilter');
+        Obs.Expect('v_R5', 'ok');
+        Obs.Expect('v_', 'ok');
+        Obs.Expect('v_NOPE|text', 'The field Kind Open of table LT QO TQ Src contains a value (NOPE) that cannot be found in the related table (LT TQ Ref).');
+        Obs.Expect('v_NOPE|code', 'DB:NothingInsideFilter');
+        Obs.Verify();
     end;
 }

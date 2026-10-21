@@ -302,7 +302,19 @@ codeunit 70253 "LT P147 Date To Text"
         D := DMY2Date(5, 3, 2024);
         V := D;
         QoObserveVariant('d', V, 2);
-        Obs.Finish();
+        Obs.Expect('d.fmt', '03/05/24');
+        Obs.Expect('d.fmt9', '2024-03-05');
+        Obs.Expect('d.k1|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('d.k1|code', 'TypeConversion');
+        Obs.Expect('d.k2|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('d.k2|code', 'TypeConversion');
+        Obs.Expect('d.k3|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('d.k3|code', 'TypeConversion');
+        Obs.Expect('d.k4|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('d.k4|code', 'TypeConversion');
+        Obs.Expect('d.k5|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('d.k5|code', 'TypeConversion');
+        Obs.Verify();
     end;
 
     [Test]
@@ -314,7 +326,19 @@ codeunit 70253 "LT P147 Date To Text"
         D := 0D;
         V := D;
         QoObserveVariant('d0', V, 2);
-        Obs.Finish();
+        Obs.Expect('d0.fmt', '');
+        Obs.Expect('d0.fmt9', '');
+        Obs.Expect('d0.k1|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('d0.k1|code', 'TypeConversion');
+        Obs.Expect('d0.k2|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('d0.k2|code', 'TypeConversion');
+        Obs.Expect('d0.k3|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('d0.k3|code', 'TypeConversion');
+        Obs.Expect('d0.k4|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('d0.k4|code', 'TypeConversion');
+        Obs.Expect('d0.k5|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('d0.k5|code', 'TypeConversion');
+        Obs.Verify();
     end;
 
     [Test]
@@ -326,7 +350,19 @@ codeunit 70253 "LT P147 Date To Text"
         D := ClosingDate(DMY2Date(5, 3, 2024));
         V := D;
         QoObserveVariant('dc', V, 2);
-        Obs.Finish();
+        Obs.Expect('dc.fmt', 'C03/05/24');
+        Obs.Expect('dc.fmt9', '2024-03-05');
+        Obs.Expect('dc.k1|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('dc.k1|code', 'TypeConversion');
+        Obs.Expect('dc.k2|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('dc.k2|code', 'TypeConversion');
+        Obs.Expect('dc.k3|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('dc.k3|code', 'TypeConversion');
+        Obs.Expect('dc.k4|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('dc.k4|code', 'TypeConversion');
+        Obs.Expect('dc.k5|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('dc.k5|code', 'TypeConversion');
+        Obs.Verify();
     end;
 
     [Test]
@@ -338,7 +374,19 @@ codeunit 70253 "LT P147 Date To Text"
         T := 134500T;
         V := T;
         QoObserveVariant('t', V, 4);
-        Obs.Finish();
+        Obs.Expect('t.fmt', ' 1:45:00 PM');
+        Obs.Expect('t.fmt9', '13:45:00');
+        Obs.Expect('t.k1|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('t.k1|code', 'TypeConversion');
+        Obs.Expect('t.k2|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('t.k2|code', 'TypeConversion');
+        Obs.Expect('t.k3|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('t.k3|code', 'TypeConversion');
+        Obs.Expect('t.k4|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('t.k4|code', 'TypeConversion');
+        Obs.Expect('t.k5|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('t.k5|code', 'TypeConversion');
+        Obs.Verify();
     end;
 
     [Test]
@@ -350,7 +398,19 @@ codeunit 70253 "LT P147 Date To Text"
         DT := CreateDateTime(DMY2Date(5, 3, 2024), 134500T);
         V := DT;
         QoObserveVariant('dt', V, 3);
-        Obs.Finish();
+        Obs.Expect('dt.fmt', '03/05/24 01:45 PM');
+        Obs.Expect('dt.fmt9', '2024-03-05T13:45:00Z');
+        Obs.Expect('dt.k1|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('dt.k1|code', 'TypeConversion');
+        Obs.Expect('dt.k2|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('dt.k2|code', 'TypeConversion');
+        Obs.Expect('dt.k3|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('dt.k3|code', 'TypeConversion');
+        Obs.Expect('dt.k4|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('dt.k4|code', 'TypeConversion');
+        Obs.Expect('dt.k5|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavCode value.');
+        Obs.Expect('dt.k5|code', 'TypeConversion');
+        Obs.Verify();
     end;
 
     [Test]
@@ -358,7 +418,17 @@ codeunit 70253 "LT P147 Date To Text"
     begin
         QoSeed();
         QoObserveFieldRef('fd', 1, 2);
-        Obs.Finish();
+        Obs.Expect('fd.fmt', '03/05/24');
+        Obs.Expect('fd.k1', '[03/05/24]');
+        Obs.Expect('fd.k1.eval', '2024-03-05');
+        Obs.Expect('fd.k2', '[03/05/24]');
+        Obs.Expect('fd.k3', '[03/05/24]');
+        Obs.Expect('fd.k4', '[03/05/24]');
+        Obs.Expect('fd.k5', '[03/05/24]');
+        Obs.Expect('fd.k5.eval', '2024-03-05');
+        Obs.Expect('fd.k6|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('fd.k6|code', 'TypeConversion');
+        Obs.Verify();
     end;
 
     [Test]
@@ -366,7 +436,17 @@ codeunit 70253 "LT P147 Date To Text"
     begin
         QoSeed();
         QoObserveFieldRef('fd0', 2, 2);
-        Obs.Finish();
+        Obs.Expect('fd0.fmt', '');
+        Obs.Expect('fd0.k1', '[]');
+        Obs.Expect('fd0.k1.eval', '');
+        Obs.Expect('fd0.k2', '[]');
+        Obs.Expect('fd0.k3', '[]');
+        Obs.Expect('fd0.k4', '[]');
+        Obs.Expect('fd0.k5', '[]');
+        Obs.Expect('fd0.k5.eval', '');
+        Obs.Expect('fd0.k6|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('fd0.k6|code', 'TypeConversion');
+        Obs.Verify();
     end;
 
     [Test]
@@ -374,7 +454,17 @@ codeunit 70253 "LT P147 Date To Text"
     begin
         QoSeed();
         QoObserveFieldRef('fdc', 3, 2);
-        Obs.Finish();
+        Obs.Expect('fdc.fmt', 'C03/05/24');
+        Obs.Expect('fdc.k1', '[C03/05/24]');
+        Obs.Expect('fdc.k1.eval', '2024-03-05');
+        Obs.Expect('fdc.k2', '[C03/05/24]');
+        Obs.Expect('fdc.k3', '[C03/05/24]');
+        Obs.Expect('fdc.k4', '[C03/05/24]');
+        Obs.Expect('fdc.k5', '[C03/05/24]');
+        Obs.Expect('fdc.k5.eval', '2024-03-05');
+        Obs.Expect('fdc.k6|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('fdc.k6|code', 'TypeConversion');
+        Obs.Verify();
     end;
 
     [Test]
@@ -382,7 +472,17 @@ codeunit 70253 "LT P147 Date To Text"
     begin
         QoSeed();
         QoObserveFieldRef('ft', 1, 4);
-        Obs.Finish();
+        Obs.Expect('ft.fmt', ' 1:45:00 PM');
+        Obs.Expect('ft.k1', '[ 1:45:00 PM]');
+        Obs.Expect('ft.k1.eval', '13:45:00');
+        Obs.Expect('ft.k2', '[ 1:45:00 PM]');
+        Obs.Expect('ft.k3', '[ 1:45:00 PM]');
+        Obs.Expect('ft.k4', '[1:45:00 PM]');
+        Obs.Expect('ft.k5', '[1:45:00 PM]');
+        Obs.Expect('ft.k5.eval', '13:45:00');
+        Obs.Expect('ft.k6|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('ft.k6|code', 'TypeConversion');
+        Obs.Verify();
     end;
 
     [Test]
@@ -390,6 +490,16 @@ codeunit 70253 "LT P147 Date To Text"
     begin
         QoSeed();
         QoObserveFieldRef('fdt', 1, 3);
-        Obs.Finish();
+        Obs.Expect('fdt.fmt', '03/05/24 01:45 PM');
+        Obs.Expect('fdt.k1', '[03/05/24 01:45 PM]');
+        Obs.Expect('fdt.k1.eval', '2024-03-05T13:45:00Z');
+        Obs.Expect('fdt.k2', '[03/05/24 01:45 PM]');
+        Obs.Expect('fdt.k3', '[03/05/24 01:45 PM]');
+        Obs.Expect('fdt.k4', '[03/05/24 01:45 PM]');
+        Obs.Expect('fdt.k5', '[03/05/24 01:45 PM]');
+        Obs.Expect('fdt.k5.eval', '2024-03-05T13:45:00Z');
+        Obs.Expect('fdt.k6|text', 'The expression Microsoft.Dynamics.Nav.Runtime.NavIndirectValue cannot be type-converted to a Microsoft.Dynamics.Nav.Runtime.NavText value.');
+        Obs.Expect('fdt.k6|code', 'TypeConversion');
+        Obs.Verify();
     end;
 }
