@@ -3,7 +3,9 @@
 // Fixtures used: Probe Observer (codeunit 69160)
 // Facts: Evaluate into a Decimal for texts with letters or a slash (result, variable, error text and code); Evaluate of a date text into a Time; JsonValue.AsDecimal / AsInteger on JSON strings; Format with <Filler Character,0> on Date, Time and DateTime; Random with a Decimal argument (range only).
 // Writer QR (2026-10-21), QR_* tests: Evaluate into a Time of the AM/PM forms with a narrow no-break space (Char 8239) and the round trip of
-//   Format(Time) through Evaluate, with no format number and with 9.
+//   Format(Time) through Evaluate, with no format number and with 9. BC: with no number every h:mm[:ss] AM/PM form is read whatever the
+//   separator (narrow no-break space, plain space, none, lower case pm, a trailing ~), 13:00:00 PM is rejected; with 9 every AM/PM form is
+//   rejected (variable kept). Format(Time) has a plain space before AM/PM (no 8239) and reads back.
 // BC versions: 27.5+
 
 codeunit 79000 "LT AJ Scalars"

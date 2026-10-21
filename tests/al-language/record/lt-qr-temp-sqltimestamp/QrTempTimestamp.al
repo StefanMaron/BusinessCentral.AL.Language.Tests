@@ -6,6 +6,9 @@
 //   Insert, Modify, Get, Rename, an assignment to the field, a copy of a database row (Copy and TransferFields), ModifyAll and a filter on
 //   the field; Format of both. Values that are not a fixed number are written as zero, positive or negative, or as a relation to the
 //   database row (same, other).
+//   BC (27.5, 28.5, 29.0 alike): a temporary record never stamps: the field and SystemRowVersion stay 0 through Insert, Modify, Rename and
+//   Get (Format gives 0), a value assigned to the field is kept by Insert, Modify, ModifyAll and filters, and a copy of a database row keeps
+//   that row's values (equal to its SystemRowVersion) through Insert, Modify and Get.
 // BC versions: 27, 28, 29
 
 table 87270 "LT QR Stamp Row"

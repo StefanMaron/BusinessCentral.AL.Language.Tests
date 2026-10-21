@@ -6,6 +6,11 @@
 //   FindFirst + Next, SetRange + FindLast, SetCurrentKey + Get, a key assigned without a read, Get then a filter that excludes the row):
 //   which row the page shows (No.|Name of the TestPage), which triggers ran on the way (log, see QrMovedObjects.al), and where Next and
 //   Previous go from there. Card and List, on a normal table and on a temporary source that OnOpenPage fills.
+//   BC (27.5, 28.5, 29.0 alike): the page opens on the row OnOpenPage left Rec on (C after Get, D after FindLast, B after FindFirst+Next,
+//   C after only assigning the key), in the view and key OnOpenPage set; a Rec outside the filter it set opens on the nearest row of the view
+//   (B for C with filter A..B). OnAfterGetRecord and OnAfterGetCurrRecord run for that row (a list also reads its window). A temporary source
+//   filled in OnOpenPage opens on the row Rec was left on (D after the inserts). Next past the last row of a list opened by Page.Run or
+//   RunModal answers Yes on a new empty row.
 // BC versions: 27, 28, 29
 
 codeunit 87266 "LT QR Moved Tests"

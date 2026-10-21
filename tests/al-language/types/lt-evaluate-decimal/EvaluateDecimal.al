@@ -6,6 +6,9 @@
 //   brackets, currency signs other than $, doubled signs, letters with umlauts), signs and exponents with format number 9, and white space
 //   other than a plain space (tab, line breaks, no-break space, narrow no-break space, full-width and Arabic-Indic digits); the statement
 //   form of a few (error text and code) and Integer / BigInteger with the same odd forms.
+//   BC (27.5, 28.5, 29.0 alike): every punctuation form is rejected (variable kept) except '5$', '$-5', '-$5' (read with no number and 0,
+//   rejected with 9); with 9 a trailing minus, parentheses, '$' and '100 -' are rejected, '+', '1E-2', '1e+2', '+.5' are read; tab, CR and LF
+//   around the number are dropped with 0 and 9, a no-break space (160 or 8239) anywhere rejects, full-width and Arabic-Indic digits reject.
 // BC versions: 27+
 
 codeunit 67522 "LT Evaluate Decimal"

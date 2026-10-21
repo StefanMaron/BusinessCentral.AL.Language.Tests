@@ -5,6 +5,8 @@
 // Topic: Format of Date, Time, DateTime, Duration with standard format numbers and custom strings
 // Writer QR (2026-10-21), QR_* tests: custom strings of ISO-like time stamps (<Filler Character,0> mid-string after <Hours24,2>, 'T' and ';'
 //   literals, <Hours24> without width, <Thousands>, <Second dec>) on a DateTime, a Time and a Date, and on 0DT, 0T and 0D.
+//   BC: on a DateTime <Hours24,2> pads with 0 (09), on a Time with a space ( 9) unless <Filler Character,0> is in the string; 0DT and 0D give ''
+//   for every string, 0T formats as 00:00:00 (12:00 AM).
 // BC versions: 29 (27 and 28 by CI)
 
 codeunit 73804 "LT DtT Format"

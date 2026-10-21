@@ -7,6 +7,9 @@
 //   MaxOccurs = Once inside each table row that holds a linked temporary table element, an optional leaf text element): Export with zero,
 //   one and many rows (the XML text, lines joined by |), Import with each container absent, present once and present twice (the rows the
 //   import made, or the error text and code; the import runs inside Codeunit.Run so a failed import does not end the test).
+//   BC (27.5, 28.5, 29.0 alike): Export writes every container once, also when empty (<request />, <lines />, <status />). Import takes the
+//   containers absent or once as their MinOccurs allows; a missing required container or a second one fails the schema check with
+//   'Imported XML cannot validate with the schema: ...' / XmlPortInvalidXml before any row is made.
 // BC versions: 27, 28, 29
 
 table 87275 "LT QR XP Head"

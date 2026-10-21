@@ -7,6 +7,11 @@
 //   extension trigger on a temporary record and through RecordRef.Insert: is it kept in the caller's variable and in the stored row,
 //   without InsertWithSystemId. Already pinned elsewhere: the table's own OnInsert (record/lt-at-partner-gaps/AtSystemIdOnInsert.al) and
 //   an OnBeforeInsertEvent subscriber with a new id (record/lt-af-record-events/AfSystemIdBeforeInsert.al).
+//   BC (27.5, 28.5, 29.0 alike): an id set by the table extension's OnBeforeInsert or OnInsert (Insert(true), RecordRef.Insert(true), a
+//   temporary record) is kept in the variable and the stored row; one set in OnAfterInsert or an OnAfterInsertEvent subscriber changes only
+//   the variable (the stored row keeps the platform's id). An id that another row already has makes Insert answer false (no row, no error);
+//   as a statement Insert raises 'There is already a record in table <table> that has the same values in a unique index for the following
+//   fields: System ID=<id>' / DB:RecordExists.
 // BC versions: 27, 28, 29
 
 codeunit 87289 "LT QR SystemId Events"
@@ -282,8 +287,12 @@ codeunit 87289 "LT QR SystemId Events"
         State.Arm(5, First.SystemId);
         asserterror InsertDuplicateStatement(true, First.SystemId);
         State.Arm(0, Empty);
-        Observer.ObserveError('duplicate');
-        Observer.Finish();
+        // The error names the duplicate id; it differs per run, so the text is asserted with that id written as {first id}.
+        Observer.Expect('duplicate|text', 'There is already a record in table LT QR Sys Row that has the same values in a unique index for the following fields: System ID=''{first id}''');
+        Observer.Expect('duplicate|code', 'DB:RecordExists');
+        Observer.Observe('duplicate|text', GetLastErrorText().Replace(Format(First.SystemId), '{first id}'));
+        Observer.Observe('duplicate|code', GetLastErrorCode());
+        Observer.Verify();
     end;
 
     [Test]
@@ -304,7 +313,11 @@ codeunit 87289 "LT QR SystemId Events"
         asserterror InsertDuplicateStatement(false, First.SystemId);
         State.Arm(0, Empty);
         UnbindSubscription(Subscriber);
-        Observer.ObserveError('duplicate');
-        Observer.Finish();
+        // The error names the duplicate id; it differs per run, so the text is asserted with that id written as {first id}.
+        Observer.Expect('duplicate|text', 'There is already a record in table LT QR Sys Row that has the same values in a unique index for the following fields: System ID=''{first id}''');
+        Observer.Expect('duplicate|code', 'DB:RecordExists');
+        Observer.Observe('duplicate|text', GetLastErrorText().Replace(Format(First.SystemId), '{first id}'));
+        Observer.Observe('duplicate|code', GetLastErrorCode());
+        Observer.Verify();
     end;
 }
