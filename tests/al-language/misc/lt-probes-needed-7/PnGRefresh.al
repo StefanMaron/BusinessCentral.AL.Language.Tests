@@ -298,4 +298,516 @@ codeunit 70177 "LT PnG Refresh"
         Observer.Expect('name-after-qty', 'Upd 1');
         Observer.Verify();
     end;
+
+    // ---- Writer QL (2026-10-21), al-runtime-rs PR 387: a list action that puts another row into Rec (Rec := Other with changed fields),
+    // then Close or the page stays open; a list filtered in filter group 2 to one template and batch that loses its only row to an action.
+    // Fixtures: misc/lt-probes-needed-7/PnGQlFixtures.al. ----
+    // Probed by corpus CI on BC 27.5, 28.5 and 29.0 (batch runs 39559542435, 39559572012, 39559599293; the same values on all three).
+    // Results: after `Rec := Other` (another stored row, changed or not, or a temporary copy with changes) the list reads its rows again and
+    // shows the other row with its STORED values; no OnModifyRecord or OnModify runs, at once, on Next or on Close, and nothing is stored.
+    // With CurrPage.Close() in the action, Rec is the shown row again after the Close call. A list filtered to one template and batch (filter
+    // group 2 or 0, Worksheet or List) that loses its only row to an action (with or without CurrPage.Update) shows its blank line three
+    // times: each time the client validates Template and Batch with the filter values, then runs OnNewRecord (Rec stamped, xRec stamped
+    // too) and OnAfterGetCurrRecord; a value typed there is inserted at Close with Line No. 10000.
+
+    local procedure SeedQlRows()
+    var
+        Row: Record "LT QL Act Row";
+        Log: Codeunit "LT PnG Log";
+    begin
+        Row.DeleteAll();
+        Row."No." := 'A';
+        Row.Name := 'orig A';
+        Row.Qty := 1;
+        Row.Insert();
+        Row."No." := 'B';
+        Row.Name := 'orig B';
+        Row.Qty := 2;
+        Row.Insert();
+        Row."No." := 'C';
+        Row.Name := 'orig C';
+        Row.Qty := 3;
+        Row.Insert();
+        Log.Reset();
+    end;
+
+    local procedure QlRows(): Text
+    var
+        Row: Record "LT QL Act Row";
+        Result: Text;
+    begin
+        if Row.FindSet() then
+            repeat
+                if Result <> '' then
+                    Result += ' ';
+                Result += Row."No." + ':' + Row.Name + ',' + Format(Row.Qty);
+            until Row.Next() = 0;
+        exit(Result);
+    end;
+
+    local procedure QlTake(): Text
+    var
+        Log: Codeunit "LT PnG Log";
+        Result: Text;
+    begin
+        Result := Log.Dump();
+        Log.Reset();
+        exit(Result);
+    end;
+
+    // Opens and closes the list once before the asserted tests: on BC 28.5 the first Close of the freshly published page once failed with
+    // 'The page definition has changed while opening the page, please try to re-open the page.' (batch run 39560986109; a tier metadata
+    // flake, not page behavior). Nothing is asserted here.
+    [Test]
+    procedure QL_RecAssign_WarmUp()
+    var
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        if TryOpenQlList(List) then
+            if TryCloseQlList(List) then;
+        ClearLastError();
+    end;
+
+    [TryFunction]
+    local procedure TryOpenQlList(var List: TestPage "LT QL Act List")
+    begin
+        List.OpenEdit();
+    end;
+
+    [Test]
+    procedure QL_RecAssign_OtherChanged_ThenClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.TakeOtherChanged.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('shown-after-action', List.NoF.Value() + ',' + List.NameF.Value());
+        Observer.Observe('stored-after-action', QlRows());
+        Observer.Observe('close-ok', Format(TryCloseQlList(List)));
+        Observer.ObserveError('close');
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,changed B x=A,orig A);P.AGR(B,changed B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('shown-after-action', 'B,orig B');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_RecAssign_OtherChangedUpdate_ThenClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.TakeOtherChangedUpdate.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('shown-after-action', List.NoF.Value() + ',' + List.NameF.Value());
+        Observer.Observe('stored-after-action', QlRows());
+        Observer.Observe('close-ok', Format(TryCloseQlList(List)));
+        Observer.ObserveError('close');
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,changed B x=A,orig A);P.AGR(B,changed B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('shown-after-action', 'B,orig B');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_RecAssign_TempChanged_ThenClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.TakeTempChanged.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('shown-after-action', List.NoF.Value() + ',' + List.NameF.Value());
+        Observer.Observe('stored-after-action', QlRows());
+        Observer.Observe('close-ok', Format(TryCloseQlList(List)));
+        Observer.ObserveError('close');
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,temp B x=A,orig A);P.AGR(B,temp B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('shown-after-action', 'B,orig B');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_RecAssign_OtherUnchanged_ThenClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.TakeOtherUnchanged.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('shown-after-action', List.NoF.Value() + ',' + List.NameF.Value());
+        Observer.Observe('stored-after-action', QlRows());
+        Observer.Observe('close-ok', Format(TryCloseQlList(List)));
+        Observer.ObserveError('close');
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,orig B x=A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('shown-after-action', 'B,orig B');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_RecAssign_OwnRowChanged_ThenClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        List.ChangeOwnRow.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('shown-after-action', List.NoF.Value() + ',' + List.NameF.Value());
+        Observer.Observe('stored-after-action', QlRows());
+        Observer.Observe('close-ok', Format(TryCloseQlList(List)));
+        Observer.ObserveError('close');
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Expect('log-open', 'P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=,)');
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(A,own changed x=A,orig A);P.AGR(A,own changed);P.MODR(A,own changed x=A,orig A);T.MOD(A,own changed x=A,orig A);P.AGR(A,own changed);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(A,own changed);P.AGR(A,own changed);P.AGCR(A,own changed x=A,own changed)');
+        Observer.Expect('shown-after-action', 'A,own changed');
+        Observer.Expect('stored-after-action', 'A:own changed,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:own changed,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_RecAssign_OtherChanged_StaysOpen_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        QlTake();
+        List.TakeOtherChanged.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('next', Format(List.Next()));
+        Observer.Observe('log-next', QlTake());
+        Observer.Observe('shown-after-next', List.NoF.Value() + ',' + List.NameF.Value());
+        Observer.Observe('stored-after-next', QlRows());
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('log-first', QlTake());
+        Observer.Observe('shown-after-first', List.NoF.Value() + ',' + List.NameF.Value());
+        Observer.Observe('close-ok', Format(TryCloseQlList(List)));
+        Observer.ObserveError('close');
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,changed B x=A,orig A);P.AGR(B,changed B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('log-next', 'P.AGR(C,orig C);P.AGR(C,orig C);P.AGCR(C,orig C x=B,orig B)');
+        Observer.Expect('shown-after-next', 'C,orig C');
+        Observer.Expect('stored-after-next', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('log-first', 'P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=C,orig C)');
+        Observer.Expect('shown-after-first', 'A,orig A');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_RecAssign_TempChanged_StaysOpen_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        QlTake();
+        List.TakeTempChanged.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('next', Format(List.Next()));
+        Observer.Observe('log-next', QlTake());
+        Observer.Observe('shown-after-next', List.NoF.Value() + ',' + List.NameF.Value());
+        Observer.Observe('stored-after-next', QlRows());
+        Observer.Observe('first', Format(List.First()));
+        Observer.Observe('log-first', QlTake());
+        Observer.Observe('shown-after-first', List.NoF.Value() + ',' + List.NameF.Value());
+        Observer.Observe('close-ok', Format(TryCloseQlList(List)));
+        Observer.ObserveError('close');
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Expect('log-action', 'P.AGR(A,orig A);ACT.end(B,temp B x=A,orig A);P.AGR(B,temp B);P.AGR(B,orig B);P.AGR(C,orig C);P.AGR(B,orig B);P.AGR(A,orig A);P.AGR(B,orig B);P.AGR(B,orig B);P.AGCR(B,orig B x=A,orig A)');
+        Observer.Expect('next', 'Yes');
+        Observer.Expect('log-next', 'P.AGR(C,orig C);P.AGR(C,orig C);P.AGCR(C,orig C x=B,orig B)');
+        Observer.Expect('shown-after-next', 'C,orig C');
+        Observer.Expect('stored-after-next', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('first', 'Yes');
+        Observer.Expect('log-first', 'P.AGR(A,orig A);P.AGR(A,orig A);P.AGCR(A,orig A x=C,orig C)');
+        Observer.Expect('shown-after-first', 'A,orig A');
+        Observer.Expect('close-ok', 'Yes');
+        Observer.Expect('close|text', '');
+        Observer.Expect('close|code', '');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_RecAssign_OtherChanged_CloseInAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QL Act List";
+    begin
+        SeedQlRows();
+        List.OpenEdit();
+        QlTake();
+        List.TakeOtherChangedClose.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('stored-after-action', QlRows());
+        Observer.Observe('close-ok', Format(TryCloseQlList(List)));
+        Observer.ObserveError('close');
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlRows());
+        Observer.Expect('log-action', 'P.AGR(A,orig A);P.AGR(A,orig A);ACT.end(A,orig A x=A,orig A);P.AGR(A,orig A)');
+        Observer.Expect('stored-after-action', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Expect('close-ok', 'No');
+        Observer.Expect('close|text', 'The TestPage is not open.');
+        Observer.Expect('close|code', 'TestPageNotOpened');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 'A:orig A,1 B:orig B,2 C:orig C,3');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryCloseQlList(var List: TestPage "LT QL Act List")
+    begin
+        List.Close();
+    end;
+
+    local procedure SeedQlJournal(WithOnlyRow: Boolean)
+    var
+        Line: Record "LT QL Jnl Line";
+        Log: Codeunit "LT PnG Log";
+    begin
+        Line.DeleteAll();
+        Line.Template := 'T1';
+        Line.Batch := 'B2';
+        Line."Line No." := 10000;
+        Line.Descr := 'other batch';
+        Line.Insert();
+        Line.Template := 'T2';
+        Line.Batch := 'B1';
+        Line."Line No." := 10000;
+        Line.Descr := 'other template';
+        Line.Insert();
+        if WithOnlyRow then begin
+            Line.Template := 'T1';
+            Line.Batch := 'B1';
+            Line."Line No." := 10000;
+            Line.Descr := 'only';
+            Line.Insert();
+        end;
+        Log.Reset();
+    end;
+
+    local procedure QlJournal(): Text
+    var
+        Line: Record "LT QL Jnl Line";
+        Result: Text;
+    begin
+        if Line.FindSet() then
+            repeat
+                if Result <> '' then
+                    Result += ' ';
+                Result += Line.Template + '/' + Line.Batch + '/' + Format(Line."Line No.") + ':' + Line.Descr;
+            until Line.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure QL_Jnl_SheetFG2_DeleteNoUpdate_OnlyRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Jnl: TestPage "LT QL Jnl Sheet FG2";
+    begin
+        SeedQlJournal(true);
+        Jnl.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        Jnl.DeleteNoUpdate.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('shown-after-action', Jnl.TemplateF.Value() + '/' + Jnl.BatchF.Value() + '/' + Jnl.LineNoF.Value() + ':' + Jnl.DescrF.Value());
+        Observer.Observe('stored-after-action', QlJournal());
+        Jnl.DescrF.SetValue('typed');
+        Observer.Observe('log-typed', QlTake());
+        Observer.Observe('shown-after-typed', Jnl.TemplateF.Value() + '/' + Jnl.BatchF.Value() + '/' + Jnl.LineNoF.Value() + ':' + Jnl.DescrF.Value());
+        Jnl.Close();
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlJournal());
+        Observer.Expect('log-open', 'P.AGR(T1/B1/10000);P.AGR(T1/B1/10000);P.AGCR(T1/B1/10000 x=T1/B1/0)');
+        Observer.Expect('log-action', 'P.AGR(T1/B1/10000);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-action', 'T1/B1/0:');
+        Observer.Expect('stored-after-action', 'T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('shown-after-typed', 'T1/B1/0:typed');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_Jnl_SheetFG2_DeleteWithUpdate_OnlyRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Jnl: TestPage "LT QL Jnl Sheet FG2";
+    begin
+        SeedQlJournal(true);
+        Jnl.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        Jnl.DeleteWithUpdate.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('shown-after-action', Jnl.TemplateF.Value() + '/' + Jnl.BatchF.Value() + '/' + Jnl.LineNoF.Value() + ':' + Jnl.DescrF.Value());
+        Observer.Observe('stored-after-action', QlJournal());
+        Jnl.DescrF.SetValue('typed');
+        Observer.Observe('log-typed', QlTake());
+        Observer.Observe('shown-after-typed', Jnl.TemplateF.Value() + '/' + Jnl.BatchF.Value() + '/' + Jnl.LineNoF.Value() + ':' + Jnl.DescrF.Value());
+        Jnl.Close();
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlJournal());
+        Observer.Expect('log-open', 'P.AGR(T1/B1/10000);P.AGR(T1/B1/10000);P.AGCR(T1/B1/10000 x=T1/B1/0)');
+        Observer.Expect('log-action', 'P.AGR(T1/B1/10000);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-action', 'T1/B1/0:');
+        Observer.Expect('stored-after-action', 'T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('shown-after-typed', 'T1/B1/0:typed');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_Jnl_ListFG2_DeleteWithUpdate_OnlyRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Jnl: TestPage "LT QL Jnl List FG2";
+    begin
+        SeedQlJournal(true);
+        Jnl.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        Jnl.DeleteWithUpdate.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('shown-after-action', Jnl.TemplateF.Value() + '/' + Jnl.BatchF.Value() + '/' + Jnl.LineNoF.Value() + ':' + Jnl.DescrF.Value());
+        Observer.Observe('stored-after-action', QlJournal());
+        Jnl.DescrF.SetValue('typed');
+        Observer.Observe('log-typed', QlTake());
+        Observer.Observe('shown-after-typed', Jnl.TemplateF.Value() + '/' + Jnl.BatchF.Value() + '/' + Jnl.LineNoF.Value() + ':' + Jnl.DescrF.Value());
+        Jnl.Close();
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlJournal());
+        Observer.Expect('log-open', 'P.AGR(T1/B1/10000);P.AGR(T1/B1/10000);P.AGCR(T1/B1/10000 x=T1/B1/0)');
+        Observer.Expect('log-action', 'P.AGR(T1/B1/10000);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-action', 'T1/B1/0:');
+        Observer.Expect('stored-after-action', 'T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('shown-after-typed', 'T1/B1/0:typed');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_Jnl_SheetFG0_DeleteWithUpdate_OnlyRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Jnl: TestPage "LT QL Jnl Sheet FG0";
+    begin
+        SeedQlJournal(true);
+        Jnl.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        Jnl.DeleteWithUpdate.Invoke();
+        Observer.Observe('log-action', QlTake());
+        Observer.Observe('shown-after-action', Jnl.TemplateF.Value() + '/' + Jnl.BatchF.Value() + '/' + Jnl.LineNoF.Value() + ':' + Jnl.DescrF.Value());
+        Observer.Observe('stored-after-action', QlJournal());
+        Jnl.DescrF.SetValue('typed');
+        Observer.Observe('log-typed', QlTake());
+        Observer.Observe('shown-after-typed', Jnl.TemplateF.Value() + '/' + Jnl.BatchF.Value() + '/' + Jnl.LineNoF.Value() + ':' + Jnl.DescrF.Value());
+        Jnl.Close();
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlJournal());
+        Observer.Expect('log-open', 'P.AGR(T1/B1/10000);P.AGR(T1/B1/10000);P.AGCR(T1/B1/10000 x=T1/B1/0)');
+        Observer.Expect('log-action', 'P.AGR(T1/B1/10000);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=T1/B1/0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-action', 'T1/B1/0:');
+        Observer.Expect('stored-after-action', 'T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('shown-after-typed', 'T1/B1/0:typed');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QL_Jnl_SheetFG2_OpenOnNoRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Jnl: TestPage "LT QL Jnl Sheet FG2";
+    begin
+        SeedQlJournal(false);
+        Jnl.OpenEdit();
+        Observer.Observe('log-open', QlTake());
+        Observer.Observe('shown-after-open', Jnl.TemplateF.Value() + '/' + Jnl.BatchF.Value() + '/' + Jnl.LineNoF.Value() + ':' + Jnl.DescrF.Value());
+        Jnl.DescrF.SetValue('typed');
+        Observer.Observe('log-typed', QlTake());
+        Jnl.Close();
+        Observer.Observe('log-close', QlTake());
+        Observer.Observe('stored-after-close', QlJournal());
+        Observer.Expect('log-open', 'T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=//0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0);T.Template.V(T1);T.Batch.V(B1);P.NEW(T1/B1/0 x=//0 below=Yes);P.AGCR(T1/B1/0 x=T1/B1/0)');
+        Observer.Expect('shown-after-open', 'T1/B1/0:');
+        Observer.Expect('log-typed', '');
+        Observer.Expect('log-close', 'P.INSR(T1/B1/10000,typed);T.INS(T1/B1/10000,typed)');
+        Observer.Expect('stored-after-close', 'T1/B1/10000:typed T1/B2/10000:other batch T2/B1/10000:other template');
+        Observer.Verify();
+    end;
 }
