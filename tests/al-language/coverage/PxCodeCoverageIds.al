@@ -268,6 +268,46 @@ codeunit 86782 "LT QH CC Third"
     end;
 }
 
+codeunit 86783 "LT QH CC Empty A"
+{
+    var
+        Counter: Integer;
+
+    procedure E1()
+    begin
+    end;
+
+    procedure E2()
+    begin
+    end;
+
+    procedure C1()
+    begin
+        Counter += 1;
+        E2();
+    end;
+}
+
+codeunit 86784 "LT QH CC Empty B"
+{
+    var
+        Counter: Integer;
+
+    procedure E1()
+    begin
+    end;
+
+    procedure E2()
+    begin
+    end;
+
+    procedure C1()
+    begin
+        Counter += 1;
+        E1();
+    end;
+}
+
 codeunit 86163 "LT PX Code Coverage Ids"
 {
     Subtype = Test;
@@ -544,6 +584,45 @@ codeunit 86163 "LT PX Code Coverage Ids"
         Observer.Observe('ovl', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Ovl"));
         Observer.Observe('twin', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Twin"));
         Observer.Observe('third', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Third"));
+        Initialize();
+        Observer.Finish();
+    end;
+
+    // Each of the two Empty codeunits is used by this one test only, so it is loaded for the first time while the recording runs.
+    local procedure QhAllRows(ObjectId: Integer): Text
+    var
+        CodeCoverage: Record "Code Coverage";
+        Result: Text;
+    begin
+        CodeCoverage.SetRange("Object Type", CodeCoverage."Object Type"::Codeunit);
+        CodeCoverage.SetRange("Object ID", ObjectId);
+        if CodeCoverage.FindSet() then
+            repeat
+                Result += StrSubstNo('L%1:%2=%3/h%4 ', CodeCoverage."Line No.", CodeCoverage."Line Type", CodeCoverage."Method Id", CodeCoverage."No. of Hits");
+            until CodeCoverage.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure QH_MethodIds_EmptyProcedure_CalledFromOutside_OrInside()
+    var
+        Observer: Codeunit "Probe Observer";
+        A: Codeunit "LT QH CC Empty A";
+        B: Codeunit "LT QH CC Empty B";
+    begin
+        Initialize();
+        CodeCoverageLog(true, false);
+        A.E1();
+        CodeCoverageLog(false, false);
+        Observer.Observe('a_after_e1', QhAllRows(Codeunit::"LT QH CC Empty A"));
+        CodeCoverageLog(true, false);
+        A.C1();
+        CodeCoverageLog(false, false);
+        Observer.Observe('a_after_c1', QhAllRows(Codeunit::"LT QH CC Empty A"));
+        CodeCoverageLog(true, false);
+        B.C1();
+        CodeCoverageLog(false, false);
+        Observer.Observe('b_after_c1', QhAllRows(Codeunit::"LT QH CC Empty B"));
         Initialize();
         Observer.Finish();
     end;
