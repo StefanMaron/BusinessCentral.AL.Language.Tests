@@ -2,6 +2,10 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160)
 // Facts: Evaluate into a Decimal for texts with letters or a slash (result, variable, error text and code); Evaluate of a date text into a Time; JsonValue.AsDecimal / AsInteger on JSON strings; Format with <Filler Character,0> on Date, Time and DateTime; Random with a Decimal argument (range only).
+// Writer QR (2026-10-21), QR_* tests: Evaluate into a Time of the AM/PM forms with a narrow no-break space (Char 8239) and the round trip of
+//   Format(Time) through Evaluate, with no format number and with 9. BC: with no number every h:mm[:ss] AM/PM form is read whatever the
+//   separator (narrow no-break space, plain space, none, lower case pm, a trailing ~), 13:00:00 PM is rejected; with 9 every AM/PM form is
+//   rejected (variable kept). Format(Time) has a plain space before AM/PM (no 8239) and reads back.
 // BC versions: 27.5+
 
 codeunit 79000 "LT AJ Scalars"
@@ -420,6 +424,107 @@ codeunit 79000 "LT AJ Scalars"
     begin
         ObserveRandom(3.0);
         Observer.Expect('Random(3) min|max', '1|3');
+        Observer.Verify();
+    end;
+
+    // Writer QR (2026-10-21): Evaluate into a Time of texts whose AM/PM is set off by a narrow no-break space (Char 8239, written ~ in
+    // the names), the form Format gives a Time on the BC service tier; with no format number and with 9. Time before each call: 08:00:00.
+    local procedure QrNn(T: Text): Text
+    var
+        Sp: Text[1];
+    begin
+        Sp[1] := 8239;
+        exit(T.Replace('~', Sp));
+    end;
+
+    local procedure ObserveTimeNn(T: Text)
+    var
+        Tm: Time;
+        Ok: Boolean;
+    begin
+        Tm := 080000T;
+        Ok := Evaluate(Tm, QrNn(T));
+        Observer.Observe('[' + T + ']', Format(Ok) + '|' + Format(Tm, 0, 9));
+        Tm := 080000T;
+        Ok := Evaluate(Tm, QrNn(T), 9);
+        Observer.Observe('[' + T + '] 9', Format(Ok) + '|' + Format(Tm, 0, 9));
+    end;
+
+    [Test]
+    procedure QR_Evaluate_Time_NarrowNoBreakSpace()
+    begin
+        ObserveTimeNn('12:00:00~PM');
+        ObserveTimeNn('12:00:00~AM');
+        ObserveTimeNn('1:05:09~PM');
+        ObserveTimeNn('12:00~PM');
+        ObserveTimeNn('11:59:59~PM');
+        ObserveTimeNn(' 1:45:06~PM');
+        ObserveTimeNn('12:00:00~pm');
+        ObserveTimeNn('12:00:00PM');
+        ObserveTimeNn('12:00:00 PM');
+        ObserveTimeNn('13:00:00~PM');
+        ObserveTimeNn('0:30:00~AM');
+        ObserveTimeNn('12:00:00~PM~');
+        Observer.Expect('[12:00:00~PM]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00~PM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00~AM]', 'Yes|00:00:00');
+        Observer.Expect('[12:00:00~AM] 9', 'No|08:00:00');
+        Observer.Expect('[1:05:09~PM]', 'Yes|13:05:09');
+        Observer.Expect('[1:05:09~PM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00~PM]', 'Yes|12:00:00');
+        Observer.Expect('[12:00~PM] 9', 'No|08:00:00');
+        Observer.Expect('[11:59:59~PM]', 'Yes|23:59:59');
+        Observer.Expect('[11:59:59~PM] 9', 'No|08:00:00');
+        Observer.Expect('[ 1:45:06~PM]', 'Yes|13:45:06');
+        Observer.Expect('[ 1:45:06~PM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00~pm]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00~pm] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00PM]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00PM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00 PM]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00 PM] 9', 'No|08:00:00');
+        Observer.Expect('[13:00:00~PM]', 'No|08:00:00');
+        Observer.Expect('[13:00:00~PM] 9', 'No|08:00:00');
+        Observer.Expect('[0:30:00~AM]', 'Yes|00:30:00');
+        Observer.Expect('[0:30:00~AM] 9', 'No|08:00:00');
+        Observer.Expect('[12:00:00~PM~]', 'Yes|12:00:00');
+        Observer.Expect('[12:00:00~PM~] 9', 'No|08:00:00');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QR_Evaluate_Time_FormatRoundTrip()
+    var
+        Tm: Time;
+        Back: Time;
+        Sp: Text[1];
+        Ok: Boolean;
+    begin
+        Sp[1] := 8239;
+        Tm := 134506T;
+        Observer.Observe('format has nnbsp', Format(StrPos(Format(Tm), Sp) > 0));
+        Observer.Observe('format with ~', Format(Tm).Replace(Sp, '~'));
+        Ok := Evaluate(Back, Format(Tm));
+        Observer.Observe('round trip', Format(Ok) + '|' + Format(Back, 0, 9));
+        Tm := 000000T;
+        Observer.Observe('midnight with ~', Format(Tm).Replace(Sp, '~'));
+        Ok := Evaluate(Back, Format(Tm));
+        Observer.Observe('midnight round trip', Format(Ok) + '|' + Format(Back, 0, 9));
+        Tm := 120000T;
+        Ok := Evaluate(Back, Format(Tm));
+        Observer.Observe('noon round trip', Format(Ok) + '|' + Format(Back, 0, 9));
+        Ok := Evaluate(Back, Format(Tm), 9);
+        Observer.Observe('noon round trip 9', Format(Ok) + '|' + Format(Back, 0, 9));
+        Ok := Evaluate(Back, Format(Tm, 0, 9), 9);
+        Observer.Observe('noon xml round trip 9', Format(Ok) + '|' + Format(Back, 0, 9));
+        Observer.Expect('format has nnbsp', 'No');
+        Observer.Expect('format with ~', ' 1:45:06 PM');
+        Observer.Expect('round trip', 'Yes|13:45:06');
+        Observer.Expect('midnight with ~', '12:00:00 AM');
+        Observer.Expect('midnight round trip', 'Yes|00:00:00');
+        Observer.Expect('noon round trip', 'Yes|12:00:00');
+        Observer.Expect('noon round trip 9', 'No|12:00:00');
+        Observer.Expect('noon xml round trip 9', 'Yes|12:00:00');
         Observer.Verify();
     end;
 }
