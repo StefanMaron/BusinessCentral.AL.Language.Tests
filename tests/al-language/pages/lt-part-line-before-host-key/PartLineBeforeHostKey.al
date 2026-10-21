@@ -1917,7 +1917,7 @@ codeunit 67582 "LT DL Tests"
     end;
 
     [Test]
-    procedure QH_BlankRows_ReadPartControl_TwiceThenHostNew()
+    procedure QH_BlankRows_ReadPartControlTwice_TraceHost()
     var
         Observer: Codeunit "Probe Observer";
         Host: TestPage "LT QH DL Doc Trace";
