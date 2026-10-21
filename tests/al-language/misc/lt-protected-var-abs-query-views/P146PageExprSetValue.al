@@ -468,7 +468,10 @@ codeunit 70011 "LT P146 Page Expr SetValue"
         Observer.Observe('open new error', GetLastErrorText());
         Observer.Observe('open new error code', GetLastErrorCode());
         Observer.Observe('log after open new', Log.GetEntries());
-        Observer.Finish();
+        Observer.Expect('open new error', 'Sorry, the current permissions prevented the action. (Page 86704 LT QG NoSource Card Insert: AL Language Coverage Tests)');
+        Observer.Expect('open new error code', 'DB:ClientInsertDenied');
+        Observer.Expect('log after open new', 'qg open;');
+        Observer.Verify();
     end;
 
     [Test]
