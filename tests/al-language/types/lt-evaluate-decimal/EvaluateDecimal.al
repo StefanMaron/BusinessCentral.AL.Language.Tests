@@ -626,7 +626,19 @@ codeunit 67522 "LT Evaluate Decimal"
         asserterror Evaluate(D, '(100)', 9);
         Observer.ObserveError('parentheses 9');
         Observer.Observe('value after', Format(D, 0, 9));
-        Observer.Finish();
+        Observer.Expect('slash|text', 'The value "New/Updated" can''t be evaluated into type Decimal.');
+        Observer.Expect('slash|code', 'Evaluate');
+        Observer.Expect('slash value', '-1');
+        Observer.Expect('slash 9|text', 'The value "New/Updated" can''t be evaluated into type Decimal.');
+        Observer.Expect('slash 9|code', 'Evaluate');
+        Observer.Expect('nnbsp|text', 'The value "1 000" can''t be evaluated into type Decimal.');
+        Observer.Expect('nnbsp|code', 'Evaluate');
+        Observer.Expect('nnbsp 9|text', 'The value "1 000" can''t be evaluated into type Decimal.');
+        Observer.Expect('nnbsp 9|code', 'Evaluate');
+        Observer.Expect('parentheses 9|text', 'The value "(100)" can''t be evaluated into type Decimal.');
+        Observer.Expect('parentheses 9|code', 'Evaluate');
+        Observer.Expect('value after', '-1');
+        Observer.Verify();
     end;
 
     [Test]

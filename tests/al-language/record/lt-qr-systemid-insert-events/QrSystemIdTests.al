@@ -223,7 +223,9 @@ codeunit 87289 "LT QR SystemId Events"
         asserterror InsertDuplicate(true, First.SystemId);
         State.Arm(0, Empty);
         Observer.ObserveError('duplicate');
-        Observer.Finish();
+        Observer.Expect('duplicate|text', 'done: insert No, caller has first id No, rows 1, GetBySystemId finds Yes id 1');
+        Observer.Expect('duplicate|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -242,6 +244,64 @@ codeunit 87289 "LT QR SystemId Events"
         BindSubscription(Subscriber);
         State.Arm(6, First.SystemId);
         asserterror InsertDuplicate(false, First.SystemId);
+        State.Arm(0, Empty);
+        UnbindSubscription(Subscriber);
+        Observer.ObserveError('duplicate');
+        Observer.Expect('duplicate|text', 'done: insert No, caller has first id No, rows 1, GetBySystemId finds Yes id 1');
+        Observer.Expect('duplicate|code', 'Dialog');
+        Observer.Verify();
+    end;
+
+    // The statement form: Insert without a return value, then the same reads.
+    local procedure InsertDuplicateStatement(RunTrigger: Boolean; FirstId: Guid)
+    var
+        Row: Record "LT QR Sys Row";
+        ById: Record "LT QR Sys Row";
+        Found: Boolean;
+    begin
+        Row.Init();
+        Row.Id := 2;
+        Row.Insert(RunTrigger);
+        Row.Reset();
+        Found := ById.GetBySystemId(FirstId);
+        Error('done: caller has first id %1, rows %2, GetBySystemId finds %3 id %4', Row.SystemId = FirstId, Row.Count(), Found, ById.Id);
+    end;
+
+    [Test]
+    procedure QR_OnInsert_DuplicateOfExistingRow_Statement()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QR Sys Row";
+        First: Record "LT QR Sys Row";
+        Empty: Guid;
+    begin
+        Row.DeleteAll();
+        First.Init();
+        First.Id := 1;
+        First.Insert();
+        State.Arm(5, First.SystemId);
+        asserterror InsertDuplicateStatement(true, First.SystemId);
+        State.Arm(0, Empty);
+        Observer.ObserveError('duplicate');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QR_Subscriber_OnBeforeInsert_DuplicateOfExistingRow_Statement()
+    var
+        Observer: Codeunit "Probe Observer";
+        Subscriber: Codeunit "LT QR Sys Subscriber";
+        Row: Record "LT QR Sys Row";
+        First: Record "LT QR Sys Row";
+        Empty: Guid;
+    begin
+        Row.DeleteAll();
+        First.Init();
+        First.Id := 1;
+        First.Insert();
+        BindSubscription(Subscriber);
+        State.Arm(6, First.SystemId);
+        asserterror InsertDuplicateStatement(false, First.SystemId);
         State.Arm(0, Empty);
         UnbindSubscription(Subscriber);
         Observer.ObserveError('duplicate');
