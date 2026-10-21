@@ -39,6 +39,83 @@ codeunit 67858 "LT Company Information Values"
         Observer.Verify();
     end;
 
+    // Writer QG (runtime PR 380): the demo rows of the corpus database as a test sees them, read before any test of this codeunit changes them
+    // (tests run in declaration order): the Company Information row and the Accounting Period rows. Dates are written with Format(D, 0, 9).
+    [Test]
+    procedure QG_CompanyInformation_CorpusRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Info: Record "Company Information";
+    begin
+        Observer.Observe('count', Format(Info.Count()));
+        Observer.Observe('get', Format(Info.Get()));
+        Observer.Observe('primary_key', Info."Primary Key");
+        Observer.Observe('name', Info.Name);
+        Observer.Observe('name_equals_company_name', Format(Info.Name = CompanyName()));
+        Observer.Observe('name_2', Info."Name 2");
+        Observer.Observe('address', Info.Address);
+        Observer.Observe('address_2', Info."Address 2");
+        Observer.Observe('city', Info.City);
+        Observer.Observe('post_code', Info."Post Code");
+        Observer.Observe('county', Info.County);
+        Observer.Observe('country_region_code', Info."Country/Region Code");
+        Observer.Observe('phone_no', Info."Phone No.");
+        Observer.Observe('vat_registration_no', Info."VAT Registration No.");
+        Observer.Observe('registration_no', Info."Registration No.");
+        Observer.Observe('picture_hasvalue_before_calcfields', Format(Info.Picture.HasValue()));
+        Info.CalcFields(Picture);
+        Observer.Observe('picture_hasvalue', Format(Info.Picture.HasValue()));
+        Observer.Expect('count', '1');
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('primary_key', '');
+        Observer.Expect('name', '<Company>');
+        Observer.Expect('name_equals_company_name', 'Yes');
+        Observer.Expect('name_2', '');
+        Observer.Expect('address', '5 The Ring');
+        Observer.Expect('address_2', 'Westminster');
+        Observer.Expect('city', 'London');
+        Observer.Expect('post_code', 'W2 8HG');
+        Observer.Expect('county', '');
+        Observer.Expect('country_region_code', 'GB');
+        Observer.Expect('phone_no', '0666-666-6666');
+        Observer.Expect('vat_registration_no', '777777777');
+        Observer.Expect('registration_no', '');
+        Observer.Expect('picture_hasvalue_before_calcfields', 'Yes');
+        Observer.Expect('picture_hasvalue', 'Yes');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QG_AccountingPeriod_CorpusRows()
+    var
+        Observer: Codeunit "Probe Observer";
+        Period: Record "Accounting Period";
+    begin
+        Observer.Observe('count', Format(Period.Count()));
+        Observer.Observe('isempty', Format(Period.IsEmpty()));
+        if Period.FindFirst() then begin
+            Observer.Observe('first_starting_date', Format(Period."Starting Date", 0, 9));
+            Observer.Observe('first_new_fiscal_year', Format(Period."New Fiscal Year"));
+            Observer.Observe('first_closed', Format(Period.Closed));
+        end;
+        if Period.FindLast() then
+            Observer.Observe('last_starting_date', Format(Period."Starting Date", 0, 9));
+        Period.SetRange("New Fiscal Year", true);
+        Observer.Observe('fiscal_year_starts', Format(Period.Count()));
+        Period.SetRange("New Fiscal Year");
+        Period.SetRange(Closed, true);
+        Observer.Observe('closed_count', Format(Period.Count()));
+        Observer.Expect('count', '36');
+        Observer.Expect('isempty', 'No');
+        Observer.Expect('first_starting_date', '2025-01-01');
+        Observer.Expect('first_new_fiscal_year', 'Yes');
+        Observer.Expect('first_closed', 'Yes');
+        Observer.Expect('last_starting_date', '2027-12-01');
+        Observer.Expect('fiscal_year_starts', '3');
+        Observer.Expect('closed_count', '12');
+        Observer.Verify();
+    end;
+
     [Test]
     procedure CompanyInformation_Values()
     var
