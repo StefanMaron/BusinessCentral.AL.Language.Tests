@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveas-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), PnBObjects.al (report 70530, tables 70527/70528, log 70531), self-contained codeunit 70535
+// Fixtures used: Probe Observer (codeunit 69160), PnBObjects.al (report 70530, tables 70527/70528, log 70531), self-contained codeunit 70535; LT QK Setup Rows (86940) for the PW_Dump company block
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 //   "Report.SaveAs dataset | Only `ReportFormat::Xml` is produced..." (line 120),
 //   "Report.SaveAs dataset | The header: ..." (121), "Rows: a row is written after OnAfterGetRecord..." (122),
@@ -486,10 +486,15 @@ codeunit 70535 "LT PnB SaveAs Xml"
     local procedure PwDump(First: Integer; Last: Integer; var Obs: Codeunit "Probe Observer")
     var
         Rep: Report "LT PnB Rep";
+        QkRows: Codeunit "LT QK Setup Rows";
         i: Integer;
     begin
         Seed();
+        // Writer QK (owner 2026-10-21): the company block of the header comes from a Company Information row the test writes
+        // (QkSetupRows.al), not from the demo row.
+        QkRows.WriteCompanyInformation();
         Render(Rep, '', ReportFormat::Xml);
+        QkRows.RestoreCompanyInformation();
         Obs.Observe('lines', Format(Lines.Count()));
         for i := First to Last do
             if i <= Lines.Count() then
@@ -561,16 +566,16 @@ codeunit 70535 "LT PnB SaveAs Xml"
         Obs.Expect('l36', '      <CompanyName>x</CompanyName>');
         Obs.Expect('l37', '      <CompanyDisplayName>x</CompanyDisplayName>');
         Obs.Expect('l38', '      <CompanyAddressLines>');
-        Obs.Expect('l39', '        <CompanyAddressLine1><Company></CompanyAddressLine1>');
-        Obs.Expect('l40', '        <CompanyAddressLine2>5 The Ring</CompanyAddressLine2>');
-        Obs.Expect('l41', '        <CompanyAddressLine3>Westminster</CompanyAddressLine3>');
-        Obs.Expect('l42', '        <CompanyAddressLine4>London, W2 8HG</CompanyAddressLine4>');
-        Obs.Expect('l43', '        <CompanyAddressLine5>Great Britain</CompanyAddressLine5>');
+        Obs.Expect('l39', '        <CompanyAddressLine1>LT QK Company</CompanyAddressLine1>');
+        Obs.Expect('l40', '        <CompanyAddressLine2>QK Street 1</CompanyAddressLine2>');
+        Obs.Expect('l41', '        <CompanyAddressLine3>QK Floor 2</CompanyAddressLine3>');
+        Obs.Expect('l42', '        <CompanyAddressLine4>QK Town, QK-1234</CompanyAddressLine4>');
+        Obs.Expect('l43', '        <CompanyAddressLine5>LT QK Land</CompanyAddressLine5>');
         Obs.Expect('l44', '        <CompanyAddressLine6></CompanyAddressLine6>');
         Obs.Expect('l45', '        <CompanyAddressLine7></CompanyAddressLine7>');
         Obs.Expect('l46', '        <CompanyAddressLine8></CompanyAddressLine8>');
         Obs.Expect('l47', '      </CompanyAddressLines>');
-        Obs.Expect('l48', '      <CompanyPhone>0666-666-6666</CompanyPhone>');
+        Obs.Expect('l48', '      <CompanyPhone>0111-222-3333</CompanyPhone>');
         Obs.Verify();
     end;
 
@@ -582,20 +587,20 @@ codeunit 70535 "LT PnB SaveAs Xml"
         PwDump(49, 64, Obs);
         Obs.Expect('lines', '113');
         Obs.Expect('l49', '      <CompanyPhoneCaption>Phone No.</CompanyPhoneCaption>');
-        Obs.Expect('l50', '      <CompanyFaxNo>0666-666-6660</CompanyFaxNo>');
+        Obs.Expect('l50', '      <CompanyFaxNo>0111-222-3334</CompanyFaxNo>');
         Obs.Expect('l51', '      <CompanyFaxNoCaption>Fax No.</CompanyFaxNoCaption>');
-        Obs.Expect('l52', '      <CompanyEmail></CompanyEmail>');
+        Obs.Expect('l52', '      <CompanyEmail>qk@example.com</CompanyEmail>');
         Obs.Expect('l53', '      <CompanyEmailCaption>Email</CompanyEmailCaption>');
-        Obs.Expect('l54', '      <CompanyHomePage></CompanyHomePage>');
+        Obs.Expect('l54', '      <CompanyHomePage>www.example.com/qk</CompanyHomePage>');
         Obs.Expect('l55', '      <CompanyHomePageCaption>Home Page</CompanyHomePageCaption>');
-        Obs.Expect('l56', '      <CompanyLogo>iVBORw0KGgoAAAANSUhEU...<length 26721>');
-        Obs.Expect('l57', '      <CompanyVATRegistrationNo>777777777</CompanyVATRegistrationNo>');
+        Obs.Expect('l56', '      <CompanyLogo>iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==</CompanyLogo>');
+        Obs.Expect('l57', '      <CompanyVATRegistrationNo>QK123456789</CompanyVATRegistrationNo>');
         Obs.Expect('l58', '      <CompanyVATRegistrationNoCaption>VAT Registration No.</CompanyVATRegistrationNoCaption>');
-        Obs.Expect('l59', '      <CompanyRegistrationNo></CompanyRegistrationNo>');
+        Obs.Expect('l59', '      <CompanyRegistrationNo>QKREG42</CompanyRegistrationNo>');
         Obs.Expect('l60', '      <CompanyRegistrationNoCaption>Registration No.</CompanyRegistrationNoCaption>');
-        Obs.Expect('l61', '      <CompanyBankName>World Wide Bank</CompanyBankName>');
+        Obs.Expect('l61', '      <CompanyBankName>LT QK Bank</CompanyBankName>');
         Obs.Expect('l62', '      <CompanyBankNameCaption>Bank Name</CompanyBankNameCaption>');
-        Obs.Expect('l63', '      <CompanyBankAccountNo>99-99-888</CompanyBankAccountNo>');
+        Obs.Expect('l63', '      <CompanyBankAccountNo>11-22-333</CompanyBankAccountNo>');
         Obs.Expect('l64', '      <CompanyBankAccountNoCaption>Bank Account No.</CompanyBankAccountNoCaption>');
         Obs.Verify();
     end;
@@ -607,13 +612,13 @@ codeunit 70535 "LT PnB SaveAs Xml"
     begin
         PwDump(65, 80, Obs);
         Obs.Expect('lines', '113');
-        Obs.Expect('l65', '      <CompanyBankBranchNo>BG99999</CompanyBankBranchNo>');
+        Obs.Expect('l65', '      <CompanyBankBranchNo>QKB777</CompanyBankBranchNo>');
         Obs.Expect('l66', '      <CompanyBankBranchNoCaption>Bank Branch No.</CompanyBankBranchNoCaption>');
-        Obs.Expect('l67', '      <CompanyIBAN>GB 12 CPBK 08929965044991</CompanyIBAN>');
+        Obs.Expect('l67', '      <CompanyIBAN>QK 11 BANK 22223333444455</CompanyIBAN>');
         Obs.Expect('l68', '      <CompanyIBANCaption>IBAN</CompanyIBANCaption>');
-        Obs.Expect('l69', '      <CompanyBankSWIFT></CompanyBankSWIFT>');
+        Obs.Expect('l69', '      <CompanyBankSWIFT>QKBKXX22</CompanyBankSWIFT>');
         Obs.Expect('l70', '      <CompanyBankSWIFTCaption>SWIFT Code</CompanyBankSWIFTCaption>');
-        Obs.Expect('l71', '      <CompanyGiroNo>888-9999</CompanyGiroNo>');
+        Obs.Expect('l71', '      <CompanyGiroNo>123-4567</CompanyGiroNo>');
         Obs.Expect('l72', '      <CompanyGiroNoCaption>Giro No.</CompanyGiroNoCaption>');
         Obs.Expect('l73', '    </CompanyMetadata>');
         Obs.Expect('l74', '  </BCReportInformation>');
