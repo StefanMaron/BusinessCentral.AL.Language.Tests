@@ -308,6 +308,17 @@ codeunit 86784 "LT QH CC Empty B"
     end;
 }
 
+codeunit 86787 "LT QH CC Empty C"
+{
+    procedure E1()
+    begin
+    end;
+
+    procedure E2()
+    begin
+    end;
+}
+
 codeunit 86163 "LT PX Code Coverage Ids"
 {
     Subtype = Test;
@@ -546,11 +557,10 @@ codeunit 86163 "LT PX Code Coverage Ids"
         Observer.Finish();
     end;
 
+    // helper test: calls every QH target procedure directly; a recording test runs it while recording (a test started while recording)
     [Test]
-    procedure QH_MethodIds_EmptyBodies_CalledFromTheTest()
+    procedure QhRunsTargets()
     var
-        Observer: Codeunit "Probe Observer";
-        CodeCoverage: Record "Code Coverage";
         R: Record "LT QH CC Row";
         R2: Record "LT QH CC Row2";
         Ovl: Codeunit "LT QH CC Ovl";
@@ -560,35 +570,59 @@ codeunit 86163 "LT PX Code Coverage Ids"
         LT: List of [Text];
         X: Integer;
     begin
-        Initialize();
-        CodeCoverageLog(true, false);
         Ovl.Ovl();
         Ovl.Ovl(1);
         Ovl.Ovl('a');
         Ovl.Ovl(1, 2);
         Ovl.Ovl(R);
+        if Ovl.RetInt() = Ovl.RetNamed() then;
+        if Ovl.RetText() = '' then;
+        Ovl.InternalProc();
         Ovl.CodeParam('A');
         Ovl.TextLenParam('A');
         Ovl.ListParam(L);
         Ovl.ListParamText(LT);
-        Ovl.InternalProc();
         Ovl.OnQhEvent(R);
         Twin.OVL();
         Twin.Ovl(1);
         Twin.Ovl(R);
+        if Twin.RetInt() = 0 then;
         Third.Ovl(X);
         Third.Ovl(R2);
+        if Third.RetInt() = 0 then;
         Third.CodeParam('A');
         Third.TextLenParam('A');
+        Codeunit.Run(Codeunit::"LT QH CC Ovl");
+        Codeunit.Run(Codeunit::"LT QH CC Twin");
+    end;
+
+    [Test]
+    procedure QH_MethodIds_TestStartedWhileRecording()
+    var
+        Observer: Codeunit "Probe Observer";
+        CodeCoverage: Record "Code Coverage";
+    begin
+        Initialize();
+        CodeCoverageLog(true, false);
+        QhRunsTargets();
         CodeCoverageLog(false, false);
         Observer.Observe('ovl', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Ovl"));
         Observer.Observe('twin', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Twin"));
         Observer.Observe('third', QhFunctionRows(CodeCoverage."Object Type"::Codeunit, Codeunit::"LT QH CC Third"));
+        Observer.Observe('runs', DumpRuns('QhRunsTargets'));
         Initialize();
         Observer.Finish();
     end;
 
-    // Each of the two Empty codeunits is used by this one test only, so it is loaded for the first time while the recording runs.
+    [Test]
+    procedure QhRunsEmptyCE1()
+    var
+        C: Codeunit "LT QH CC Empty C";
+    begin
+        C.E1();
+    end;
+
+    // Each of the three Empty codeunits is used by this one test only, so it is loaded for the first time while the recording runs.
     local procedure QhAllRows(ObjectId: Integer): Text
     var
         CodeCoverage: Record "Code Coverage";
@@ -623,6 +657,11 @@ codeunit 86163 "LT PX Code Coverage Ids"
         B.C1();
         CodeCoverageLog(false, false);
         Observer.Observe('b_after_c1', QhAllRows(Codeunit::"LT QH CC Empty B"));
+        CodeCoverageLog(true, false);
+        QhRunsEmptyCE1();
+        CodeCoverageLog(false, false);
+        Observer.Observe('c_after_test_e1', QhAllRows(Codeunit::"LT QH CC Empty C"));
+        Observer.Observe('c_runs', DumpRuns('QhRunsEmptyCE1'));
         Initialize();
         Observer.Finish();
     end;
