@@ -9,6 +9,11 @@
 //   host edit typed before the part edit.
 //   (2) a subform field's OnValidate that calls CurrPage.SaveRecord() and reads Rec and xRec of the same field before and after the call,
 //   for a new typed row and for an edited stored row, each edited twice (Microsoft's DeltaUpdateTotals adds Rec minus xRec).
+// Results (BC 29.0): with Both, SubPart and not set alike the host re-reads its row after the part's Update(false) (H.AGR/H.AGCR with the
+//   part's Total; with Both the host's triggers run before the part's re-read, otherwise after it), no 'changed by another user' is raised,
+//   the host's later save keeps the part's change, and the part's own typed Qty is not saved (Update(false) re-reads the line). An unsaved
+//   host edit is saved (H.MODR) before the part's OnValidate runs. In a subform OnValidate, CurrPage.SaveRecord() changes neither Rec nor
+//   xRec; for a new row Rec gets the AutoSplitKey line number and xRec stays the blank new row.
 // Settles al-runtime-rs docs/probes-needed.md assumption part-update-propagation-both-refreshes-host (Tests-ERM 134344 and about 160 more).
 // BC versions: 29 (27 and 28 by CI)
 
@@ -499,7 +504,18 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         Observer.Observe('log-close', Log.Take());
         Observer.Observe('stored-after-close', Stored());
         Observer.Observe('lines-after-close', StoredLines());
-        Observer.Finish();
+        Observer.Expect('log-open', 'H.AGR(t=1 d=orig n=orig x.t=0) H.AGCR(t=1 d=orig n=orig x.t=0) L.AGR(10000 q=1 x.q=0) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=0) H.AGR(t=1 d=orig n=orig x.t=1) H.AGCR(t=1 d=orig n=orig x.t=1)');
+        Observer.Expect('log-part-edit', 'L.Qty.V(5 x=1) L.Qty.V.end H.AGR(t=5 d=orig n=orig x.t=1) H.AGCR(t=5 d=orig n=orig x.t=1) L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=5)');
+        Observer.Expect('host-total-after-part', '5.00');
+        Observer.Expect('stored-after-part', 't=5 d=orig n=orig');
+        Observer.Expect('log-action', 'H.AGR(t=5 d=orig n=orig x.t=5) H.ACT(t=5 d=orig) T.H.Descr.V(by action x=orig t=5 x.t=5) H.MODR(t=5 d=by action n=orig x.t=5 x.d=orig) T.H.MOD(t=5 d=by action n=orig x.t=5 x.d=orig) H.ACT.end(t=5 d=by action) H.AGR(t=5 d=by action n=orig x.t=5) L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=1)');
+        Observer.Expect('host-total-after-action', '5.00');
+        Observer.Expect('host-descr-after-action', 'by action');
+        Observer.Expect('stored-after-action', 't=5 d=by action n=orig');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 't=5 d=by action n=orig');
+        Observer.Expect('lines-after-close', '10000:q=1,a=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -525,7 +541,18 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         Observer.Observe('log-close', Log.Take());
         Observer.Observe('stored-after-close', Stored());
         Observer.Observe('lines-after-close', StoredLines());
-        Observer.Finish();
+        Observer.Expect('log-open', 'H.AGR(t=1 d=orig n=orig x.t=0) H.AGCR(t=1 d=orig n=orig x.t=0) L.AGR(10000 q=1 x.q=0) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=0) H.AGR(t=1 d=orig n=orig x.t=1) H.AGCR(t=1 d=orig n=orig x.t=1)');
+        Observer.Expect('log-part-edit', 'L.Qty.V(5 x=1) L.Qty.V.end L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=5) H.AGR(t=5 d=orig n=orig x.t=1) H.AGCR(t=5 d=orig n=orig x.t=1)');
+        Observer.Expect('host-total-after-part', '5.00');
+        Observer.Expect('stored-after-part', 't=5 d=orig n=orig');
+        Observer.Expect('log-action', 'H.AGR(t=5 d=orig n=orig x.t=5) H.ACT(t=5 d=orig) T.H.Descr.V(by action x=orig t=5 x.t=5) H.MODR(t=5 d=by action n=orig x.t=5 x.d=orig) T.H.MOD(t=5 d=by action n=orig x.t=5 x.d=orig) H.ACT.end(t=5 d=by action) H.AGR(t=5 d=by action n=orig x.t=5) L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=1)');
+        Observer.Expect('host-total-after-action', '5.00');
+        Observer.Expect('host-descr-after-action', 'by action');
+        Observer.Expect('stored-after-action', 't=5 d=by action n=orig');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 't=5 d=by action n=orig');
+        Observer.Expect('lines-after-close', '10000:q=1,a=1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -551,7 +578,18 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         Observer.Observe('log-close', Log.Take());
         Observer.Observe('stored-after-close', Stored());
         Observer.Observe('lines-after-close', StoredLines());
-        Observer.Finish();
+        Observer.Expect('log-open', 'H.AGR(t=1 d=orig n=orig x.t=0) H.AGCR(t=1 d=orig n=orig x.t=0) L.AGR(10000 q=1 x.q=0) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=0) H.AGR(t=1 d=orig n=orig x.t=1) H.AGCR(t=1 d=orig n=orig x.t=1)');
+        Observer.Expect('log-part-edit', 'L.Qty.V(5 x=1) L.Qty.V.end L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=5) H.AGR(t=5 d=orig n=orig x.t=1) H.AGCR(t=5 d=orig n=orig x.t=1)');
+        Observer.Expect('host-total-after-part', '5.00');
+        Observer.Expect('stored-after-part', 't=5 d=orig n=orig');
+        Observer.Expect('log-action', 'H.AGR(t=5 d=orig n=orig x.t=5) H.ACT(t=5 d=orig) T.H.Descr.V(by action x=orig t=5 x.t=5) H.MODR(t=5 d=by action n=orig x.t=5 x.d=orig) T.H.MOD(t=5 d=by action n=orig x.t=5 x.d=orig) H.ACT.end(t=5 d=by action) H.AGR(t=5 d=by action n=orig x.t=5) L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=1)');
+        Observer.Expect('host-total-after-action', '5.00');
+        Observer.Expect('host-descr-after-action', 'by action');
+        Observer.Expect('stored-after-action', 't=5 d=by action n=orig');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 't=5 d=by action n=orig');
+        Observer.Expect('lines-after-close', '10000:q=1,a=1');
+        Observer.Verify();
     end;
 
     // The host holds an unsaved edit (Note typed) when the part edit modifies the host row.
@@ -580,7 +618,18 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         TP.Close();
         Observer.Observe('log-close', Log.Take());
         Observer.Observe('stored-after-close', Stored());
-        Observer.Finish();
+        Observer.Expect('log-open-and-host-edit', 'H.AGR(t=1 d=orig n=orig x.t=0) H.AGCR(t=1 d=orig n=orig x.t=0) L.AGR(10000 q=1 x.q=0) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=0) H.AGR(t=1 d=orig n=orig x.t=1) H.AGCR(t=1 d=orig n=orig x.t=1)');
+        Observer.Expect('stored-after-host-edit', 't=1 d=orig n=orig');
+        Observer.Expect('log-part-edit', 'H.MODR(t=1 d=orig n=typed x.t=1 x.d=orig) T.H.MOD(t=1 d=orig n=typed x.t=1 x.d=orig) L.Qty.V(5 x=1) L.Qty.V.end H.AGR(t=5 d=orig n=typed x.t=1) H.AGCR(t=5 d=orig n=typed x.t=1) L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=5)');
+        Observer.Expect('host-total-after-part', '5.00');
+        Observer.Expect('host-note-after-part', 'typed');
+        Observer.Expect('stored-after-part', 't=5 d=orig n=typed');
+        Observer.Expect('log-action', 'H.AGR(t=5 d=orig n=typed x.t=5) H.ACT(t=5 d=orig) T.H.Descr.V(by action x=orig t=5 x.t=5) H.MODR(t=5 d=by action n=typed x.t=5 x.d=orig) T.H.MOD(t=5 d=by action n=typed x.t=5 x.d=orig) H.ACT.end(t=5 d=by action) H.AGR(t=5 d=by action n=typed x.t=5) L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=1)');
+        Observer.Expect('host-total-after-action', '5.00');
+        Observer.Expect('stored-after-action', 't=5 d=by action n=typed');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 't=5 d=by action n=typed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -607,7 +656,18 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         TP.Close();
         Observer.Observe('log-close', Log.Take());
         Observer.Observe('stored-after-close', Stored());
-        Observer.Finish();
+        Observer.Expect('log-open-and-host-edit', 'H.AGR(t=1 d=orig n=orig x.t=0) H.AGCR(t=1 d=orig n=orig x.t=0) L.AGR(10000 q=1 x.q=0) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=0) H.AGR(t=1 d=orig n=orig x.t=1) H.AGCR(t=1 d=orig n=orig x.t=1)');
+        Observer.Expect('stored-after-host-edit', 't=1 d=orig n=orig');
+        Observer.Expect('log-part-edit', 'H.MODR(t=1 d=orig n=typed x.t=1 x.d=orig) T.H.MOD(t=1 d=orig n=typed x.t=1 x.d=orig) L.Qty.V(5 x=1) L.Qty.V.end L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=5) H.AGR(t=5 d=orig n=typed x.t=1) H.AGCR(t=5 d=orig n=typed x.t=1)');
+        Observer.Expect('host-total-after-part', '5.00');
+        Observer.Expect('host-note-after-part', 'typed');
+        Observer.Expect('stored-after-part', 't=5 d=orig n=typed');
+        Observer.Expect('log-action', 'H.AGR(t=5 d=orig n=typed x.t=5) H.ACT(t=5 d=orig) T.H.Descr.V(by action x=orig t=5 x.t=5) H.MODR(t=5 d=by action n=typed x.t=5 x.d=orig) T.H.MOD(t=5 d=by action n=typed x.t=5 x.d=orig) H.ACT.end(t=5 d=by action) H.AGR(t=5 d=by action n=typed x.t=5) L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=1)');
+        Observer.Expect('host-total-after-action', '5.00');
+        Observer.Expect('stored-after-action', 't=5 d=by action n=typed');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 't=5 d=by action n=typed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -634,7 +694,18 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         TP.Close();
         Observer.Observe('log-close', Log.Take());
         Observer.Observe('stored-after-close', Stored());
-        Observer.Finish();
+        Observer.Expect('log-open-and-host-edit', 'H.AGR(t=1 d=orig n=orig x.t=0) H.AGCR(t=1 d=orig n=orig x.t=0) L.AGR(10000 q=1 x.q=0) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=0) H.AGR(t=1 d=orig n=orig x.t=1) H.AGCR(t=1 d=orig n=orig x.t=1)');
+        Observer.Expect('stored-after-host-edit', 't=1 d=orig n=orig');
+        Observer.Expect('log-part-edit', 'H.MODR(t=1 d=orig n=typed x.t=1 x.d=orig) T.H.MOD(t=1 d=orig n=typed x.t=1 x.d=orig) L.Qty.V(5 x=1) L.Qty.V.end L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=5) H.AGR(t=5 d=orig n=typed x.t=1) H.AGCR(t=5 d=orig n=typed x.t=1)');
+        Observer.Expect('host-total-after-part', '5.00');
+        Observer.Expect('host-note-after-part', 'typed');
+        Observer.Expect('stored-after-part', 't=5 d=orig n=typed');
+        Observer.Expect('log-action', 'H.AGR(t=5 d=orig n=typed x.t=5) H.ACT(t=5 d=orig) T.H.Descr.V(by action x=orig t=5 x.t=5) H.MODR(t=5 d=by action n=typed x.t=5 x.d=orig) T.H.MOD(t=5 d=by action n=typed x.t=5 x.d=orig) H.ACT.end(t=5 d=by action) H.AGR(t=5 d=by action n=typed x.t=5) L.AGR(10000 q=1 x.q=1) L.AGR(10000 q=1 x.q=1) L.AGCR(10000 q=1 x.q=1)');
+        Observer.Expect('host-total-after-action', '5.00');
+        Observer.Expect('stored-after-action', 't=5 d=by action n=typed');
+        Observer.Expect('log-close', '');
+        Observer.Expect('stored-after-close', 't=5 d=by action n=typed');
+        Observer.Verify();
     end;
 
     // ---- (2) subform OnValidate: CurrPage.SaveRecord() and Rec/xRec of the same field before and after ----
@@ -658,7 +729,14 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         TP.Close();
         Observer.Observe('log-close', Log.Take());
         Observer.Observe('lines-after-close', StoredLines());
-        Observer.Finish();
+        Observer.Expect('log-open', 'S.AGCR(10000 r=1 x=0)');
+        Observer.Expect('log-first-edit', 'S.V.before(10000 r=5 x=1 x.ln=10000) S.MODR(10000 r=5 x=1) S.V.after(10000 r=5 x=1 x.ln=10000 delta=4)');
+        Observer.Expect('lines-after-first-edit', '10000:q=1,a=5');
+        Observer.Expect('log-second-edit', 'S.V.before(10000 r=7 x=5 x.ln=10000) S.MODR(10000 r=7 x=5) S.V.after(10000 r=7 x=5 x.ln=10000 delta=2)');
+        Observer.Expect('lines-after-second-edit', '10000:q=1,a=7');
+        Observer.Expect('log-close', '');
+        Observer.Expect('lines-after-close', '10000:q=1,a=7');
+        Observer.Verify();
     end;
 
     [Test]
@@ -682,6 +760,13 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         TP.Close();
         Observer.Observe('log-close', Log.Take());
         Observer.Observe('lines-after-close', StoredLines());
-        Observer.Finish();
+        Observer.Expect('log-open-and-new', 'S.AGCR(10000 r=1 x=0) S.NEW(x=1 x.ln=10000) S.AGCR(0 r=0 x=0) S.AGCR(10000 r=1 x=1) S.NEW(x=1 x.ln=10000) S.AGCR(0 r=0 x=0)');
+        Observer.Expect('log-first-edit', 'S.V.before(0 r=5 x=0 x.ln=0) S.INSR(20000 r=5 x=0 x.ln=0) S.V.after(20000 r=5 x=0 x.ln=0 delta=5)');
+        Observer.Expect('lines-after-first-edit', '10000:q=1,a=1 20000:q=0,a=5');
+        Observer.Expect('log-second-edit', 'S.V.before(20000 r=7 x=5 x.ln=20000) S.MODR(20000 r=7 x=5) S.V.after(20000 r=7 x=5 x.ln=20000 delta=2)');
+        Observer.Expect('lines-after-second-edit', '10000:q=1,a=1 20000:q=0,a=7');
+        Observer.Expect('log-close', '');
+        Observer.Expect('lines-after-close', '10000:q=1,a=1 20000:q=0,a=7');
+        Observer.Verify();
     end;
 }
