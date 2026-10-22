@@ -163,6 +163,8 @@ codeunit 83950 "LT BW Subscriber Order Tests"
     // (tests/al-language-xapp-d, depends on A only) subscribes to "LT QY XA Order Publisher".OnQyIndep, as do A (61138), B (61117, 61147),
     // C (61127) and this app (87620). D and B, C and this app do not depend on each other. Needs D in app_dirs (publish order fixture, A, D, B, C).
     //   Predictions: publish order A;D;B1;B2;C;M; | lowest subscriber id B1;B2;C;A;D;M; | app name M A B C D | publisher, then name M A C D B
+    // Observed (BC 27.5, 28.5, 29.0): A;B1;B2;C;M;D; = none of these predictions. D is published right after A, before B, but its subscriber
+    // runs last, after the main app. Fixtures: tests/al-language-xapp-a|b|c|d/Qy*Objects.al, QyOrderFixtures.al.
     [Test]
     procedure SubscriberOrder_AppsThatDoNotDependOnEachOther_FiveApps()
     var
@@ -171,7 +173,9 @@ codeunit 83950 "LT BW Subscriber Order Tests"
         Initialize();
         Observer.Observe('order', Publisher.RaiseIndep());
         Observer.Observe('order again', Publisher.RaiseIndep());
-        Observer.Finish();
+        Observer.Expect('order', 'A;B1;B2;C;M;D;');
+        Observer.Expect('order again', 'A;B1;B2;C;M;D;');
+        Observer.Verify();
     end;
 
     local procedure Initialize()
