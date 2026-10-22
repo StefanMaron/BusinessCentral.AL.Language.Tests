@@ -3,6 +3,7 @@
 // Fixtures used: Probe Observer (codeunit 69160)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Control flow: for/foreach/while/repeat, case with text constants, in operator, exit values, short-circuit evaluation order, local recursion.
+// Writer QX: a for loop over a Date (month and year boundaries, downto, empty ranges, 0D and closing date bounds, the value after the loop).
 // BC versions: 29 (27 and 28 by CI)
 
 codeunit 72515 "LT SyT Control Flow"
@@ -12,6 +13,7 @@ codeunit 72515 "LT SyT Control Flow"
 
     var
         Trace: Text;
+        QxObserver: Codeunit "Probe Observer";
 
     local procedure T(Name: Text; Result: Boolean): Boolean
     begin
@@ -555,6 +557,92 @@ codeunit 72515 "LT SyT Control Flow"
     begin
         exit(Format(A) + Format(B) + Format(C));
     end;
+
+    // ---- Writer QX (Microsoft's DemoTool: for ActualDate := AdjustDate(19011201D) to AdjustDate(19030126D) do): a for loop whose control
+    // variable is a Date. The plain 3-day loop is pinned above (ForLoop_NonIntegerControlVariables, date). ----
+
+    local procedure QxShift(D: Date): Date
+    begin
+        exit(CalcDate('<+122Y>', D));
+    end;
+
+    local procedure QxVisit(FromDate: Date; ToDate: Date; Down: Boolean): Text
+    var
+        D: Date;
+        Visited: Text;
+        Count: Integer;
+    begin
+        if Down then
+            for D := FromDate downto ToDate do begin
+                Count += 1;
+                if Count <= 6 then
+                    Visited += Format(D, 0, 9) + ',';
+            end
+        else
+            for D := FromDate to ToDate do begin
+                Count += 1;
+                if Count <= 6 then
+                    Visited += Format(D, 0, 9) + ',';
+            end;
+        exit('count=' + Format(Count) + ' first=' + Visited + ' after=' + Format(D, 0, 9));
+    end;
+
+    [TryFunction]
+    local procedure QxTryVisit(FromDate: Date; ToDate: Date; Down: Boolean; var Result: Text)
+    begin
+        Result := QxVisit(FromDate, ToDate, Down);
+    end;
+
+    local procedure QxObserveVisit(Name: Text; FromDate: Date; ToDate: Date; Down: Boolean)
+    var
+        Result: Text;
+    begin
+        if QxTryVisit(FromDate, ToDate, Down, Result) then
+            QxObserver.Observe(Name, Result)
+        else
+            QxObserver.ObserveError(Name);
+    end;
+
+    [Test]
+    procedure QX_ForLoop_DateControlVariable()
+    var
+        D: Date;
+        Count: Integer;
+    begin
+        QxObserveVisit('month and year boundary', DMY2Date(30, 12, 1902), DMY2Date(2, 1, 1903), false);
+        QxObserveVisit('downto', DMY2Date(3, 1, 2024), DMY2Date(30, 12, 2023), true);
+        QxObserveVisit('leap day', DMY2Date(27, 2, 2024), DMY2Date(1, 3, 2024), false);
+        QxObserveVisit('empty range to', DMY2Date(5, 1, 2024), DMY2Date(1, 1, 2024), false);
+        QxObserveVisit('empty range downto', DMY2Date(1, 1, 2024), DMY2Date(5, 1, 2024), true);
+        QxObserveVisit('one day', DMY2Date(1, 1, 2024), DMY2Date(1, 1, 2024), false);
+        QxObserveVisit('0D to 0D', 0D, 0D, false);
+        QxObserveVisit('0D to a date', 0D, DMY2Date(2, 1, 1), false);
+        QxObserveVisit('date downto 0D', DMY2Date(2, 1, 1), 0D, true);
+        QxObserveVisit('to a closing date', DMY2Date(30, 12, 2023), ClosingDate(DMY2Date(31, 12, 2023)), false);
+        QxObserveVisit('from a closing date', ClosingDate(DMY2Date(30, 12, 2023)), DMY2Date(1, 1, 2024), false);
+        QxObserveVisit('date literals through a procedure', QxShift(19011201D), QxShift(19030126D), false);
+        for D := 19011201D to 19011203D do
+            Count += 1;
+        QxObserver.Observe('date literal bounds', Format(Count) + '|' + Format(D, 0, 9));
+        QxObserver.Expect('month and year boundary', 'count=4 first=1902-12-30,1902-12-31,1903-01-01,1903-01-02, after=1903-01-02');
+        QxObserver.Expect('downto', 'count=5 first=2024-01-03,2024-01-02,2024-01-01,2023-12-31,2023-12-30, after=2023-12-30');
+        QxObserver.Expect('leap day', 'count=4 first=2024-02-27,2024-02-28,2024-02-29,2024-03-01, after=2024-03-01');
+        QxObserver.Expect('empty range to', 'count=0 first= after=2024-01-05');
+        QxObserver.Expect('empty range downto', 'count=0 first= after=2024-01-01');
+        QxObserver.Expect('one day', 'count=1 first=2024-01-01, after=2024-01-01');
+        QxObserver.Expect('0D to 0D', 'count=1 first=, after=');
+        QxObserver.Expect('0D to a date|text', 'The date is not valid.');
+        QxObserver.Expect('0D to a date|code', 'DateInvalid');
+        QxObserver.Expect('date downto 0D|text', 'The date is not valid.');
+        QxObserver.Expect('date downto 0D|code', 'DateInvalid');
+        QxObserver.Expect('to a closing date', 'count=2 first=2023-12-30,2023-12-31, after=2024-01-01');
+        QxObserver.Expect('from a closing date|text', 'The operation cannot be performed on a closing date value.');
+        QxObserver.Expect('from a closing date|code', 'ClosingDateOperation');
+        QxObserver.Expect('date literals through a procedure', 'count=423 first=2023-12-01,2023-12-02,2023-12-03,2023-12-04,2023-12-05,2023-12-06, after=2025-01-26');
+        QxObserver.Expect('date literal bounds', '3|1901-12-03');
+        QxObserver.Verify();
+    end;
+
 }
 
 codeunit 72516 "LT SyT Exit Recursion"

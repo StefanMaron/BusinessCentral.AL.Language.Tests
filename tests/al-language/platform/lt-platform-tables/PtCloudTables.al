@@ -4,6 +4,8 @@
 // Probe: platform tables that have no row provider in the AL runtime. For each table: the column list, whether rows exist, the first row, an Insert, a
 // second Insert of the same key, a Modify, a Delete and an Insert without triggers. Every request runs in its own Codeunit.Run, so an error is observed
 // as text and code. Object id 67107.
+// Writer QX (Microsoft's DemoTool): Media Resources codes of a fresh tenant, Media Reference.ImportStream and Blob rows by Code; Tenant Report
+//   Layout Selection rows of a fresh tenant and the Insert(true)-else-Modify(true) of a report layout; OData Edm Type keys and the Edm Xml Blob.
 
 codeunit 67107 "LT PT Cloud Tables"
 {
@@ -236,6 +238,257 @@ codeunit 67107 "LT PT Cloud Tables"
         Observer.Expect('insert_same_object_other_name', 'ok:Yes');
         Observer.Expect('count_same_object', 'ok:3');
         Observer.Expect('insert_name_case', 'ok:Yes');
+        Observer.Verify();
+    end;
+
+    // ---- Writer QX (Microsoft's DemoTool: Media Resources Mgt. (Base App 9755) InsertMediaFromInstream / InsertBlobFromText, Create Custom
+    // Report Layout's Tenant Report Layout Selection Insert(true)-else-Modify(true), Graph Mgt - General Tools InsertOrUpdateODataType) ----
+
+    local procedure QxPngStream(var TempBlob: Codeunit "Temp Blob"; var InS: InStream)
+    var
+        Base64: Codeunit "Base64 Convert";
+        OutS: OutStream;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        Base64.FromBase64('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', OutS);
+        TempBlob.CreateInStream(InS);
+    end;
+
+    local procedure QxTenantMedia(Id: Guid): Text
+    var
+        TenantMedia: Record "Tenant Media";
+    begin
+        if not TenantMedia.Get(Id) then
+            exit('no tenant media row');
+        TenantMedia.CalcFields(Content);
+        exit('description=[' + TenantMedia.Description + '] mime=[' + TenantMedia."Mime Type" + '] width=' + Format(TenantMedia.Width) + ' height=' +
+            Format(TenantMedia.Height) + ' hascontent=' + Format(TenantMedia.Content.HasValue()));
+    end;
+
+    [Test]
+    procedure QX_MediaResources_FreshTenantCodes()
+    var
+        MediaResources: Record "Media Resources";
+        Observer: Codeunit "Probe Observer";
+        Codes: Text;
+        WithMedia: Integer;
+        WithMediaSet: Integer;
+        WithBlob: Integer;
+    begin
+        MediaResources.SetAutoCalcFields(Blob);
+        if MediaResources.FindSet() then
+            repeat
+                Codes += MediaResources.Code + ',';
+                if MediaResources."Media Reference".HasValue() then
+                    WithMedia += 1;
+                if MediaResources."MediaSet Reference".Count() > 0 then
+                    WithMediaSet += 1;
+                if MediaResources.Blob.HasValue() then
+                    WithBlob += 1;
+            until MediaResources.Next() = 0;
+        Observer.Observe('count', Format(MediaResources.Count()));
+        Observer.Observe('with media', Format(WithMedia));
+        Observer.Observe('with mediaset', Format(WithMediaSet));
+        Observer.Observe('with blob', Format(WithBlob));
+        Observer.Observe('codes', Codes);
+        Observer.Expect('count', '46');
+        Observer.Expect('with media', '20');
+        Observer.Expect('with mediaset', '6');
+        Observer.Expect('with blob', '20');
+        Observer.Expect('codes', '1305-1-DEFAULT.PNG,1306-1-DEFAULT.PNG,1307-1-DEFAULT.PNG,1307-1-PHONE.PNG,1309-1-DEFAULT.PNG,APPLICATIONCOUNTRY,ASSISTEDSETUPDONE-NOTEXT-400PX.PNG,ASSISTEDSETUPINFO-NOTEXT.PNG,ASSISTEDSETUP-NOTEXT-400PX.PNG,CANCELED INVOICE,COPILOTNOTAVAILABLE.PNG,DRAFT INVOICE,EXCELTEMPLATEAGEDACCOUNTSPAYABLE.XLTM,EXCELTEMPLATEAGEDACCOUNTSRECEIVABLE.XLTM,EXCELTEMPLATEBALANCESHEET.XLTM,EXCELTEMPLATECASHFLOWSTATEMENT.XLTM,EXCELTEMPLATEINCOMESTATEMENT.XLTM,EXCELTEMPLATERETAINEDEARNINGS.XLTM,EXCELTEMPLATETRIALBALANCE.XLTM,EXTERNALSYNC-NOTEXT.PNG,FIRSTINVOICE1.PNG,FIRSTINVOICE2.PNG,FIRSTINVOICE3.PNG,FIRSTINVOICESPLASH.PNG,IMAGEANALYSIS-SETUP-NOTEXT.PNG,INVOICING - SALESMAIL.HTML,LATEPAYMENTSTANDARDMODEL.TXT,OUTLOOKADDINILLUSTRATION.PNG,OVERDUE INVOICE,PAID INVOICE,PAYMENT SERVICE - MICROSOFT-LOGO.PNG,PAYMENT SERVICE - PAYPAL-LOGO.PNG,PAYMENT SERVICE - WORLDPAY-LOGO.PNG,POWERBI-OPTIN-480PX.PNG,QUOTE,SOCIAL - FACEBOOK.PNG,SOCIAL - INSTAGRAM.PNG,SOCIAL - LINKEDIN.PNG,SOCIAL - PINTEREST.PNG,SOCIAL - TWITTER.PNG,SOCIAL - YELP.PNG,SOCIAL - YOUTUBE.PNG,TEAMSAPPILLUSTRATION.PNG,UNPAID INVOICE,WHATSNEWWIZARD-BANNER-FIRST.PNG,WHATSNEWWIZARD-BANNER-SECOND.PNG,');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QX_MediaResources_ImportStreamAndBlob()
+    var
+        MediaResources: Record "Media Resources";
+        TempBlob: Codeunit "Temp Blob";
+        Observer: Codeunit "Probe Observer";
+        InS: InStream;
+        OutS: OutStream;
+        Txt: Text;
+    begin
+        MediaResources.SetFilter(Code, 'LTQX*');
+        MediaResources.DeleteAll();
+        MediaResources.Reset();
+        Observer.Observe('get missing', Format(MediaResources.Get('LTQX-MEDIA')));
+        MediaResources.Init();
+        MediaResources.Validate(Code, 'LTQX-MEDIA');
+        QxPngStream(TempBlob, InS);
+        MediaResources."Media Reference".ImportStream(InS, 'LTQX-MEDIA');
+        Observer.Observe('media hasvalue before insert', Format(MediaResources."Media Reference".HasValue()));
+        Observer.Observe('insert(true)', Format(MediaResources.Insert(true)));
+        Clear(MediaResources);
+        Observer.Observe('get', Format(MediaResources.Get('LTQX-MEDIA')));
+        Observer.Observe('media hasvalue', Format(MediaResources."Media Reference".HasValue()));
+        Observer.Observe('tenant media', QxTenantMedia(MediaResources."Media Reference".MediaId()));
+        Observer.Observe('get lower case', Format(MediaResources.Get('ltqx-media')));
+        MediaResources.Init();
+        MediaResources.Validate(Code, 'LTQX-BLOB');
+        MediaResources.Blob.CreateOutStream(OutS, TextEncoding::UTF8);
+        OutS.WriteText('{"blob":"text"}');
+        Observer.Observe('blob insert(true)', Format(MediaResources.Insert(true)));
+        Clear(MediaResources);
+        MediaResources.Get('LTQX-BLOB');
+        Observer.Observe('blob hasvalue without calcfields', Format(MediaResources.Blob.HasValue()));
+        MediaResources.CalcFields(Blob);
+        MediaResources.Blob.CreateInStream(InS, TextEncoding::UTF8);
+        InS.ReadText(Txt);
+        Observer.Observe('blob text', Txt);
+        Observer.Observe('blob media hasvalue', Format(MediaResources."Media Reference".HasValue()));
+        MediaResources.Init();
+        MediaResources.Code := 'LTQX-MEDIA';
+        Observer.Observe('insert duplicate', Format(MediaResources.Insert(true)));
+        MediaResources.SetFilter(Code, 'LTQX*');
+        Observer.Observe('count mine', Format(MediaResources.Count()));
+        MediaResources.DeleteAll(true);
+        Observer.Observe('count mine after deleteall', Format(MediaResources.Count()));
+        Observer.Expect('get missing', 'No');
+        Observer.Expect('media hasvalue before insert', 'Yes');
+        Observer.Expect('insert(true)', 'Yes');
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('media hasvalue', 'Yes');
+        Observer.Expect('tenant media', 'no tenant media row');
+        Observer.Expect('get lower case', 'Yes');
+        Observer.Expect('blob insert(true)', 'Yes');
+        Observer.Expect('blob hasvalue without calcfields', 'Yes');
+        Observer.Expect('blob text', '{"blob":"text"}');
+        Observer.Expect('blob media hasvalue', 'No');
+        Observer.Expect('insert duplicate', 'No');
+        Observer.Expect('count mine', '2');
+        Observer.Expect('count mine after deleteall', '0');
+        Observer.Verify();
+    end;
+
+    local procedure QxSelectionRows(): Text
+    var
+        Selection: Record "Tenant Report Layout Selection";
+        Result: Text;
+    begin
+        if Selection.FindSet() then
+            repeat
+                Result += '[' + Format(Selection."Report ID") + '|' + Selection."Company Name" + '|' + Format(IsNullGuid(Selection."User ID")) + '|' +
+                    Selection."Layout Name" + '|' + Format(IsNullGuid(Selection."App ID")) + ']';
+            until Selection.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure QX_TenantReportLayoutSelection_RowsAndDemoShape()
+    var
+        Selection: Record "Tenant Report Layout Selection";
+        LayoutList: Record "Report Layout List";
+        Observer: Codeunit "Probe Observer";
+        Names: Text;
+        LayoutName: Text[250];
+        OldName: Text[250];
+        OldAppId: Guid;
+        BlankGuid: Guid;
+        HadRow: Boolean;
+    begin
+        Observer.Observe('rows', QxSelectionRows());
+        Observer.Observe('get 1302 blank company', Format(Selection.Get(1302, '', BlankGuid)));
+        Observer.Observe('get 1302 this company', Format(Selection.Get(1302, CompanyName(), BlankGuid)));
+        LayoutList.SetRange("Report ID", 1306);
+        if LayoutList.FindSet() then
+            repeat
+                Names += LayoutList.Name + '|' + Format(LayoutList."Layout Format") + ',';
+            until LayoutList.Next() = 0;
+        Observer.Observe('report layout list 1306', Names);
+        if LayoutList.FindFirst() then begin
+            LayoutName := LayoutList.Name;
+            HadRow := Selection.Get(1306, '', BlankGuid);
+            if HadRow then begin
+                OldName := Selection."Layout Name";
+                OldAppId := Selection."App ID";
+            end;
+            Selection.Init();
+            Selection."Report ID" := 1306;
+            Selection."Layout Name" := LayoutName;
+            Selection."App ID" := LayoutList."Application ID";
+            Observer.Observe('had 1306 row', Format(HadRow));
+            Observer.Observe('insert(true) 1306', Format(Selection.Insert(true)));
+            Observer.Observe('modify(true) 1306', Format(Selection.Modify(true)));
+            Observer.Observe('rows after', QxSelectionRows());
+            if HadRow then begin
+                Selection.Get(1306, '', BlankGuid);
+                Selection."Layout Name" := OldName;
+                Selection."App ID" := OldAppId;
+                Selection.Modify();
+            end else
+                if Selection.Get(1306, '', BlankGuid) then
+                    Selection.Delete();
+        end;
+        Observer.Expect('rows', '[1302||Yes|StandardSalesProFormaInv.docx|No][1303||Yes|StandardDraftSalesInvoiceBlue.docx|No][1304||Yes|StandardSalesQuoteBlue.docx|No][1306||Yes|StandardSalesInvoiceBlueSimple.docx|No]');
+        Observer.Expect('get 1302 blank company', 'Yes');
+        Observer.Expect('get 1302 this company', 'No');
+        Observer.Expect('report layout list 1306', 'StandardSalesInvoice.docx|Word,StandardSalesInvoice.rdlc|RDLC,StandardSalesInvoiceBlueSimple.docx|Word,StandardSalesInvoiceBlueSimpleThemable.docx|Word,StandardSalesInvoiceDefEmail.docx|Word,StandardSalesInvoiceVatSpec.docx|Word,');
+        Observer.Expect('had 1306 row', 'Yes');
+        Observer.Expect('insert(true) 1306', 'No');
+        Observer.Expect('modify(true) 1306', 'Yes');
+        Observer.Expect('rows after', '[1302||Yes|StandardSalesProFormaInv.docx|No][1303||Yes|StandardDraftSalesInvoiceBlue.docx|No][1304||Yes|StandardSalesQuoteBlue.docx|No][1306||Yes|StandardSalesInvoice.docx|No]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QX_ODataEdmType_RowsAndEdmXml()
+    var
+        EdmType: Record "OData Edm Type";
+        Observer: Codeunit "Probe Observer";
+        OutS: OutStream;
+        InS: InStream;
+        Keys: Text;
+        Txt: Text;
+    begin
+        EdmType.SetFilter("Key", '<>LTQX*');
+        if EdmType.FindSet() then
+            repeat
+                Keys += EdmType."Key" + ',';
+            until EdmType.Next() = 0;
+        Observer.Observe('fresh count', Format(EdmType.Count()));
+        Observer.Observe('fresh keys', CopyStr(Keys, 1, 1000));
+        EdmType.Reset();
+        Observer.Observe('write permission', Format(EdmType.WritePermission()));
+        if EdmType.Get('LTQX-EDM') then
+            EdmType.Delete();
+        EdmType.SetAutoCalcFields("Edm Xml");
+        Observer.Observe('get missing', Format(EdmType.Get('LTQX-EDM')));
+        Clear(EdmType);
+        EdmType."Key" := 'LTQX-EDM';
+        EdmType.Description := 'first';
+        EdmType."Edm Xml".CreateOutStream(OutS, TextEncoding::UTF8);
+        OutS.WriteText('<ComplexType Name="ltqx"><Property Name="a" Type="Edm.String" /></ComplexType>');
+        Observer.Observe('insert(true)', Format(EdmType.Insert(true)));
+        Clear(EdmType);
+        EdmType.SetAutoCalcFields("Edm Xml");
+        Observer.Observe('get', Format(EdmType.Get('LTQX-EDM')));
+        Observer.Observe('edm xml hasvalue', Format(EdmType."Edm Xml".HasValue()));
+        EdmType."Edm Xml".CreateInStream(InS, TextEncoding::UTF8);
+        InS.ReadText(Txt);
+        Observer.Observe('edm xml text', Txt);
+        EdmType.Description := 'second';
+        EdmType."Edm Xml".CreateOutStream(OutS, TextEncoding::UTF8);
+        OutS.WriteText('<x/>');
+        Observer.Observe('modify(true)', Format(EdmType.Modify(true)));
+        Clear(EdmType);
+        EdmType.Get('LTQX-EDM');
+        EdmType.CalcFields("Edm Xml");
+        EdmType."Edm Xml".CreateInStream(InS, TextEncoding::UTF8);
+        InS.ReadText(Txt);
+        Observer.Observe('after modify', EdmType.Description + '|' + Txt);
+        Observer.Observe('delete', Format(EdmType.Delete()));
+        Observer.Expect('fresh count', '6');
+        Observer.Expect('fresh keys', 'BOOKINGSDATE,DIMENSION,DOCUMENTLINEOBJECTDETAILS,ITEM-UOM,ITEM-UOM-CONVERSION,POSTALADDRESS,');
+        Observer.Expect('write permission', 'Yes');
+        Observer.Expect('get missing', 'No');
+        Observer.Expect('insert(true)', 'Yes');
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('edm xml hasvalue', 'Yes');
+        Observer.Expect('edm xml text', '<ComplexType Name="ltqx"><Property Name="a" Type="Edm.String" /></ComplexType>');
+        Observer.Expect('modify(true)', 'Yes');
+        Observer.Ignore('after modify');
+        Observer.Expect('delete', 'Yes');
         Observer.Verify();
     end;
 }
