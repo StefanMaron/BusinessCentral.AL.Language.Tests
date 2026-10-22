@@ -234,18 +234,23 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
     local procedure RdReadText(Name: Text): Text
     var
         F: File;
+        TempBlob: Codeunit "Temp Blob";
+        FileIn: InStream;
+        OutS: OutStream;
         InS: InStream;
         Line: Text;
         Result: Text;
     begin
-        F.TextMode(false);
         F.Open(Name);
-        F.CreateInStream(InS, TextEncoding::UTF8);
+        F.CreateInStream(FileIn);
+        TempBlob.CreateOutStream(OutS);
+        CopyStream(OutS, FileIn);
+        F.Close();
+        TempBlob.CreateInStream(InS, TextEncoding::UTF8);
         while not InS.EOS() do begin
             InS.ReadText(Line);
             Result += Line + '|';
         end;
-        F.Close();
         exit(Result);
     end;
 
