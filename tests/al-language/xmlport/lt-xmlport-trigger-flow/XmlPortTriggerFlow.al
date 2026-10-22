@@ -399,4 +399,167 @@ codeunit 74961 "LT XmlPort Trigger Flow"
         Observer.Expect('chi_after', '3');
         Observer.Verify();
     end;
+
+    // Tests of the nested-import objects in RcXmlPortNestedImport.al (tables 87860-87862, xmlports 87863-87865, runner 87866).
+    local procedure RcWipe()
+    var
+        Par: Record "LT RC Par";
+        Chi: Record "LT RC Chi";
+        GChi: Record "LT RC GChi";
+        Log: Codeunit "LT XT Log";
+    begin
+        Par.DeleteAll();
+        Chi.DeleteAll();
+        GChi.DeleteAll();
+        Commit();
+        Log.Take();
+    end;
+
+    local procedure RcRun(XmlportId: Integer; Xml: Text): Text
+    var
+        Runner: Codeunit "LT RC Import Runner";
+    begin
+        Commit();
+        Runner.SetArgs(XmlportId, Xml);
+        if Runner.Run() then
+            exit('ok');
+        exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    local procedure RcRows(): Text
+    var
+        Par: Record "LT RC Par";
+        Chi: Record "LT RC Chi";
+        GChi: Record "LT RC GChi";
+        Txt: Text;
+    begin
+        if Par.FindSet() then
+            repeat
+                Txt += 'P' + Format(Par.Id) + '/' + Par.Name + ';';
+            until Par.Next() = 0;
+        if Chi.FindSet() then
+            repeat
+                Txt += 'C' + Format(Chi.Id) + '/' + Format(Chi.ParentId) + '/' + Chi.Note + ';';
+            until Chi.Next() = 0;
+        if GChi.FindSet() then
+            repeat
+                Txt += 'G' + Format(GChi.Id) + '/' + Format(GChi.ChildId) + '/' + GChi.Note + ';';
+            until GChi.Next() = 0;
+        exit(Txt);
+    end;
+
+    [Test]
+    procedure NoAutoReplace_NewParentTwoChildren()
+    var
+        Log: Codeunit "LT XT Log";
+        Observer: Codeunit "Probe Observer";
+    begin
+        RcWipe();
+        Observer.Observe('result', RcRun(Xmlport::"LT RC Imp NoAR", '<Root><Par><Id>1</Id><Name>one</Name><Chi><CId>10</CId><Note>a</Note></Chi><Chi><CId>11</CId><Note>b</Note></Chi></Par><Par><Id>2</Id><Name>two</Name></Par></Root>'));
+        Observer.Observe('trace', Log.Take());
+        Observer.Observe('rows', RcRows());
+        Observer.Expect('result', 'ok');
+        Observer.Expect('trace', 'P.init;P.bi=1/one;tP+1/one;P.ai=1;C.init;C.bi=10/1;tC+10/1/a;C.ai=10;C.init;C.bi=11/0;tC+11/0/b;C.ai=11;P.bm=1/one;tP~1/one;P.am=1;P.init;P.bi=2/two;tP+2/two;P.ai=2;');
+        Observer.Expect('rows', 'P1/one;P2/two;C10/1/a;C11/0/b;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure NoAutoReplace_ExistingParentWithChild()
+    var
+        Par: Record "LT RC Par";
+        Log: Codeunit "LT XT Log";
+        Observer: Codeunit "Probe Observer";
+    begin
+        RcWipe();
+        Par.Id := 1;
+        Par.Name := 'old';
+        Par.Insert();
+        Commit();
+        Log.Take();
+        Observer.Observe('result', RcRun(Xmlport::"LT RC Imp NoAR", '<Root><Par><Id>1</Id><Name>new</Name><Chi><CId>10</CId><Note>a</Note></Chi></Par></Root>'));
+        Observer.Observe('trace', Log.Take());
+        Observer.Observe('rows', RcRows());
+        Observer.Expect('result', 'error:The record in table LT RC Par already exists. Identification fields and values: Id=''1''|DB:RecordExists');
+        Observer.Expect('trace', 'P.init;P.bi=1/new;tP+1/new;P.ai=1;C.init;C.bi=10/1;tC+10/1/a;C.ai=10;');
+        Observer.Expect('rows', 'P1/old;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure NoAutoReplace_ExistingParentNoChild()
+    var
+        Par: Record "LT RC Par";
+        Log: Codeunit "LT XT Log";
+        Observer: Codeunit "Probe Observer";
+    begin
+        RcWipe();
+        Par.Id := 1;
+        Par.Name := 'old';
+        Par.Insert();
+        Commit();
+        Log.Take();
+        Observer.Observe('result', RcRun(Xmlport::"LT RC Imp NoAR", '<Root><Par><Id>1</Id><Name>new</Name></Par></Root>'));
+        Observer.Observe('trace', Log.Take());
+        Observer.Observe('rows', RcRows());
+        Observer.Expect('result', 'error:The record in table LT RC Par already exists. Identification fields and values: Id=''1''|DB:RecordExists');
+        Observer.Expect('trace', 'P.init;P.bi=1/new;tP+1/new;P.ai=1;');
+        Observer.Expect('rows', 'P1/old;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure NoAutoReplace_ExistingChildUnderNewParent()
+    var
+        Chi: Record "LT RC Chi";
+        Log: Codeunit "LT XT Log";
+        Observer: Codeunit "Probe Observer";
+    begin
+        RcWipe();
+        Chi.Id := 10;
+        Chi.ParentId := 9;
+        Chi.Note := 'old';
+        Chi.Insert();
+        Commit();
+        Log.Take();
+        Observer.Observe('result', RcRun(Xmlport::"LT RC Imp NoAR", '<Root><Par><Id>1</Id><Name>one</Name><Chi><CId>10</CId><Note>a</Note></Chi></Par></Root>'));
+        Observer.Observe('trace', Log.Take());
+        Observer.Observe('rows', RcRows());
+        Observer.Expect('result', 'error:The record in table LT RC Chi already exists. Identification fields and values: Id=''10''|DB:RecordExists');
+        Observer.Expect('trace', 'P.init;P.bi=1/one;tP+1/one;P.ai=1;C.init;C.bi=10/1;tC+10/1/a;C.ai=10;P.bm=1/one;tP~1/one;P.am=1;');
+        Observer.Expect('rows', 'C10/9/old;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure ThreeLevels_NoAutoReplace()
+    var
+        Log: Codeunit "LT XT Log";
+        Observer: Codeunit "Probe Observer";
+    begin
+        RcWipe();
+        Observer.Observe('result', RcRun(Xmlport::"LT RC Imp Three", '<Root><Par><Id>1</Id><Name>one</Name><Chi><CId>10</CId><Note>a</Note><G><GId>100</GId><GNote>x</GNote></G><G><GId>101</GId><GNote>y</GNote></G></Chi><Chi><CId>11</CId><Note>b</Note></Chi></Par><Par><Id>2</Id><Name>two</Name><Chi><CId>20</CId><Note>c</Note><G><GId>200</GId><GNote>z</GNote></G></Chi></Par></Root>'));
+        Observer.Observe('trace', Log.Take());
+        Observer.Observe('rows', RcRows());
+        Observer.Expect('result', 'ok');
+        Observer.Expect('trace', 'P.bi=1/one;tP+1/one;P.ai=1;C.bi=10/1;tC+10/1/a;C.ai=10;G.bi=100/10;tG+100/10/x;G.ai=100;G.bi=101/0;tG+101/0/y;G.ai=101;C.bm=10;tC~10/1/a;C.am=10;C.bi=11/0;tC+11/0/b;C.ai=11;P.bm=1/one;tP~1/one;P.am=1;P.bi=2/two;tP+2/two;P.ai=2;C.bi=20/2;tC+20/2/c;C.ai=20;G.bi=200/20;tG+200/20/z;G.ai=200;C.bm=20;tC~20/2/c;C.am=20;P.bm=2/two;tP~2/two;P.am=2;');
+        Observer.Expect('rows', 'P1/one;P2/two;C10/1/a;C11/0/b;C20/2/c;G100/10/x;G101/0/y;G200/20/z;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure TempChild_AutoReplace()
+    var
+        Log: Codeunit "LT XT Log";
+        Observer: Codeunit "Probe Observer";
+    begin
+        RcWipe();
+        Observer.Observe('result', RcRun(Xmlport::"LT RC Imp TempChi", '<Root><Par><Id>1</Id><Name>one</Name><Chi><CId>10</CId><Note>a</Note></Chi><Chi><CId>10</CId><Note>b</Note></Chi><Chi><CId>11</CId><Note>c</Note></Chi></Par><Par><Id>2</Id><Name>two</Name><Chi><CId>11</CId><Note>d</Note></Chi></Par></Root>'));
+        Observer.Observe('trace', Log.Take());
+        Observer.Observe('rows', RcRows());
+        Observer.Expect('result', 'ok');
+        Observer.Expect('trace', 'P.bi=1/one;tP+1/one;P.ai=1;C.bi=10/1/a;C.ai=10/1/a;C.bm=10/b;C.am=10/b;C.bi=11/0/c;C.ai=11/0/c;P.bm=1/one;tP~1/one;P.am=1;P.bi=2/two;tP+2/two;P.ai=2;C.bm=11/d;C.am=11/d;P.bm=2/two;tP~2/two;P.am=2;post filter=;tmp=10/0/b;tmp=11/2/d;');
+        Observer.Expect('rows', 'P1/one;P2/two;');
+        Observer.Verify();
+    end;
 }
