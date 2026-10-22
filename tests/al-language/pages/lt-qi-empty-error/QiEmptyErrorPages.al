@@ -380,7 +380,10 @@ codeunit 86853 "LT QI EE Tests"
         Observer.ObserveError('setvalue');
         Observer.Observe('value-after', List.AutoGen.Value());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('setvalue|text', 'no error');
+        Observer.Expect('setvalue|code', 'Dialog');
+        Observer.Expect('value-after', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
