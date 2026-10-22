@@ -186,6 +186,11 @@ codeunit 74451 "LT BlobCalc"
     // another variable with Get + CalcFields. The same with CalcFields before the write, a shorter value over a longer stored one (does
     // any old byte remain), HasValue and Length before and after the write, two writes in a row, an OutStream created and not written,
     // Temp Blob FromRecord and ToRecordRef, Blob assignment from an unloaded Blob, and the Picture of Company Information. RfShown reads every byte as base64.
+    // BC 29.0 answers: on a Blob not loaded by CalcFields, CreateOutStream starts from empty, so Modify stores exactly the new bytes (no old
+    // byte remains). On a Blob loaded by CalcFields (or already written in memory), CreateOutStream writes over the old bytes from the start
+    // and does not truncate: 'new' over 'a long stored value' stores 'newng stored value'. An OutStream created and not written leaves the
+    // stored value alone. Assigning an unloaded Blob to another record's Blob empties the target. Before CalcFields, Length is the
+    // stored (compressed) size, not the content length.
     local procedure RfShown(Id: Integer): Text
     var
         Fresh: Record "LT BlobCalc Row";
@@ -232,7 +237,13 @@ codeunit 74451 "LT BlobCalc"
         Observer.Observe('same variable get', RfState(Row));
         Row.CalcFields(Data);
         Observer.Observe('same variable calc', RfState(Row));
-        Observer.Finish();
+        Observer.Expect('before write', 'has=Yes|len=25');
+        Observer.Expect('after write', 'has=Yes|len=3');
+        Observer.Expect('after modify', 'has=Yes|len=3');
+        Observer.Expect('read back', 'has=Yes|len=3|b64=bmV3');
+        Observer.Expect('same variable get', 'has=Yes|len=9');
+        Observer.Expect('same variable calc', 'has=Yes|len=3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -249,7 +260,10 @@ codeunit 74451 "LT BlobCalc"
         Observer.Observe('after write', RfState(Row));
         Row.Modify();
         Observer.Observe('read back', RfShown(21));
-        Observer.Finish();
+        Observer.Expect('before write', 'has=Yes|len=8');
+        Observer.Expect('after write', 'has=Yes|len=19');
+        Observer.Expect('read back', 'has=Yes|len=19|b64=YSBtdWNoIGxvbmdlciB2YWx1ZQ==');
+        Observer.Verify();
     end;
 
     [Test]
@@ -266,7 +280,10 @@ codeunit 74451 "LT BlobCalc"
         Observer.Observe('after write', RfState(Row));
         Row.Modify();
         Observer.Observe('read back', RfShown(22));
-        Observer.Finish();
+        Observer.Expect('before write', 'has=No|len=0');
+        Observer.Expect('after write', 'has=Yes|len=13');
+        Observer.Expect('read back', 'has=Yes|len=13|b64=Zmlyc3QgY29udGVudA==');
+        Observer.Verify();
     end;
 
     [Test]
@@ -285,7 +302,11 @@ codeunit 74451 "LT BlobCalc"
         Row.Modify();
         Observer.Observe('after modify', RfState(Row));
         Observer.Observe('read back', RfShown(23));
-        Observer.Finish();
+        Observer.Expect('before write', 'has=Yes|len=19');
+        Observer.Expect('after write', 'has=Yes|len=19');
+        Observer.Expect('after modify', 'has=Yes|len=19');
+        Observer.Expect('read back', 'has=Yes|len=19|b64=bmV3b25nIHN0b3JlZCB2YWx1ZQ==');
+        Observer.Verify();
     end;
 
     [Test]
@@ -318,7 +339,11 @@ codeunit 74451 "LT BlobCalc"
         RfWrite(Row, 'x');
         Row.Modify();
         Observer.Observe('two modifies read back', RfShown(24));
-        Observer.Finish();
+        Observer.Expect('two streams state', 'has=Yes|len=11');
+        Observer.Expect('two streams read back', 'has=Yes|len=11|b64=dHdvc3Qgd3JpdGU=');
+        Observer.Expect('one stream two texts read back', 'has=Yes|len=7|b64=b25lbW9yZQ==');
+        Observer.Expect('two modifies read back', 'has=Yes|len=11|b64=eGhpcmQgdmFsdWU=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -335,7 +360,9 @@ codeunit 74451 "LT BlobCalc"
         Observer.Observe('after create', RfState(Row));
         Row.Modify();
         Observer.Observe('read back', RfShown(25));
-        Observer.Finish();
+        Observer.Expect('after create', 'has=Yes|len=12');
+        Observer.Expect('read back', 'has=Yes|len=6|b64=c3RvcmVk');
+        Observer.Verify();
     end;
 
     [Test]
@@ -366,7 +393,11 @@ codeunit 74451 "LT BlobCalc"
         Observer.Observe('after to record', RfState(Row));
         Row.Modify();
         Observer.Observe('read back', RfShown(26));
-        Observer.Finish();
+        Observer.Expect('from record unloaded', 'len=19|text=a long stored value');
+        Observer.Expect('row after from record', 'has=Yes|len=25');
+        Observer.Expect('after to record', 'has=Yes|len=2');
+        Observer.Expect('read back', 'has=Yes|len=2|b64=dGI=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -391,7 +422,10 @@ codeunit 74451 "LT BlobCalc"
         Target.Data := Source.Data;
         Target.Modify();
         Observer.Observe('loaded source read back', RfShown(28));
-        Observer.Finish();
+        Observer.Expect('target after assign', 'has=No|len=0');
+        Observer.Expect('unloaded source read back', 'has=No|len=0|b64=');
+        Observer.Expect('loaded source read back', 'has=Yes|len=12|b64=c291cmNlIHZhbHVl');
+        Observer.Verify();
     end;
 
     local procedure RfPicture(): Text
@@ -459,6 +493,11 @@ codeunit 74451 "LT BlobCalc"
             end;
             Info.Modify();
         end;
-        Observer.Finish();
+        Observer.Expect('before write', 'has=Yes|len=19');
+        Observer.Expect('after write', 'has=Yes|len=70');
+        Observer.Expect('png read back', 'has=Yes|len=70|b64=iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        Observer.Expect('png equals input', 'Yes');
+        Observer.Expect('short read back', 'has=Yes|len=2|b64=eHk=');
+        Observer.Verify();
     end;
 }

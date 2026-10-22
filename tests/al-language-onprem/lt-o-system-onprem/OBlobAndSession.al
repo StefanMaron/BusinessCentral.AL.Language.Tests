@@ -98,7 +98,10 @@ codeunit 61236 "LT O Blob File"
         Observer.Observe('read back', StrSubstNo('has=%1|len=%2|text=%3', Fresh.Data.HasValue(), Fresh.Data.Length(), Content));
         Fresh.Delete();
         if Erase(Path) then;
-        Observer.Finish();
+        Observer.Expect('before import', 'has=Yes|len=25');
+        Observer.Expect('after import', 'has=Yes|len=3');
+        Observer.Expect('read back', 'has=Yes|len=3|text=imp');
+        Observer.Verify();
     end;
 
     // The error text holds the service tier's temporary folder: observe its start and end only.
