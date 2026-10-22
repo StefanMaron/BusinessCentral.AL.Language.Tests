@@ -4,7 +4,8 @@
 // Facts: Text + Guid concatenation and MaxStrLen of a Guid; an Option compared with a Decimal; the bytes OutStream.Write produces for value types not pinned elsewhere (Code, Option, Enum, DateFormula, RecordId, Variant, Label, BigText, Record, JsonObject); the Field table row of the rowversion field (No. 0, name timestamp) on an own table and on Customer.
 // Facts (writer QT): RecordRef on a table with a key over SystemRowVersion (own key or from a tableextension): the FieldIndex walk never meets
 //   the rowversion field, Field(0) is timestamp (No. 0, BigInteger, Normal), FieldExist(0) is No, the key's FieldIndex(1) is timestamp No. 0.
-//   QT_FieldTable_* record the Field table answers but do not assert them (Linux suspect, Windows check queued).
+//   QT_FieldTable_*: the Field table finds the rowversion row (0:timestamp) only by a FieldName filter (asserted after the Windows check of 2026-10-22).
+// Facts (writer RA): the Field table read filtered only on TableNo (and with ObsoleteState <> Removed added) on those tables: which rows, in what order.
 // BC versions: 27.5+
 
 table 79005 "LT AJ Item"
@@ -467,36 +468,56 @@ codeunit 79013 "LT AJ Misc"
     procedure QT_FieldTable_OwnKeyOnRowVersion()
     begin
         QtFieldTableAnswers(Database::"KRV Row");
-        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
-        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
-        Observer.Discard();
+        // The Field table answers the rowversion row (0:timestamp) only to a FieldName filter, not to Get(table, 0) or a No. filter.
+        // Windows containers 27.5, 28.5 and 29.0 gave the same values as Linux (Windows check, 2026-10-22).
+        Observer.Expect('Get(table, 0)', 'not found');
+        Observer.Expect('by name timestamp', '0:timestamp:BigInteger:Normal:8:Yes;');
+        Observer.Expect('No. = 0 count', '0');
+        Observer.Expect('BigInteger count', '0');
+        Observer.Expect('by name SystemRowVersion count', '0');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QT_FieldTable_OwnKeyOnRowVersion_TableWithModifyExtension()
     begin
         QtFieldTableAnswers(Database::"KRV Modified Row");
-        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
-        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
-        Observer.Discard();
+        // The Field table answers the rowversion row (0:timestamp) only to a FieldName filter, not to Get(table, 0) or a No. filter.
+        // Windows containers 27.5, 28.5 and 29.0 gave the same values as Linux (Windows check, 2026-10-22).
+        Observer.Expect('Get(table, 0)', 'not found');
+        Observer.Expect('by name timestamp', '0:timestamp:BigInteger:Normal:8:Yes;');
+        Observer.Expect('No. = 0 count', '0');
+        Observer.Expect('BigInteger count', '0');
+        Observer.Expect('by name SystemRowVersion count', '0');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QT_FieldTable_KeyOnRowVersionFromTableExtension()
     begin
         QtFieldTableAnswers(Database::"Customer Bank Account");
-        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
-        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
-        Observer.Discard();
+        // The Field table answers the rowversion row (0:timestamp) only to a FieldName filter, not to Get(table, 0) or a No. filter.
+        // Windows containers 27.5, 28.5 and 29.0 gave the same values as Linux (Windows check, 2026-10-22).
+        Observer.Expect('Get(table, 0)', 'not found');
+        Observer.Expect('by name timestamp', '0:timestamp:BigInteger:Normal:8:Yes;');
+        Observer.Expect('No. = 0 count', '0');
+        Observer.Expect('BigInteger count', '0');
+        Observer.Expect('by name SystemRowVersion count', '0');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QT_FieldTable_NoKeyOnRowVersion_Control()
     begin
         QtFieldTableAnswers(Database::"LT AJ Ts");
-        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
-        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
-        Observer.Discard();
+        // The Field table answers the rowversion row (0:timestamp) only to a FieldName filter, not to Get(table, 0) or a No. filter.
+        // Windows containers 27.5, 28.5 and 29.0 gave the same values as Linux (Windows check, 2026-10-22).
+        Observer.Expect('Get(table, 0)', 'not found');
+        Observer.Expect('by name timestamp', '0:timestamp:BigInteger:Normal:8:Yes;');
+        Observer.Expect('No. = 0 count', '0');
+        Observer.Expect('BigInteger count', '0');
+        Observer.Expect('by name SystemRowVersion count', '0');
+        Observer.Verify();
     end;
 
     [Test]
