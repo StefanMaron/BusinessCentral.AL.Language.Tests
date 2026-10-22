@@ -254,7 +254,8 @@ codeunit 74513 "LT P138 Col Caption Tests"
     begin
         QsSeed();
         Observer.Observe('labels', QsDatasetLines('<Label '));
-        Observer.Finish();
+        Observer.Expect('labels', '[<Label name="No_RowCaption">QS Row No cap</Label>][<Label name="Name_RowCaption">QS Row Name cap</Label>][<Label name="Kind_RowCaption">QS Row Kind cap</Label>][<Label name="FromChildCaption">QS Other Note cap</Label>][<Label name="Note_ChildCaption">QS Other Note cap</Label>][<Label name="No_FromParentCaption">QS Row No cap</Label>][<Label name="Id_SiblingCaption">QS Other Id cap</Label>][<Label name="Name_FromSiblingCaption">QS Row Name cap</Label>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -264,7 +265,8 @@ codeunit 74513 "LT P138 Col Caption Tests"
     begin
         QsSeed();
         Observer.Observe('columns', QsDatasetLines('<Column '));
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="No_Row">R1</Column>][<Column name="Name_Row">first</Column>][<Column name="Kind_Row">Quantity</Column>][<Column name="FromChild">child of R1</Column>][<Column name="Note_Child">child of R1</Column>][<Column name="No_FromParent">R1</Column>][<Column name="No_Row">R2</Column>][<Column name="Name_Row">second</Column>][<Column name="Kind_Row">Amount</Column>][<Column name="FromChild">child of R1</Column>][<Column name="Id_Sibling">2</Column>][<Column name="Name_FromSibling">second</Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -278,6 +280,8 @@ codeunit 74513 "LT P138 Col Caption Tests"
         Other.DeleteAll();
         Observer.Observe('labels', QsDatasetLines('<Label '));
         Observer.Observe('columns', QsDatasetLines('<Column '));
-        Observer.Finish();
+        Observer.Expect('labels', '[<Label name="No_RowCaption">QS Row No cap</Label>][<Label name="Name_RowCaption">QS Row Name cap</Label>][<Label name="Kind_RowCaption">QS Row Kind cap</Label>][<Label name="FromChildCaption">QS Other Note cap</Label>][<Label name="Note_ChildCaption">QS Other Note cap</Label>][<Label name="No_FromParentCaption">QS Row No cap</Label>][<Label name="Id_SiblingCaption">QS Other Id cap</Label>][<Label name="Name_FromSiblingCaption">QS Row Name cap</Label>]');
+        Observer.Expect('columns', '');
+        Observer.Verify();
     end;
 }

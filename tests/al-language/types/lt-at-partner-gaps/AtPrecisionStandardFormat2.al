@@ -111,7 +111,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         QsObserveValues(Observer, '<Precision,2:2><Standard Format,2>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -124,7 +142,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         QsObserveValues(Observer, '<Precision,2><Standard Format,2>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -137,7 +173,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         QsObserveValues(Observer, '<Standard Format,2>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0');
+        Observer.Expect('1', '1');
+        Observer.Expect('-1', '-1');
+        Observer.Expect('10', '10');
+        Observer.Expect('10.00000', '10');
+        Observer.Expect('0.1', '0.1');
+        Observer.Expect('1234.5', '1234.5');
+        Observer.Expect('-1234.567', '-1234.567');
+        Observer.Expect('0.005', '0.005');
+        Observer.Expect('0.015', '0.015');
+        Observer.Expect('0.025', '0.025');
+        Observer.Expect('-0.005', '-0.005');
+        Observer.Expect('0.004999', '0.004999');
+        Observer.Expect('999999.995', '999999.995');
+        Observer.Expect('123456789012.345', '123456789012.345');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10');
+        Observer.Expect('1/3', '0.333333333333333333');
+        Observer.Verify();
     end;
 
     [Test]
@@ -150,7 +204,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         QsObserveValues(Observer, '<Precision,2:2><Standard Format,0>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1,234.50');
+        Observer.Expect('-1234.567', '-1,234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1,000,000.00');
+        Observer.Expect('123456789012.345', '123,456,789,012.35');
+        Observer.Expect('-99999999999999.99', '-99,999,999,999,999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -163,7 +235,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         QsObserveValues(Observer, '<Precision,2><Standard Format,0>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1,234.50');
+        Observer.Expect('-1234.567', '-1,234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1,000,000.00');
+        Observer.Expect('123456789012.345', '123,456,789,012.35');
+        Observer.Expect('-99999999999999.99', '-99,999,999,999,999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -176,7 +266,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         QsObserveValues(Observer, '<Precision,2:2><Standard Format,1>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -189,7 +297,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         QsObserveValues(Observer, '<Precision,2><Standard Format,1>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -202,7 +328,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         QsObserveValues(Observer, '<Precision,2:2><Standard Format,9>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -215,7 +359,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         QsObserveValues(Observer, '<Precision,2><Standard Format,9>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -228,7 +390,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1031);
         QsObserveValues(Observer, '<Precision,2:2><Standard Format,2>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -241,7 +421,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1031);
         QsObserveValues(Observer, '<Precision,2><Standard Format,2>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,7 +452,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1031);
         QsObserveValues(Observer, '<Standard Format,2>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0');
+        Observer.Expect('1', '1');
+        Observer.Expect('-1', '-1');
+        Observer.Expect('10', '10');
+        Observer.Expect('10.00000', '10');
+        Observer.Expect('0.1', '0.1');
+        Observer.Expect('1234.5', '1234.5');
+        Observer.Expect('-1234.567', '-1234.567');
+        Observer.Expect('0.005', '0.005');
+        Observer.Expect('0.015', '0.015');
+        Observer.Expect('0.025', '0.025');
+        Observer.Expect('-0.005', '-0.005');
+        Observer.Expect('0.004999', '0.004999');
+        Observer.Expect('999999.995', '999999.995');
+        Observer.Expect('123456789012.345', '123456789012.345');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10');
+        Observer.Expect('1/3', '0.333333333333333333');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,7 +483,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1031);
         QsObserveValues(Observer, '<Precision,2:2><Standard Format,0>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1,234.50');
+        Observer.Expect('-1234.567', '-1,234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1,000,000.00');
+        Observer.Expect('123456789012.345', '123,456,789,012.35');
+        Observer.Expect('-99999999999999.99', '-99,999,999,999,999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -280,7 +514,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1031);
         QsObserveValues(Observer, '<Precision,2><Standard Format,0>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1,234.50');
+        Observer.Expect('-1234.567', '-1,234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1,000,000.00');
+        Observer.Expect('123456789012.345', '123,456,789,012.35');
+        Observer.Expect('-99999999999999.99', '-99,999,999,999,999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -293,7 +545,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1031);
         QsObserveValues(Observer, '<Precision,2:2><Standard Format,1>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -306,7 +576,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1031);
         QsObserveValues(Observer, '<Precision,2><Standard Format,1>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -319,7 +607,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1031);
         QsObserveValues(Observer, '<Precision,2:2><Standard Format,9>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -332,7 +638,25 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1031);
         QsObserveValues(Observer, '<Precision,2><Standard Format,9>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('0', '0.00');
+        Observer.Expect('1', '1.00');
+        Observer.Expect('-1', '-1.00');
+        Observer.Expect('10', '10.00');
+        Observer.Expect('10.00000', '10.00');
+        Observer.Expect('0.1', '0.10');
+        Observer.Expect('1234.5', '1234.50');
+        Observer.Expect('-1234.567', '-1234.57');
+        Observer.Expect('0.005', '0.01');
+        Observer.Expect('0.015', '0.02');
+        Observer.Expect('0.025', '0.03');
+        Observer.Expect('-0.005', '-0.01');
+        Observer.Expect('0.004999', '0.00');
+        Observer.Expect('999999.995', '1000000.00');
+        Observer.Expect('123456789012.345', '123456789012.35');
+        Observer.Expect('-99999999999999.99', '-99999999999999.99');
+        Observer.Expect('evaluated 10.00000', '10.00');
+        Observer.Expect('1/3', '0.33');
+        Observer.Verify();
     end;
 
     [Test]
@@ -357,7 +681,47 @@ codeunit 80004 "LT AT Precision Std Format 2"
         Row.Plain := -0.005;
         QsObserveRow(Observer, 'b', Row);
         GlobalLanguage(Orig);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('a default', '1,234.57|1,234.5678|1,234.6|1,234.5678|1,234.5678');
+        Observer.Expect('a P22S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a P2S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a S2', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 2', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 9', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('b default', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b P22S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b P2S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b S2', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 2', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 9', '-0.01|-0.005|-0.0|-0.005|-0.005');
+#elif BC28PLUS
+        Observer.Expect('a default', '1,234.57|1,234.5678|1,234.6|1,234.5678|1,234.5678');
+        Observer.Expect('a P22S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a P2S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a S2', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 2', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 9', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('b default', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b P22S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b P2S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b S2', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 2', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 9', '-0.01|-0.005|-0.0|-0.005|-0.005');
+#else
+        Observer.Expect('a default', '1,234.5678|1,234.5678|1,234.6|1,234.5678|1,234.5678');
+        Observer.Expect('a P22S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a P2S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a S2', '1234.5678|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 2', '1234.5678|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 9', '1234.5678|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('b default', '-0.005|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b P22S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b P2S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b S2', '-0.005|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 2', '-0.005|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 9', '-0.005|-0.005|-0.0|-0.005|-0.005');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -382,7 +746,47 @@ codeunit 80004 "LT AT Precision Std Format 2"
         Row.Plain := -0.005;
         QsObserveRow(Observer, 'b', Row);
         GlobalLanguage(Orig);
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('a default', '1,234.57|1,234.5678|1,234.6|1,234.5678|1,234.5678');
+        Observer.Expect('a P22S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a P2S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a S2', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 2', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 9', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('b default', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b P22S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b P2S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b S2', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 2', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 9', '-0.01|-0.005|-0.0|-0.005|-0.005');
+#elif BC28PLUS
+        Observer.Expect('a default', '1,234.57|1,234.5678|1,234.6|1,234.5678|1,234.5678');
+        Observer.Expect('a P22S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a P2S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a S2', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 2', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 9', '1234.57|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('b default', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b P22S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b P2S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b S2', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 2', '-0.01|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 9', '-0.01|-0.005|-0.0|-0.005|-0.005');
+#else
+        Observer.Expect('a default', '1,234.5678|1,234.5678|1,234.6|1,234.5678|1,234.5678');
+        Observer.Expect('a P22S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a P2S2', '1234.57|1234.57|1234.57|1234.57|1234.57');
+        Observer.Expect('a S2', '1234.5678|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 2', '1234.5678|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('a number 9', '1234.5678|1234.5678|1234.6|1234.5678|1234.5678');
+        Observer.Expect('b default', '-0.005|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b P22S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b P2S2', '-0.01|-0.01|-0.01|-0.01|-0.01');
+        Observer.Expect('b S2', '-0.005|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 2', '-0.005|-0.005|-0.0|-0.005|-0.005');
+        Observer.Expect('b number 9', '-0.005|-0.005|-0.0|-0.005|-0.005');
+#endif
+        Observer.Verify();
     end;
 
     local procedure QsObserveRow(var Observer: Codeunit "Probe Observer"; Prefix: Text; Row: Record "LT QS Std Fmt Row")

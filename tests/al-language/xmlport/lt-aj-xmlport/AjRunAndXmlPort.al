@@ -528,7 +528,9 @@ codeunit 79011 "LT AJ XmlPort Temp"
         Xp.Import();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('rows', Xp.Rows());
-        Observer.Finish();
+        Observer.Expect('log', 'pre count=0;init n=0 count=0;before shelf=S1 itemcode=ITEM-A n=0 count=0 temp=Yes;after n=0 count=0;init n=0 count=0;before shelf=S2 itemcode=ITEM-B n=0 count=0 temp=Yes;after n=0 count=0;post count=0;');
+        Observer.Expect('rows', 'count=0 rows=');
+        Observer.Verify();
     end;
 
     [Test]
@@ -545,7 +547,9 @@ codeunit 79011 "LT AJ XmlPort Temp"
         Xp.Import();
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('rows', Xp.Rows());
-        Observer.Finish();
+        Observer.Expect('log', 'pre count=0;init n=0 count=0;before shelf=S1 itemcode=ITEM-A n=0 count=0 temp=Yes;after n=1 count=1;init n=0 count=1;before shelf=S2 itemcode=ITEM-B n=0 count=1 temp=Yes;after n=2 count=2;post count=2;');
+        Observer.Expect('rows', 'count=2 rows=1;2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -564,7 +568,10 @@ codeunit 79011 "LT AJ XmlPort Temp"
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('rows', Xp.Rows());
         Observer.Observe('real after', Format(Real.Count()));
-        Observer.Finish();
+        Observer.Expect('log', 'before id=1 txt=one temp=0;after id=1 temp=0 real=0;before id=2 txt=two temp=0;after id=2 temp=0 real=0;');
+        Observer.Expect('rows', 'count=0 rows=');
+        Observer.Expect('real after', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -584,6 +591,9 @@ codeunit 79011 "LT AJ XmlPort Temp"
         Observer.Observe('log', Xp.GetLog());
         Observer.Observe('rows', Xp.Rows());
         Observer.Observe('real after', Format(Real.Count()));
-        Observer.Finish();
+        Observer.Expect('log', 'before id=1 txt=one temp=0;after id=1 temp=1 real=0;before id=2 txt=two temp=1;after id=2 temp=2 real=0;');
+        Observer.Expect('rows', 'count=2 rows=1:one;2:two;');
+        Observer.Expect('real after', '0');
+        Observer.Verify();
     end;
 }

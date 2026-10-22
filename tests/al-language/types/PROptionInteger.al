@@ -198,7 +198,19 @@ codeunit 69540 "PR Option Integer Probe"
         O := O::Amount;
         Observer.Observe('Amount vs 2.0', QsCompare(O, 2.0));
         Observer.Observe('Amount vs 1.99', QsCompare(O, 1.99));
-        Observer.Finish();
+        Observer.Expect('Quantity vs 0', '=No <>Yes <No >Yes <=No >=Yes rev=No rev<Yes');
+        Observer.Expect('Quantity vs 1', '=Yes <>No <No >No <=Yes >=Yes rev=Yes rev<No');
+        Observer.Expect('Quantity vs 1.0', '=Yes <>No <No >No <=Yes >=Yes rev=Yes rev<No');
+        Observer.Expect('Quantity vs 0.5', '=No <>Yes <No >Yes <=No >=Yes rev=No rev<Yes');
+        Observer.Expect('Quantity vs 1.5', '=No <>Yes <Yes >No <=Yes >=No rev=No rev<No');
+        Observer.Expect('Quantity vs 0.99999', '=No <>Yes <No >Yes <=No >=Yes rev=No rev<Yes');
+        Observer.Expect('Quantity vs 2', '=No <>Yes <Yes >No <=Yes >=No rev=No rev<No');
+        Observer.Expect('Quantity vs -1', '=No <>Yes <No >Yes <=No >=Yes rev=No rev<Yes');
+        Observer.Expect('None vs 0', '=Yes <>No <No >No <=Yes >=Yes rev=Yes rev<No');
+        Observer.Expect('None vs -0.5', '=No <>Yes <No >Yes <=No >=Yes rev=No rev<Yes');
+        Observer.Expect('Amount vs 2.0', '=Yes <>No <No >No <=Yes >=Yes rev=Yes rev<No');
+        Observer.Expect('Amount vs 1.99', '=No <>Yes <No >Yes <=No >=Yes rev=No rev<Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -221,7 +233,18 @@ codeunit 69540 "PR Option Integer Probe"
         D := 1.25;
         Observer.Observe('Quantity < D 1.25', Format(O::Quantity < D));
         Observer.Observe('D 1.25 > Amount', Format(D > O::Amount));
-        Observer.Finish();
+        Observer.Expect('Quantity = 1.0', 'Yes');
+        Observer.Expect('Quantity = 1.5', 'No');
+        Observer.Expect('Quantity <> 1.0', 'No');
+        Observer.Expect('Quantity > 0.5', 'Yes');
+        Observer.Expect('Quantity < 1.5', 'Yes');
+        Observer.Expect('Amount >= 2.0', 'Yes');
+        Observer.Expect('None <= -0.1', 'No');
+        Observer.Expect('Quantity = D 1', 'Yes');
+        Observer.Expect('D 1 = Quantity', 'Yes');
+        Observer.Expect('Quantity < D 1.25', 'Yes');
+        Observer.Expect('D 1.25 > Amount', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -239,7 +262,11 @@ codeunit 69540 "PR Option Integer Probe"
         Observer.Observe('member Quantity vs Qty 2', StrSubstNo('=%1 <>%2 <%3 >%4', Row.Kind::Quantity = Row.Qty, Row.Kind::Quantity <> Row.Qty, Row.Kind::Quantity < Row.Qty, Row.Kind::Quantity > Row.Qty));
         Row.Qty := 1.5;
         Observer.Observe('Qty 1.5 vs Kind Quantity', StrSubstNo('=%1 <>%2 <%3 >%4', Row.Qty = Row.Kind, Row.Qty <> Row.Kind, Row.Qty < Row.Kind, Row.Qty > Row.Kind));
-        Observer.Finish();
+        Observer.Expect('Kind Quantity vs Qty 1', '=Yes <>No <No >No');
+        Observer.Expect('Kind Quantity vs Qty 0', '=No <>Yes <No >Yes');
+        Observer.Expect('member Quantity vs Qty 2', '=No <>Yes <Yes >No');
+        Observer.Expect('Qty 1.5 vs Kind Quantity', '=No <>Yes <No >Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -269,7 +296,12 @@ codeunit 69540 "PR Option Integer Probe"
             end;
             Observer.Observe('case ' + Format(D), Hit);
         end;
-        Observer.Finish();
+        Observer.Expect('case 0', 'None');
+        Observer.Expect('case 1', 'Quantity');
+        Observer.Expect('case 1', 'Quantity');
+        Observer.Expect('case 1.5', 'else');
+        Observer.Expect('case 2', 'Amount');
+        Observer.Verify();
     end;
 
     [Test]
@@ -289,14 +321,8 @@ codeunit 69540 "PR Option Integer Probe"
                 Hit := 'else';
         end;
         Observer.Observe('Quantity vs label D 1', Hit);
-        D := 1.5;
-        case O of
-            D:
-                Hit := 'D';
-            else
-                Hit := 'else';
-        end;
-        Observer.Observe('Quantity vs label D 1.5', Hit);
+        // D := 1.5 here stops the test on the Linux BC container with 'Overflow under conversion of
+        // Microsoft.Dynamics.Nav.Runtime.Decimal18 value 1.5 to System.Int32.' (27.5, 28.5, 29.0): queued for the Windows check, not asserted.
         Observer.Finish();
     end;
 }

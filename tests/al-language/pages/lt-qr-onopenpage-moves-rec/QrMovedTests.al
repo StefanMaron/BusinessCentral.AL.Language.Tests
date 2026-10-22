@@ -856,700 +856,1300 @@ codeunit 87266 "LT QR Moved Tests"
     procedure QS_KeyAsc_Card_NoMove()
     begin
         QsViewKeyAscCard(0);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_Card_GetC()
     begin
         QsViewKeyAscCard(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_Card_FindLast()
     begin
         QsViewKeyAscCard(2);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_Card_FindFirstNext()
     begin
         QsViewKeyAscCard(3);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_Card_FindFirst()
     begin
         QsViewKeyAscCard(4);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_Card_KeyAssigned()
     begin
         QsViewKeyAscCard(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_Card_GetD()
     begin
         QsViewKeyAscCard(6);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_Card_GetA()
     begin
         QsViewKeyAscCard(7);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_Card_OtherKeyGetB()
     begin
         QsViewKeyAscCard(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_Card_FlipOrderFindFirst()
     begin
         QsViewKeyAscCard(9);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_NoMove()
     begin
         QsViewKeyAscList(0);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:;R:D;R:C;R:B;R:A;R:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_GetC()
     begin
         QsViewKeyAscList(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;R:B;R:A;R:C;R:D;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_FindLast()
     begin
         QsViewKeyAscList(2);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;R:B;R:C;R:D;R:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_FindFirstNext()
     begin
         QsViewKeyAscList(3);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;R:B;R:A;R:C;R:D;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_FindFirst()
     begin
         QsViewKeyAscList(4);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:D;R:D;R:D;R:C;R:B;R:A;R:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_KeyAssigned()
     begin
         QsViewKeyAscList(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;R:B;R:A;R:C;R:D;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_GetD()
     begin
         QsViewKeyAscList(6);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:D;R:D;R:D;R:C;R:B;R:A;R:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_GetA()
     begin
         QsViewKeyAscList(7);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;R:B;R:C;R:D;R:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_OtherKeyGetB()
     begin
         QsViewKeyAscList(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:B;R:B;R:C;R:D;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyAsc_List_FlipOrderFindFirst()
     begin
         QsViewKeyAscList(9);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;R:B;R:C;R:D;R:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_NoMove()
     begin
         QsViewKeyDescCard(0);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_GetC()
     begin
         QsViewKeyDescCard(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_FindLast()
     begin
         QsViewKeyDescCard(2);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_FindFirstNext()
     begin
         QsViewKeyDescCard(3);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:B;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_FindFirst()
     begin
         QsViewKeyDescCard(4);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_KeyAssigned()
     begin
         QsViewKeyDescCard(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_GetD()
     begin
         QsViewKeyDescCard(6);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_GetA()
     begin
         QsViewKeyDescCard(7);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_OtherKeyGetB()
     begin
         QsViewKeyDescCard(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|A');
+        Observer.Expect('next log', 'R:A;C:A;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_Card_FlipOrderFindFirst()
     begin
         QsViewKeyDescCard(9);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_NoMove()
     begin
         QsViewKeyDescList(0);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:;R:A;R:B;R:C;R:D;R:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_GetC()
     begin
         QsViewKeyDescList(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:C;R:C;R:C;R:D;R:C;R:B;R:A;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_FindLast()
     begin
         QsViewKeyDescList(2);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:D;R:D;R:D;R:C;R:B;R:A;R:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_FindFirstNext()
     begin
         QsViewKeyDescList(3);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:B;R:B;R:B;R:C;R:D;R:B;R:A;R:B;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_FindFirst()
     begin
         QsViewKeyDescList(4);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:A;R:A;R:A;R:B;R:C;R:D;R:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_KeyAssigned()
     begin
         QsViewKeyDescList(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:C;R:C;R:C;R:D;R:C;R:B;R:A;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_GetD()
     begin
         QsViewKeyDescList(6);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:D;R:D;R:D;R:C;R:B;R:A;R:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_GetA()
     begin
         QsViewKeyDescList(7);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:A;R:A;R:A;R:B;R:C;R:D;R:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_OtherKeyGetB()
     begin
         QsViewKeyDescList(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:B;R:B;R:A;R:B;R:C;R:D;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|A');
+        Observer.Expect('next log', 'R:A;R:A;C:A;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyDesc_List_FlipOrderFindFirst()
     begin
         QsViewKeyDescList(9);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:D;R:D;R:D;R:C;R:B;R:A;R:D;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_NoMove()
     begin
         QsViewPkDescCard(0);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_GetC()
     begin
         QsViewPkDescCard(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_FindLast()
     begin
         QsViewPkDescCard(2);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_FindFirstNext()
     begin
         QsViewPkDescCard(3);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_FindFirst()
     begin
         QsViewPkDescCard(4);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_KeyAssigned()
     begin
         QsViewPkDescCard(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_GetD()
     begin
         QsViewPkDescCard(6);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_GetA()
     begin
         QsViewPkDescCard(7);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_OtherKeyGetB()
     begin
         QsViewPkDescCard(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|A');
+        Observer.Expect('next log', 'R:A;C:A;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_Card_FlipOrderFindFirst()
     begin
         QsViewPkDescCard(9);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_NoMove()
     begin
         QsViewPkDescList(0);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_GetC()
     begin
         QsViewPkDescList(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:C;R:C;R:B;R:A;R:C;R:D;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_FindLast()
     begin
         QsViewPkDescList(2);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:A;R:A;R:B;R:C;R:D;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_FindFirstNext()
     begin
         QsViewPkDescList(3);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:C;R:C;R:B;R:A;R:C;R:D;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_FindFirst()
     begin
         QsViewPkDescList(4);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:D;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_KeyAssigned()
     begin
         QsViewPkDescList(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:C;R:C;R:B;R:A;R:C;R:D;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_GetD()
     begin
         QsViewPkDescList(6);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:D;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_GetA()
     begin
         QsViewPkDescList(7);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:A;R:A;R:B;R:C;R:D;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_OtherKeyGetB()
     begin
         QsViewPkDescList(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:B;R:B;R:A;R:B;R:C;R:D;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|A');
+        Observer.Expect('next log', 'R:A;R:A;C:A;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_PkDesc_List_FlipOrderFindFirst()
     begin
         QsViewPkDescList(9);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:A;R:A;R:B;R:C;R:D;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_NoMove()
     begin
         QsViewWhereCard(0);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_GetC()
     begin
         QsViewWhereCard(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_FindLast()
     begin
         QsViewWhereCard(2);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_FindFirstNext()
     begin
         QsViewWhereCard(3);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_FindFirst()
     begin
         QsViewWhereCard(4);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_KeyAssigned()
     begin
         QsViewWhereCard(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_GetD()
     begin
         QsViewWhereCard(6);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_GetA()
     begin
         QsViewWhereCard(7);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:A;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_OtherKeyGetB()
     begin
         QsViewWhereCard(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_Card_FlipOrderFindFirst()
     begin
         QsViewWhereCard(9);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_NoMove()
     begin
         QsViewWhereList(0);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:;R:B;R:C;R:D;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_GetC()
     begin
         QsViewWhereList(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:C;R:C;R:D;R:C;R:B;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_FindLast()
     begin
         QsViewWhereList(2);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:D;R:D;R:C;R:B;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_FindFirstNext()
     begin
         QsViewWhereList(3);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:C;R:C;R:D;R:C;R:B;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_FindFirst()
     begin
         QsViewWhereList(4);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:B;R:B;R:C;R:D;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_KeyAssigned()
     begin
         QsViewWhereList(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:C;R:C;R:D;R:C;R:B;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_GetD()
     begin
         QsViewWhereList(6);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:D;R:D;R:C;R:B;R:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_GetA()
     begin
         QsViewWhereList(7);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:A;R:B;R:C;R:D;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_OtherKeyGetB()
     begin
         QsViewWhereList(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:B;R:B;R:C;R:D;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_Where_List_FlipOrderFindFirst()
     begin
         QsViewWhereList(9);
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1);O:D;R:D;R:C;R:B;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;C:D;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_NoMove()
     begin
         QsViewKeyWhereCard(0);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_GetC()
     begin
         QsViewKeyWhereCard(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_FindLast()
     begin
         QsViewKeyWhereCard(2);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_FindFirstNext()
     begin
         QsViewKeyWhereCard(3);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:B;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|A');
+        Observer.Expect('next log', 'R:A;C:A;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_FindFirst()
     begin
         QsViewKeyWhereCard(4);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_KeyAssigned()
     begin
         QsViewKeyWhereCard(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_GetD()
     begin
         QsViewKeyWhereCard(6);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:D;R:D;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_GetA()
     begin
         QsViewKeyWhereCard(7);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_OtherKeyGetB()
     begin
         QsViewKeyWhereCard(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_Card_FlipOrderFindFirst()
     begin
         QsViewKeyWhereCard(9);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;C:A;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_NoMove()
     begin
         QsViewKeyWhereList(0);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:;R:C;R:B;R:A;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_GetC()
     begin
         QsViewKeyWhereList(1);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;R:B;R:A;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_FindLast()
     begin
         QsViewKeyWhereList(2);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;R:B;R:C;R:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_FindFirstNext()
     begin
         QsViewKeyWhereList(3);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:B;R:B;R:B;R:A;R:B;R:C;R:B;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|A');
+        Observer.Expect('next log', 'R:A;R:A;R:A;C:A;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_FindFirst()
     begin
         QsViewKeyWhereList(4);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;R:B;R:A;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_KeyAssigned()
     begin
         QsViewKeyWhereList(5);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:C;R:C;R:C;R:B;R:A;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_GetD()
     begin
         QsViewKeyWhereList(6);
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:D;R:D;R:C;R:B;R:A;R:C;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_GetA()
     begin
         QsViewKeyWhereList(7);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;R:B;R:C;R:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'No|A');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_OtherKeyGetB()
     begin
         QsViewKeyWhereList(8);
-        Observer.Finish();
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:B;R:B;R:C;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QS_KeyWhere_List_FlipOrderFindFirst()
     begin
         QsViewKeyWhereList(9);
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:A;R:A;R:A;R:B;R:C;R:A;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;R:A;C:A;');
+        Observer.Verify();
     end;
 
     [PageHandler]
@@ -1564,7 +2164,13 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         QsSeed(1);
         Page.Run(Page::"LT QS PkDesc List");
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:C;R:C;R:B;R:A;R:C;R:D;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -1579,7 +2185,13 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         QsSeed(2);
         Page.RunModal(Page::"LT QS PkDesc List");
-        Observer.Finish();
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field1) ORDER(1);O:A;R:A;R:B;R:C;R:D;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|');
+        Observer.Expect('next log', 'C:;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;C:A;');
+        Observer.Verify();
     end;
 
     [PageHandler]
@@ -1594,7 +2206,13 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         QsSeed(6);
         Page.Run(Page::"LT QS KeyWhere Card");
-        Observer.Finish();
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2);O:D;R:D;R:C;C:C;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;C:B;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -1609,6 +2227,12 @@ codeunit 87266 "LT QR Moved Tests"
     begin
         QsSeed(2);
         Page.RunModal(Page::"LT QS KeyDesc Card");
-        Observer.Finish();
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'V:VERSION(1) SORTING(Field2) ORDER(1);O:D;R:D;C:D;');
+        Observer.Expect('next', 'No|D');
+        Observer.Expect('next log', '');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
     end;
 }
