@@ -502,18 +502,6 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Verify();
     end;
 
-    [TryFunction]
-    local procedure TryInsertTimeKey(var K: Record "LT RH Time Key Row")
-    begin
-        K.Insert();
-    end;
-
-    [TryFunction]
-    local procedure TryInsertDateTimeKey(var K: Record "LT RH DateTime Key Row")
-    begin
-        K.Insert();
-    end;
-
     local procedure KeyTime(var K: Record "LT RH Time Key Row"): Text
     begin
         exit(K."Entry Code" + '|' + Format(K."Entry Time", 0, 9) + '|' + Format(K."Entry Time" - 000000T) + '|' + K.Note);
@@ -566,8 +554,8 @@ codeunit 73549 "LT P130 Date Filters"
         K."Entry Code" := 'A';
         K."Entry Time" := 100000T;
         K.Note := 'third';
-        Observer.Observe('insert .000 try', Format(TryInsertTimeKey(K)));
-        Observer.ObserveError('insert .000 error');
+        K.Insert();
+        Observer.Observe('insert .000 plain', 'returned');
         K.Reset();
         Observer.Observe('count after duplicate', Format(K.Count()));
         if K.FindSet() then
@@ -660,8 +648,8 @@ codeunit 73549 "LT P130 Date Filters"
         K."At" := Base;
         K.Note := 'second';
         ClearLastError();
-        Observer.Observe('insert .000 try', Format(TryInsertDateTimeKey(K)));
-        Observer.ObserveError('insert .000 error');
+        K.Insert();
+        Observer.Observe('insert .000 plain', 'returned');
         K.Reset();
         Observer.Observe('count after duplicate', Format(K.Count()));
         K.Init();
@@ -672,6 +660,10 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Observe('get next day', Format(K.Get(CreateDateTime(20240326D, 000000T))) + '|' + Format(K."At", 0, 9));
         K.Reset();
         Observer.Observe('count', Format(K.Count()));
+        if K.FindSet() then
+            repeat
+                Observer.Observe('row', Format(K."At", 0, 9) + '|' + K.Note);
+            until K.Next() = 0;
         Observer.Finish();
     end;
 }

@@ -153,6 +153,23 @@ codeunit 98200 "LT RH Agent Natives"
         Answer := false;
         Ok := TrySandboxOrFirstParty(true, Answer);
         ObserveTry('sandbox or first party true', Ok, Answer);
-        Observer.Finish();
+        Observer.Expect('sandbox', 'Yes|Yes');
+        Observer.Expect('sandbox error|text', '');
+        Observer.Expect('sandbox error|code', '');
+        Observer.Expect('positive listed', 'No|No');
+        Observer.Expect('positive listed error|text', 'Feature availability can only be checked by Microsoft applications.');
+        Observer.Expect('positive listed error|code', 'InvalidOperation');
+#if BC28PLUS
+        Observer.Expect('test session', 'No|No');
+        Observer.Expect('test session error|text', 'Feature availability can only be checked by Microsoft applications.');
+        Observer.Expect('test session error|code', 'InvalidOperation');
+#endif
+        Observer.Expect('sandbox or first party false', 'No|No');
+        Observer.Expect('sandbox or first party false error|text', 'Feature availability can only be checked by Microsoft applications.');
+        Observer.Expect('sandbox or first party false error|code', 'InvalidOperation');
+        Observer.Expect('sandbox or first party true', 'No|No');
+        Observer.Expect('sandbox or first party true error|text', 'Feature availability can only be checked by Microsoft applications.');
+        Observer.Expect('sandbox or first party true error|code', 'InvalidOperation');
+        Observer.Verify();
     end;
 }
