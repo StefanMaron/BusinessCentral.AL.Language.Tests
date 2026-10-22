@@ -227,6 +227,58 @@ report 67760 "W3 Lang Rpt"
     end;
 }
 
+// Writer RB (AL Runner issues 5681 and 5666): the dataset values when the language or region is set before SaveAs (GlobalLanguage, the
+// Language and FormatRegion of the report variable), for Decimal, Integer, Date, Time, DateTime and Boolean columns and for Format() texts.
+report 87800 "LT RB Fmt Rpt"
+{
+    ProcessingOnly = false;
+    UsageCategory = None;
+
+    dataset
+    {
+        dataitem(Row; "W3 Row")
+        {
+            column(Id; Id) { }
+            column(DecC; DecVar) { }
+            column(NegDecC; NegDecVar) { }
+            column(IntC; IntVar) { }
+            column(DateC; DateVar) { }
+            column(TimeC; TimeVar) { }
+            column(DtC; DtVar) { }
+            column(BoolC; BoolVar) { }
+            column(FmtC; FmtVar) { }
+
+            trigger OnAfterGetRecord()
+            begin
+                DecVar := 1234.5;
+                NegDecVar := -1234567.891;
+                IntVar := 1234567;
+                DateVar := DMY2Date(5, 3, 2024);
+                TimeVar := 093005T;
+                DtVar := CreateDateTime(DateVar, TimeVar);
+                BoolVar := true;
+                FmtVar := Format(DecVar) + '|' + Format(NegDecVar) + '|' + Format(IntVar) + '|' + Format(DateVar) + '|' + Format(TimeVar) + '|' + Format(BoolVar);
+            end;
+        }
+    }
+
+    var
+        DecVar: Decimal;
+        NegDecVar: Decimal;
+        IntVar: Integer;
+        DateVar: Date;
+        TimeVar: Time;
+        DtVar: DateTime;
+        BoolVar: Boolean;
+        FmtVar: Text;
+        L: Codeunit "W3 ObjId Log";
+
+    trigger OnPreReport()
+    begin
+        L.Add('pre language=' + Format(CurrReport.Language) + ' region=[' + CurrReport.FormatRegion + '] global=' + Format(GlobalLanguage()));
+    end;
+}
+
 // Writer QV (AL Runner issue 5666): CurrReport.Preview read in a dataset column (directly and through a report procedure), in the report
 // triggers and in the request page triggers, for each way the tests of codeunit 67761 start the report. RDLC layout, so SaveAs Pdf and
 // the Preview and Print actions of the request page have a layout.
@@ -777,5 +829,101 @@ codeunit 67761 "W3 ObjId Probe"
             'print':
                 RP.Print().Invoke();
         end;
+    end;
+
+    // Writer RB: SaveAs Xml of report 87800 with nothing set, after GlobalLanguage(1031), and with Language / FormatRegion set on the
+    // report variable before SaveAs. GlobalLanguage is put back.
+    // BC 29.0: a language (global or on the variable) changes only Format() texts (Yes/Ja) and the item language; FormatRegion changes
+    // the column values and Format() texts of decimals, dates and times.
+    local procedure RbRun(var Rpt: Report "LT RB Fmt Rpt"; var Observer: Codeunit "Probe Observer")
+    var
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        Xml: Text;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        Observer.Observe('saved', Format(Rpt.SaveAs('', ReportFormat::Xml, OutS), 0, 9));
+        Xml := Dataset.ReadAll(TempBlob);
+        Observer.Observe('log', L.Take());
+        Observer.Observe('columns', Dataset.ColumnLines(Xml));
+        Observer.Observe('item language', Dataset.ItemAttribute(Xml, 1, 'language'));
+        Observer.Observe('item formatRegion', Dataset.ItemAttribute(Xml, 1, 'formatRegion'));
+    end;
+
+    [Test]
+    procedure RB_SaveAs_NothingSet()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT RB Fmt Rpt";
+    begin
+        Seed();
+        RbRun(Rpt, Observer);
+        Observer.Expect('saved', 'true');
+        Observer.Expect('log', 'pre language=1033 region=[] global=1033;');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="NegDecC" decimalformatter="#,##0.00">-1234567.891</Column>|<Column name="IntC">1234567</Column>|<Column name="DateC">3/5/2024</Column>|<Column name="TimeC">9:30:05 AM</Column>|<Column name="DtC">3/5/2024 9:30:05 AM</Column>|<Column name="BoolC">True</Column>|<Column name="FmtC">1,234.5|-1,234,567.891|1234567|03/05/24| 9:30:05 AM|Yes</Column>|');
+        Observer.Expect('item language', 'en-US');
+        Observer.Expect('item formatRegion', 'en-US');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RB_SaveAs_AfterGlobalLanguage1031()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT RB Fmt Rpt";
+        OldLanguage: Integer;
+    begin
+        Seed();
+        OldLanguage := GlobalLanguage();
+        Observer.Observe('set 1031 ok', Format(TrySetGlobalLanguage(1031), 0, 9));
+        RbRun(Rpt, Observer);
+        TrySetGlobalLanguage(OldLanguage);
+        Observer.Observe('language restored', Format(GlobalLanguage() = OldLanguage, 0, 9));
+        Observer.Expect('set 1031 ok', 'true');
+        Observer.Expect('saved', 'true');
+        Observer.Expect('log', 'pre language=1031 region=[] global=1031;');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="NegDecC" decimalformatter="#,##0.00">-1234567.891</Column>|<Column name="IntC">1234567</Column>|<Column name="DateC">3/5/2024</Column>|<Column name="TimeC">9:30:05 AM</Column>|<Column name="DtC">3/5/2024 9:30:05 AM</Column>|<Column name="BoolC">True</Column>|<Column name="FmtC">1,234.5|-1,234,567.891|1234567|03/05/24| 9:30:05 AM|Ja</Column>|');
+        Observer.Expect('item language', 'de-DE');
+        Observer.Expect('item formatRegion', 'en-US');
+        Observer.Expect('language restored', 'true');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RB_SaveAs_ReportVariableLanguage1031()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT RB Fmt Rpt";
+    begin
+        Seed();
+        Rpt.Language := 1031;
+        Observer.Observe('read before run', Format(Rpt.Language));
+        RbRun(Rpt, Observer);
+        Observer.Expect('read before run', '1031');
+        Observer.Expect('saved', 'true');
+        Observer.Expect('log', 'pre language=1031 region=[] global=1033;');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="NegDecC" decimalformatter="#,##0.00">-1234567.891</Column>|<Column name="IntC">1234567</Column>|<Column name="DateC">3/5/2024</Column>|<Column name="TimeC">9:30:05 AM</Column>|<Column name="DtC">3/5/2024 9:30:05 AM</Column>|<Column name="BoolC">True</Column>|<Column name="FmtC">1,234.5|-1,234,567.891|1234567|03/05/24| 9:30:05 AM|Ja</Column>|');
+        Observer.Expect('item language', 'de-DE');
+        Observer.Expect('item formatRegion', 'en-US');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RB_SaveAs_ReportVariableFormatRegionDeDE()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT RB Fmt Rpt";
+    begin
+        Seed();
+        Rpt.FormatRegion := 'de-DE';
+        Observer.Observe('read before run', Rpt.FormatRegion);
+        RbRun(Rpt, Observer);
+        Observer.Expect('read before run', 'de-DE');
+        Observer.Expect('saved', 'true');
+        Observer.Expect('log', 'pre language=1033 region=[de-DE] global=1033;');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234,5</Column>|<Column name="NegDecC" decimalformatter="#,##0.00">-1234567,891</Column>|<Column name="IntC">1234567</Column>|<Column name="DateC">05.03.2024</Column>|<Column name="TimeC">09:30:05</Column>|<Column name="DtC">05.03.2024 09:30:05</Column>|<Column name="BoolC">True</Column>|<Column name="FmtC">1.234,5|-1.234.567,891|1234567|05.03.24|09:30:05|Yes</Column>|');
+        Observer.Expect('item language', 'en-US');
+        Observer.Expect('item formatRegion', 'de-DE');
+        Observer.Verify();
     end;
 }
