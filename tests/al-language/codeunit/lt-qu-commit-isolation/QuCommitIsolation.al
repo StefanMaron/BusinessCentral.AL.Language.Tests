@@ -21,7 +21,25 @@
 // D (Disabled), N (no property). Every A test that writes without observing never fails, so a failure elsewhere cannot change
 // what the readers see.
 // Not asked here: a test that fails after Commit() (a red test cannot be part of the corpus).
+//
+// Measured on BC 27.5, 28.5 and 29.0 (Linux legs):
+//   - Inside a test, Commit() acts as a real commit of the inner transaction under every isolation: IsInWriteTransaction is
+//     No after it (X05), a guarded Codeunit.Run is refused while a write is open ("the transaction is stopped", DB:Ok) and
+//     allowed after Commit() (X06), and an error trapped by asserterror undoes only the writes since the last Commit() (X07).
+//   - Commit() inside a TryFunction fails with TryFunctionWrite under every isolation (X08).
+//   - A test-method boundary never leaves a write transaction open (tx_at_start = No in X04, X09, X11).
+//   - Codeunit isolation (and no property): every row survives into the later tests of the codeunit, committed or not (C04,
+//     C09), and NOTHING survives into the next test codeunit, Commit() included (C11, N11): the isolation is an outer
+//     transaction a Commit() inside the test does not end.
+//   - Function isolation, BC 28+: nothing survives into the next test, Commit() and a committing Codeunit.Run included (F04,
+//     F09); BC 27: as Codeunit isolation.
+//   - Disabled isolation, BC 28+: everything survives into the next codeunit, including the write still open when a test ended
+//     (D11 cb): the boundary commits it; BC 27: as Codeunit isolation.
+// The BC28PLUS guards mark a difference of the test HARNESS, not of the platform version: BC 27 legs run every codeunit under
+// 130450 (TestIsolation = Codeunit), which takes no account of RequiredTestIsolation; BC 28+ legs run these codeunits (no
+// [HandlerFunctions]) through the TestRunnerHub, which takes the isolation from RequiredTestIsolation.
 // Object ids 87440-87450.
+// BC versions: 27.5, 28.5, 29.0
 
 table 87440 "LT QU Row"
 {
@@ -330,7 +348,13 @@ codeunit 87442 "LT QU Codeunit A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveTryCommit('C', Observer);
-        Observer.Finish();
+        Observer.Expect('try|text', 'Call to the function ''COMMIT'' is not allowed inside the call to ''QU_C08_CommitInTryFunction'' when it is used as a TryFunction.');
+        Observer.Expect('try|code', 'TryFunctionWrite');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('tx_after', 'No');
+        Observer.Expect('committed_before_try', 'Yes');
+        Observer.Expect('open_when_try_started', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,7 +363,15 @@ codeunit 87442 "LT QU Codeunit A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveCommittedByEarlierTests('C', Observer);
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('w1', 'Yes');
+        Observer.Expect('w2', 'Yes');
+        Observer.Expect('r2', 'Yes');
+        Observer.Expect('r3', 'Yes');
+        Observer.Expect('e0', 'Yes');
+        Observer.Expect('e1', 'Yes');
+        Observer.Expect('t0', 'Yes');
+        Observer.Verify();
     end;
 }
 
@@ -356,7 +388,22 @@ codeunit 87443 "LT QU Codeunit B"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveEarlierCodeunit('C', Observer);
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('nc', 'No');
+        Observer.Expect('cm', 'No');
+        Observer.Expect('ca', 'No');
+        Observer.Expect('cb', 'No');
+        Observer.Expect('w1', 'No');
+        Observer.Expect('w2', 'No');
+        Observer.Expect('r0', 'No');
+        Observer.Expect('r2', 'No');
+        Observer.Expect('r3', 'No');
+        Observer.Expect('e0', 'No');
+        Observer.Expect('e1', 'No');
+        Observer.Expect('e2', 'No');
+        Observer.Expect('t0', 'No');
+        Observer.Expect('t1', 'No');
+        Observer.Verify();
     end;
 }
 
@@ -466,7 +513,13 @@ codeunit 87444 "LT QU Function A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveTryCommit('F', Observer);
-        Observer.Finish();
+        Observer.Expect('try|text', 'Call to the function ''COMMIT'' is not allowed inside the call to ''QU_F08_CommitInTryFunction'' when it is used as a TryFunction.');
+        Observer.Expect('try|code', 'TryFunctionWrite');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('tx_after', 'No');
+        Observer.Expect('committed_before_try', 'Yes');
+        Observer.Expect('open_when_try_started', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -475,7 +528,26 @@ codeunit 87444 "LT QU Function A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveCommittedByEarlierTests('F', Observer);
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('w1', 'No');
+        Observer.Expect('w2', 'No');
+        Observer.Expect('r2', 'No');
+        Observer.Expect('r3', 'No');
+        Observer.Expect('e0', 'No');
+        Observer.Expect('e1', 'No');
+        Observer.Expect('t0', 'No');
+#else
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('w1', 'Yes');
+        Observer.Expect('w2', 'Yes');
+        Observer.Expect('r2', 'Yes');
+        Observer.Expect('r3', 'Yes');
+        Observer.Expect('e0', 'Yes');
+        Observer.Expect('e1', 'Yes');
+        Observer.Expect('t0', 'Yes');
+#endif
+        Observer.Verify();
     end;
 }
 
@@ -492,7 +564,22 @@ codeunit 87445 "LT QU Function B"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveEarlierCodeunit('F', Observer);
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('nc', 'No');
+        Observer.Expect('cm', 'No');
+        Observer.Expect('ca', 'No');
+        Observer.Expect('cb', 'No');
+        Observer.Expect('w1', 'No');
+        Observer.Expect('w2', 'No');
+        Observer.Expect('r0', 'No');
+        Observer.Expect('r2', 'No');
+        Observer.Expect('r3', 'No');
+        Observer.Expect('e0', 'No');
+        Observer.Expect('e1', 'No');
+        Observer.Expect('e2', 'No');
+        Observer.Expect('t0', 'No');
+        Observer.Expect('t1', 'No');
+        Observer.Verify();
     end;
 }
 
@@ -594,7 +681,13 @@ codeunit 87446 "LT QU Disabled A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveTryCommit('D', Observer);
-        Observer.Finish();
+        Observer.Expect('try|text', 'Call to the function ''COMMIT'' is not allowed inside the call to ''QU_D08_CommitInTryFunction'' when it is used as a TryFunction.');
+        Observer.Expect('try|code', 'TryFunctionWrite');
+        Observer.Expect('ok', 'No');
+        Observer.Expect('tx_after', 'No');
+        Observer.Expect('committed_before_try', 'Yes');
+        Observer.Expect('open_when_try_started', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -603,7 +696,15 @@ codeunit 87446 "LT QU Disabled A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveCommittedByEarlierTests('D', Observer);
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('w1', 'Yes');
+        Observer.Expect('w2', 'Yes');
+        Observer.Expect('r2', 'Yes');
+        Observer.Expect('r3', 'Yes');
+        Observer.Expect('e0', 'Yes');
+        Observer.Expect('e1', 'Yes');
+        Observer.Expect('t0', 'Yes');
+        Observer.Verify();
     end;
 }
 
@@ -620,7 +721,40 @@ codeunit 87447 "LT QU Disabled B"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveEarlierCodeunit('D', Observer);
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('nc', 'Yes');
+        Observer.Expect('cm', 'Yes');
+        Observer.Expect('ca', 'Yes');
+        Observer.Expect('cb', 'Yes');
+        Observer.Expect('w1', 'Yes');
+        Observer.Expect('w2', 'Yes');
+        Observer.Expect('r0', 'No');
+        Observer.Expect('r2', 'Yes');
+        Observer.Expect('r3', 'Yes');
+        Observer.Expect('e0', 'Yes');
+        Observer.Expect('e1', 'Yes');
+        Observer.Expect('e2', 'No');
+        Observer.Expect('t0', 'Yes');
+        Observer.Expect('t1', 'No');
+#else
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('nc', 'No');
+        Observer.Expect('cm', 'No');
+        Observer.Expect('ca', 'No');
+        Observer.Expect('cb', 'No');
+        Observer.Expect('w1', 'No');
+        Observer.Expect('w2', 'No');
+        Observer.Expect('r0', 'No');
+        Observer.Expect('r2', 'No');
+        Observer.Expect('r3', 'No');
+        Observer.Expect('e0', 'No');
+        Observer.Expect('e1', 'No');
+        Observer.Expect('e2', 'No');
+        Observer.Expect('t0', 'No');
+        Observer.Expect('t1', 'No');
+#endif
+        Observer.Verify();
     end;
 }
 
@@ -714,6 +848,21 @@ codeunit 87449 "LT QU NoProperty B"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveEarlierCodeunit('N', Observer);
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('nc', 'No');
+        Observer.Expect('cm', 'No');
+        Observer.Expect('ca', 'No');
+        Observer.Expect('cb', 'No');
+        Observer.Expect('w1', 'No');
+        Observer.Expect('w2', 'No');
+        Observer.Expect('r0', 'No');
+        Observer.Expect('r2', 'No');
+        Observer.Expect('r3', 'No');
+        Observer.Expect('e0', 'No');
+        Observer.Expect('e1', 'No');
+        Observer.Expect('e2', 'No');
+        Observer.Expect('t0', 'No');
+        Observer.Expect('t1', 'No');
+        Observer.Verify();
     end;
 }
