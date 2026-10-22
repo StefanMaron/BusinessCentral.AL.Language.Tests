@@ -1237,7 +1237,7 @@ codeunit 73850 "LT RpT Request Page"
 
     // Writer RI (al-runtime-rs issue 5691): the handler's SetValue raises and the handler does not catch it (objects in
     // RiRequestPageRefusedEntry.al). The error leaves Report.Run; the log shows which close triggers ran. A second run in the same test
-    // shows whether the page was closed.
+    // shows whether the page was closed. The value the failed OnValidate saw (Yes) is not kept: OnQueryClosePage reads No.
     [Test]
     [HandlerFunctions('RiRefusedHandler')]
     procedure RI_HandlerSetValue_OnValidateError_ReachesRun()
@@ -1254,7 +1254,7 @@ codeunit 73850 "LT RpT Request Page"
         Observer.Observe('next run', L.Take());
         Observer.Expect('err|text', 'Validation error for Field: ApplyCtl,  Message = ''LT RI apply rejected''');
         Observer.Expect('err|code', 'TestValidation');
-        Observer.Expect('log', 'RP OnOpenPage;h apply;validate apply=Yes;RP OnQueryClosePage action=Cancel apply=Yes int=0;RP OnClosePage;');
+        Observer.Expect('log', 'RP OnOpenPage;h apply;validate apply=Yes;RP OnQueryClosePage action=Cancel apply=No int=0;RP OnClosePage;');
         Observer.Expect('next run', 'RP OnOpenPage;h ok;RP OnQueryClosePage action=OK apply=No int=0;RP OnClosePage;OnPreReport apply=No int=0;row 1;row 2;row 3;row 4;');
         Observer.Verify();
     end;
