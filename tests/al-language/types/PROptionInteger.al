@@ -323,6 +323,7 @@ codeunit 69540 "PR Option Integer Probe"
         Observer.Observe('Quantity vs label D 1', Hit);
         // D := 1.5 here stops the test on the Linux BC container with 'Overflow under conversion of
         // Microsoft.Dynamics.Nav.Runtime.Decimal18 value 1.5 to System.Int32.' (27.5, 28.5, 29.0): queued for the Windows check, not asserted.
-        Observer.Finish();
+        Observer.Expect('Quantity vs label D 1', 'D');
+        Observer.Verify();
     end;
 }
