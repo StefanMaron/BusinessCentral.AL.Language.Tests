@@ -504,12 +504,17 @@ codeunit 69815 "PA Misc Contracts"
         O.Expect('packageid_equals_id', 'No');
         O.Expect('dataversion_equals_appversion', 'Yes');
         O.Expect('publisher_isempty', 'No');
-        O.Expect('dependencies_count', '6');
+        // 9 since the three cross-app fixtures (CONTRIBUTING.md, "Multi-app fixtures") became dependencies of this app. Dependencies()
+        // lists the apps in ascending app id order (the six earlier entries were already in that order).
+        O.Expect('dependencies_count', '9');
+        O.Expect('dependency_AL Language XApp C', '{0DF0FADC-D339-4B0F-A1D5-51DC51F10900} Bravo Probe Publisher');
         O.Expect('dependency_Permissions Mock', '{40860557-A18D-42AD-AECB-22B7DD80DC80} Microsoft');
         O.Expect('dependency_Base Application', '{437DBF0E-84FF-417A-965D-ED2BB9650972} Microsoft');
         O.Expect('dependency_System Application', '{63CA2FA4-4F03-4F2B-A480-172FEF340D3F} Microsoft');
         O.Expect('dependency_System Application Test Library', '{9856AE4F-D1A7-46EF-89BB-6EF056398228} Microsoft');
         O.Expect('dependency_Application', '{C1335042-3002-4257-BF8A-75C898CCB1B8} Microsoft');
+        O.Expect('dependency_AL Language XApp B', '{C87CED6D-11A6-4AD2-87C7-AC10083D0A2F} Zulu Probe Publisher');
+        O.Expect('dependency_AL Language XApp A', '{CD6A4292-F27B-4AF9-89BC-15A5956F5C71} AL Language');
         O.Expect('dependency_AL Internals Test Fixture', '{F1E2D3C4-B5A6-7890-FEDC-BA9876543210} AL Language');
         O.Verify();
     end;

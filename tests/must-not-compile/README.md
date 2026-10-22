@@ -15,7 +15,7 @@ The header is the run of `//` comment lines at the top. A line `// @key value` i
 |---|---|
 | `// @expect AL0161 \| 'Hidden' is inaccessible due to its protection level` | one expected diagnostic: code, then the text. Repeat the line for several diagnostics. The recorded text must be the START of the compiler's text (the compilers differ in the explanation they append), and the diagnostics found must match the `@expect` lines exactly, none missing, none extra. |
 | `// @target OnPrem` | the app's target; default `Cloud`. |
-| `// @depends Base Application,System Application` | the dependencies; this is the default (names are `Base Application` and `System Application`). |
+| `// @depends Base Application,System Application` | the dependencies; this is the default (names are `Base Application` and `System Application`). A cross-app case may also name the corpus apps `AL Internals Test Fixture`, `AL Language XApp A`, `AL Language XApp B` and `AL Language XApp C` (CONTRIBUTING.md, "Multi-app fixtures"); their compiled `.app` files, and those of their dependencies, must then be in the `--symbols` folder. |
 | `// @appjson {"assemblyProbingPaths": ["./x"]}` | JSON merged into the generated app.json (for diagnostics about app.json). |
 | `// @from 27` / `// @until 28` | the BC majors the verdict holds for (default all). |
 | `// @max-al 17` | the case is skipped with a compiler newer than this AL major (the verdict is that of the AL 16 and 17 compilers; AL 18 and later accept the file). |

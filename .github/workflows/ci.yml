@@ -273,7 +273,14 @@ jobs:
       runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-bcc60c1c74c72098cfc368de89034051238f4592"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
-      app_dirs:             "tests/al-language-internals-fixture"
+      # Dependency apps of al-language, in publish order (an app after the apps it depends on). The three cross-app fixtures
+      # (CONTRIBUTING.md, "Multi-app fixtures") hold no tests: al-language depends on them, and their app ids, names and publishers are
+      # chosen for the cross-app subscriber order probe. Every job that compiles al-language lists them, in this order.
+      app_dirs: |
+        tests/al-language-internals-fixture
+        tests/al-language-xapp-a
+        tests/al-language-xapp-b
+        tests/al-language-xapp-c
       test_app_dirs:        "tests/al-language"
       # The quoted range after || is this job's full range. Every job's full range is 50000..99999, every id a test app
       # can use, so a new id block never needs an edit here (the runner reads the Subtype = Test codeunits of the test
@@ -361,6 +368,9 @@ jobs:
       # resolve. Its own tests are not run in this job - the test job above owns them.
       app_dirs: |
         tests/al-language-internals-fixture
+        tests/al-language-xapp-a
+        tests/al-language-xapp-b
+        tests/al-language-xapp-c
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem"
       codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-onprem'] || '50000..99999' }}
@@ -400,6 +410,9 @@ jobs:
       bc_country:           "w1"
       app_dirs: |
         tests/al-language-internals-fixture
+        tests/al-language-xapp-a
+        tests/al-language-xapp-b
+        tests/al-language-xapp-c
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem-dotnet"
       assembly_probing_paths: |
@@ -419,3 +432,55 @@ jobs:
     #   base64 -w0 < your.bclicense | gh secret set BC_LICENSE
     # secrets:
     #   bc_license: ${{ secrets.BC_LICENSE }}
+
+  # The test app tests/al-language-testlibraries, in a job of its own that also installs Microsoft's Tests-TestLibraries
+  # and Data Archive apps (bc-linux input extra_apps, MsDyn365Bc.On.Linux PR 128).
+  #
+  # WHY A SEPARATE JOB. A Windows container made with BcContainerHelper has these two apps installed; the Linux tier
+  # keeps only the apps that the corpus apps depend on. They change results that AL code can see:
+  #   * Tests-TestLibraries codeunit 130011 "Backup Management" sets all four flags of GetDatabaseTableTriggerSetup to
+  #     true for every table id in 1..99999 (MsDyn365Bc.On.Linux issue 125);
+  #   * the Test Runner's codeunit 130453 runs 130301 "Reset State Before Test Run" before each test and, when the
+  #     test's TestPermissions is not Disabled, 130302 "Set State Test Run", which lowers the session to the permission
+  #     set 'D365 Full Access'. Without Tests-TestLibraries neither codeunit exists (corpus issue 658).
+  # The test job above keeps its installed-app set unchanged: al-runtime-rs models that set as its oracle environment.
+  # A test belongs in tests/al-language-testlibraries only when its result needs these apps. Its objects live in
+  # 81550..81649 (codeunit_range below; on a pull request the prepare job may pass only the selected codeunits).
+  #
+  # Not a required status check yet: its checks are named "BC TestLibraries <ver> / test", and the repository's
+  # rulesets list only "BC <ver> / test" (add them there once the job has run green for a while).
+  test-testlibraries:
+    name: BC TestLibraries ${{ matrix.bc_version }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    # Same bc-linux pin as the jobs above (bcc60c1c has the extra_apps input).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
+    with:
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-bcc60c1c74c72098cfc368de89034051238f4592"
+      bc_version:           ${{ matrix.bc_version }}
+      bc_country:           "w1"
+      # al-language is published only because the test app depends on it (Probe Observer). Its own tests run in the
+      # test job above.
+      app_dirs: |
+        tests/al-language-internals-fixture
+        tests/al-language-xapp-a
+        tests/al-language-xapp-b
+        tests/al-language-xapp-c
+        tests/al-language
+      test_app_dirs:        "tests/al-language-testlibraries"
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-testlibraries'] || '81550..81649' }}
+      extra_apps: |
+        Tests-TestLibraries
+        Data Archive
+      preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
+      al_tool_version:      "30.0.42.60748-beta"
+      runtime_version:      ${{ matrix.runtime }}
+      bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
+      # Full-text search: al-language has tables with OptimizeForTextSearch = true (corpus #633).
+      sql_image:            "ghcr.io/aldevtools/msdyn365bc.on.linux/mssql:2022-fts"
+      # RDLC rendering: see the test job above (al-language holds RDLC reports).
+      rdlc_renderer:        true
+      rdlc_trust_layouts:   true

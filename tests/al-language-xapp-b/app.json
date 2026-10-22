@@ -1,0 +1,42 @@
+{
+  "id": "c87ced6d-11a6-4ad2-87c7-ac10083d0a2f",
+  "name": "AL Language XApp B",
+  "publisher": "Zulu Probe Publisher",
+  "version": "1.0.0.0",
+  "brief": "Cross-app fixture B: extends the objects of cross-app fixture A.",
+  "description": "Table extensions of cross-app fixture A's tables, a page with a protected variable whose type comes from the AL Internals Test Fixture app, and subscribers of the cross-app order probe. Depends on cross-app fixture A and the AL Internals Test Fixture. The app id, name and publisher are fixed on purpose: they decide the candidate orders of the cross-app subscriber order probe (CONTRIBUTING.md, \"Multi-app fixtures\"). Do not change them.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "platform": "27.0.0.0",
+  "dependencies": [
+    {
+      "id": "f1e2d3c4-b5a6-7890-fedc-ba9876543210",
+      "name": "AL Internals Test Fixture",
+      "publisher": "AL Language",
+      "version": "1.0.0.0"
+    },
+    {
+      "id": "cd6a4292-f27b-4af9-89bc-15a5956f5c71",
+      "name": "AL Language XApp A",
+      "publisher": "AL Language",
+      "version": "1.0.0.0"
+    }
+  ],
+  "screenshots": [],
+  "idRanges": [
+    {
+      "from": 61110,
+      "to": 61119
+    },
+    {
+      "from": 61140,
+      "to": 61149
+    }
+  ],
+  "features": [],
+  "runtime": "18.0",
+  "target": "Cloud"
+}
