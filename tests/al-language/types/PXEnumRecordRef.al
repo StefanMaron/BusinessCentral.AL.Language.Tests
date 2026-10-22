@@ -1,7 +1,7 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/recordref/recordref-getbysystemid-method
 // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-enum-assignment-compatibility
 // Scope: in-scope
-// Fixtures used: self-contained enums 69185 to 69187, table 69185, codeunit 69185
+// Fixtures used: self-contained enums 69185 to 69187, table 69185, codeunit 69185; writer QX: table 87571 (QX_Get_EnumKey_NotFoundErrors)
 // Probe: written against a real BC 27.5 service tier; every literal below is what that tier produced. Other BC versions were not measured.
 //
 // Enum to Enum: an enum of another type is assigned only when the TARGET enum states AssignmentCompatibility = true (the source's property does not matter; without it
@@ -299,4 +299,69 @@ codeunit 69185 "PX Enum Probe"
         Observer.Expect('never_opened_ref_number', '0');
         Observer.Verify();
     end;
+
+    // ---- Writer QX (Microsoft's DemoTool: ProductionOrder.Get(Type, ProductionOrderNo) with an Integer for the Enum key field Status and no
+    // such row): the not-found error of a Get keyed by an Integer, an Option and an enum of another type on an Enum key field (table 87571,
+    // key Status (Enum) then No.), and on table PX Row (key Code then Kind). Result unused: the error text and code. ----
+
+    [Test]
+    procedure QX_Get_EnumKey_NotFoundErrors()
+    var
+        Row: Record "LT QX Enum First Row";
+        PxRow: Record "PX Row";
+        Int: Integer;
+        Opt: Option None,Uno,Dos;
+        Other: Enum "PX Src Compat";
+        Own: Enum "PX Dst Compat";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Row.DeleteAll();
+        Row.Status := Row.Status::Dos;
+        Row."No." := 'P1';
+        Row.Insert();
+        Int := 2;
+        Observer.Observe('integer found', Format(Row.Get(Int, 'P1')));
+        Int := 2;
+        asserterror Row.Get(Int, 'P9');
+        Observer.ObserveError('integer declared ordinal, no row');
+        Int := 7;
+        asserterror Row.Get(Int, 'P1');
+        Observer.ObserveError('integer ordinal the enum lacks');
+        asserterror Row.Get(1, 'P1');
+        Observer.ObserveError('integer literal');
+        Opt := Opt::Uno;
+        asserterror Row.Get(Opt, 'P1');
+        Observer.ObserveError('option');
+        Other := Other::Seven;
+        asserterror Row.Get(Other, 'P1');
+        Observer.ObserveError('other enum ordinal the key enum lacks');
+        Other := Other::One;
+        asserterror Row.Get(Other, 'P1');
+        Observer.ObserveError('other enum declared ordinal');
+        Own := Own::Nueve;
+        asserterror Row.Get(Own, 'P1');
+        Observer.ObserveError('own enum');
+        PxRow.DeleteAll();
+        Int := 9;
+        asserterror PxRow.Get('A', Int);
+        Observer.ObserveError('px row integer second key field');
+        Row.DeleteAll();
+        Observer.Finish();
+    end;
+}
+
+table 87571 "LT QX Enum First Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Status; Enum "PX Dst Compat") { }
+        field(2; "No."; Code[20]) { }
+    }
+
+    keys
+    {
+        key(PK; Status, "No.") { Clustered = true; }
+    }
 }

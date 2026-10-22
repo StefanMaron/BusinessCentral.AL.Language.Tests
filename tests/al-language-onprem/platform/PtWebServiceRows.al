@@ -2,6 +2,7 @@
 // Scope: OnPrem app only: the Web Service table (2000000076) has Scope = OnPrem, so a RecordRef from a Target = Cloud app cannot open it.
 // Fixtures used: Probe Observer (69160)
 // Probe: the columns and the rows of the Web Service table in a fresh tenant (issue 580 item 7). Object id 61281.
+// Writer QX (Microsoft's DemoTool): System Application Web Service Management.CreateWebService and CreateTenantWebService on page 42.
 
 codeunit 61281 "LT PT Web Service Rows"
 {
@@ -71,8 +72,64 @@ codeunit 61281 "LT PT Web Service Rows"
         Observer.Verify();
     end;
 
+    // ---- Writer QX (Microsoft's DemoTool, Create Web Services: WebServiceManagement.CreateWebService(Page, Page::"Sales Order", '', true)):
+    // the Web Service and Tenant Web Service rows for page 42 before and after, the name an empty ObjectName gives, a second call, a named call. ----
 
+    local procedure QxRowsFor(ObjectId: Integer): Text
+    var
+        WebService: Record "Web Service";
+        TenantWebService: Record "Tenant Web Service";
+        Result: Text;
+    begin
+        WebService.SetRange("Object Type", WebService."Object Type"::Page);
+        WebService.SetRange("Object ID", ObjectId);
+        if WebService.FindSet() then
+            repeat
+                Result += 'ws[' + WebService."Service Name" + '|' + Format(WebService.Published) + ']';
+            until WebService.Next() = 0;
+        TenantWebService.SetRange("Object Type", TenantWebService."Object Type"::Page);
+        TenantWebService.SetRange("Object ID", ObjectId);
+        if TenantWebService.FindSet() then
+            repeat
+                Result += 'tws[' + TenantWebService."Service Name" + '|' + Format(TenantWebService.Published) + ']';
+            until TenantWebService.Next() = 0;
+        exit(Result);
+    end;
 
+    local procedure QxCounts(): Text
+    var
+        WebService: Record "Web Service";
+        TenantWebService: Record "Tenant Web Service";
+    begin
+        exit(Format(WebService.Count()) + '|' + Format(TenantWebService.Count()));
+    end;
 
-
+    [Test]
+    procedure QX_CreateWebService_SalesOrderPage()
+    var
+        WebService: Record "Web Service";
+        TenantWebService: Record "Tenant Web Service";
+        WebServiceManagement: Codeunit "Web Service Management";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('counts before', QxCounts());
+        Observer.Observe('page 42 before', QxRowsFor(Page::"Sales Order"));
+        WebServiceManagement.CreateWebService(WebService."Object Type"::Page, Page::"Sales Order", '', true);
+        Observer.Observe('counts after', QxCounts());
+        Observer.Observe('page 42 after', QxRowsFor(Page::"Sales Order"));
+        WebServiceManagement.CreateWebService(WebService."Object Type"::Page, Page::"Sales Order", '', false);
+        Observer.Observe('page 42 after unpublished call', QxRowsFor(Page::"Sales Order"));
+        WebServiceManagement.CreateWebService(WebService."Object Type"::Page, Page::"Sales Order", '', true);
+        WebServiceManagement.CreateWebService(WebService."Object Type"::Page, Page::"Sales Order", 'LTQXSalesOrder', true);
+        Observer.Observe('page 42 after named call', QxRowsFor(Page::"Sales Order"));
+        WebServiceManagement.CreateTenantWebService(WebService."Object Type"::Page, Page::"Sales Order", 'LTQXTenantSalesOrder', true);
+        Observer.Observe('page 42 after tenant call', QxRowsFor(Page::"Sales Order"));
+        Observer.Observe('counts end', QxCounts());
+        WebService.SetFilter("Service Name", 'LTQX*');
+        WebService.DeleteAll();
+        TenantWebService.SetFilter("Service Name", 'LTQX*');
+        TenantWebService.DeleteAll();
+        Observer.Observe('counts cleaned', QxCounts());
+        Observer.Finish();
+    end;
 }
