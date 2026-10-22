@@ -43,9 +43,18 @@
     {
       "from": 61200,
       "to": 61299
+    },
+    {
+      "from": 98000,
+      "to": 98999
     }
   ],
   "features": [],
-  "runtime": "16.0",
-  "target": "OnPrem"
+  "runtime": "18.0",
+  "target": "OnPrem",
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  }
 }

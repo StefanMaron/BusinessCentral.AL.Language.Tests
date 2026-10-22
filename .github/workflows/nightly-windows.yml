@@ -15,7 +15,8 @@ name: Nightly Windows (official MS BC container)
 #
 # THIS IS DELIBERATELY NOT A REQUIRED STATUS CONTEXT. Do not add it to the branch ruleset.
 # It takes ~1-2 hours, it is a signal for humans, and a nightly that gates merges stalls the
-# repository. The eight "BC <ver> / test" contexts from ci.yml remain the merge gate.
+# repository. The required checks from ci.yml (the Cloud, OnPrem and OnPrem DotNet test legs
+# for 27.5, 28.5 and 29.0, and the object-id gate) remain the merge gate.
 #
 # WHY THE ENVIRONMENT IS PINNED AND PRINTED, NOT JUST PINNED.
 # Six of #213's 14 failures are properties of the tier, not of BC: three are decimal-comma /
@@ -25,22 +26,15 @@ name: Nightly Windows (official MS BC container)
 # not available, rather than running unpinned), and the license, region, container OS, generic
 # image and BC build are all written into an artifact next to the results.
 #
-# THE TENANT ENCRYPTION KEY IS CREATED HERE, AND ONLY HERE (#248).
+# THE TENANT ENCRYPTION KEY IS CREATED HERE, AND ONLY HERE (#248, #282).
 # A BcContainerHelper container has no tenant encryption key, so IsolatedStorage.SetEncrypted
-# and AL's ENCRYPT/DECRYPT refuse outright. A step below creates a real one with BC's own
-# New-NAVEncryptionKey and FAILS THE RUN if it cannot -- same reasoning as the culture pin:
-# a nightly that continues without it re-reports cu 60378 forever until everyone ignores it.
-# ci.yml's Linux image instead installs a pass-through fake (StartupHook Patch #26) that makes
-# Encrypt() return its plaintext input, so a green there says nothing about encryption. This
-# is therefore the only tier in the repository where that surface is genuinely measured.
-#
-# THAT STEP HAS NOT YET RUN SUCCESSFULLY (#255). As merged in #253 it passed three parameters
-# the cmdlets do not have, so it could not bind and failed on every run. #255 corrects the
-# invocation and makes the precheck validate PARAMETER names rather than cmdlet names, which
-# is what would have caught it. The correction is verified against the cmdlet metadata of all
-# eight BC versions in the matrix, but it is NOT yet verified by execution -- the first green
-# nightly is what will establish that, and until then "the encryption surface is measured
-# here" is the design, not an observation.
+# and AL's ENCRYPT/DECRYPT refuse outright. A step below creates the TENANT key from AL
+# (CreateEncryptionKey(), app .github/nightly-windows/encryption-key), verifies it with an
+# Encrypt/Decrypt round trip at the scope AL reads, and FAILS THE RUN if it cannot -- same
+# reasoning as the culture pin: a nightly that continues without it re-reports cu 60378 forever
+# until everyone ignores it. The earlier version used New-NAVEncryptionKey/Import-NAVEncryptionKey,
+# which load the key of the server instance, not of the tenant: its check passed while AL had no
+# key (run 38858383715, #282).
 #
 # HOW TO READ THE SUMMARY THIS PRODUCES (#249).
 # The job summary opens with "Failed on THIS run" -- that section, and nothing else in the
@@ -227,6 +221,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Run 38851717694 (BC 29.0, workflow_dispatch) found the docker CLI but no daemon:
+      # every `docker` call failed on npipe:////./pipe/docker_engine, so no test ran.
+      # Start the service if it is stopped, then wait for the engine to answer. Failing
+      # here says "the daemon never came up", not a downstream parse error.
+      - name: Wait for the docker daemon
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $svc = Get-Service -Name docker -ErrorAction SilentlyContinue
+          if ($null -eq $svc) {
+            Write-Host "::warning::no 'docker' service is registered on this runner"
+          } elseif ($svc.Status -ne 'Running') {
+            Write-Host "docker service is '$($svc.Status)'; starting it"
+            Start-Service -Name docker -ErrorAction Continue
+          }
+          $deadline = (Get-Date).AddMinutes(3)
+          $ready = $false
+          while ((Get-Date) -lt $deadline) {
+            $os = (docker info --format '{{.OSType}}' 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $os) { $ready = $true; break }
+            Start-Sleep -Seconds 5
+          }
+          if (-not $ready) {
+            Get-Service -Name docker -ErrorAction SilentlyContinue | Format-List Name, Status, StartType
+            Write-Host "::error::the docker daemon did not answer within 3 minutes; no verdict is possible on this runner"
+            exit 1
+          }
+          Write-Host "docker daemon is up (OSType: $os)"
+
       # ---------------------------------------------------------------------------------
       # Measurement first. If a GitHub-hosted Windows runner cannot carry a BC container,
       # this is where that shows up, with numbers attached rather than as a vague timeout.
@@ -369,6 +391,8 @@ jobs:
 
           # MEASURED (run 34057062917): without sharing the workspace, the compile step dies
           # with "The appProjectFolder (D:\a\...) is not shared with the container."
+          # (Since 2026-10-20 the apps compile on the host with the latest AL compiler, see "Install the
+          # latest AL compiler"; the share stays for the publish and test steps.)
           # Compile-AppInBcContainer runs the AL compiler INSIDE the container, so the sources
           # have to be reachable from in there. BcContainerHelper shares its own helper and
           # artifact folders by default but never the GitHub workspace, which on a hosted
@@ -417,153 +441,179 @@ jobs:
           Write-Host ("workspace {0} -> {1} inside the container" -f $env:GITHUB_WORKSPACE, $mapped)
 
       # ---------------------------------------------------------------------------------
-      # Create a tenant encryption key (#248).
+      # The AL compiler: the newest one, never the container's own (owner rule 2026-10-20).
+      #
+      # WHY. Every corpus app compiles with the latest AL compiler, on every BC version and in
+      # every workflow. The container's compiler is the one that shipped with that BC build.
+      # Run 39363023181 (BC 28.4): that compiler crashed on Report "LT AW Layouts"
+      # ("Sequence contains no elements" in Excel layout validation), so no test ran.
+      #
+      # WHERE IT COMES FROM. The same place and the same version as ci.yml's Linux legs:
+      # nuget.org, package Microsoft.Dynamics.BusinessCentral.Development.Tools, version =
+      # ci.yml's `al_tool_version`. This step reads that pin from ci.yml, so the two tiers
+      # cannot drift apart: bump the pin in ci.yml and the nightly follows. The package holds a
+      # framework-dependent alc.exe (tools/net8.0/any), which runs on the Windows runner with
+      # .NET 8. (bc-linux's install-al-compiler.sh takes the compiler from this same package.)
+      #
+      # HOW. BcContainerHelper's New-BcCompilerFolder builds a compiler folder on the HOST: the
+      # symbols (.app files) and service-tier DLLs from this run's BC artifact, the same build
+      # the container runs, and the compiler from -vsixFile. A folder laid out as
+      # extension\bin\alc.exe is the "flat bin" VSIX layout it accepts. The compile steps call
+      # Compile-AppWithBcCompilerFolder and then publish the .app into the container.
+      # New-BcCompilerFolder copies only some test libraries into the symbols; the corpus also
+      # needs Test Runner and Permissions Mock, so every other .app of the artifact's
+      # Applications folders is added with Copy-AppFilesToCompilerFolder (Microsoft's own test
+      # apps excepted).
+      # ---------------------------------------------------------------------------------
+      - name: Set up .NET 8 for the AL compiler
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install the latest AL compiler (same pin as ci.yml)
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module BcContainerHelper -DisableNameChecking
+          $bcContainerHelperConfig.bcartifactsCacheFolder = $env:BC_ARTIFACT_CACHE
+
+          $ci = Get-Content (Join-Path $env:GITHUB_WORKSPACE '.github/workflows/ci.yml') -Raw
+          $pins = @([regex]::Matches($ci, '(?m)^\s*al_tool_version:\s*"([^"]+)"') |
+                    ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+          if ($pins.Count -ne 1) {
+            throw "ci.yml must pin exactly one al_tool_version; found: $($pins -join ', ')"
+          }
+          $ver = $pins[0]
+          Write-Host "AL compiler: Microsoft.Dynamics.BusinessCentral.Development.Tools $ver (from ci.yml)"
+
+          $pkg = 'microsoft.dynamics.businesscentral.development.tools'
+          $nupkg = Join-Path $env:RUNNER_TEMP "$pkg.$ver.zip"
+          $extract = Join-Path $env:RUNNER_TEMP 'al-tools-nupkg'
+          Invoke-WebRequest -UseBasicParsing -OutFile $nupkg `
+            -Uri "https://api.nuget.org/v3-flatcontainer/$pkg/$ver/$pkg.$ver.nupkg"
+          Expand-Archive -Path $nupkg -DestinationPath $extract -Force
+          $toolDir = Join-Path $extract 'tools/net8.0/any'
+          if (-not (Test-Path (Join-Path $toolDir 'alc.exe'))) {
+            throw "No tools/net8.0/any/alc.exe in $pkg $ver."
+          }
+          $vsix = Join-Path $env:RUNNER_TEMP 'al-compiler-vsix'
+          $bin = Join-Path $vsix 'extension/bin'
+          New-Item -ItemType Directory -Force -Path $bin | Out-Null
+          Copy-Item -Path (Join-Path $toolDir '*') -Destination $bin -Recurse -Force
+          & (Join-Path $bin 'alc.exe') /? | Select-Object -First 2 | ForEach-Object { Write-Host "alc: $_" }
+
+          $cf = New-BcCompilerFolder -artifactUrl $env:BC_ARTIFACT_URL -containerName 'nightlyalc' -vsixFile $vsix
+          Write-Host "compiler folder: $cf"
+
+          $symbols = Join-Path $cf 'symbols'
+          $have = @(Get-ChildItem -Path $symbols -Filter '*.app' | ForEach-Object Name)
+          $paths = Download-Artifacts -artifactUrl $env:BC_ARTIFACT_URL -includePlatform
+          $extra = @(foreach ($p in $paths) {
+            Get-ChildItem -Path $p -Directory -Filter '?pplications*' | ForEach-Object {
+              Get-ChildItem -Path $_.FullName -Filter '*.app' -Recurse
+            }
+          }) | Where-Object { $_.Name -notlike 'Microsoft_Tests-*' -and $have -notcontains $_.Name } |
+               Sort-Object Name -Unique
+          Write-Host ("adding {0} more .app files from the artifact to the symbols" -f $extra.Count)
+          if ($extra.Count) {
+            Copy-AppFilesToCompilerFolder -compilerFolder $cf -appFiles @($extra | ForEach-Object FullName)
+          }
+          foreach ($n in 'Test Runner', 'Permissions Mock', 'System Application Test Library', 'Base Application') {
+            if (-not (Get-ChildItem -Path $symbols -Filter "*$n*.app")) { throw "No $n symbols in $symbols." }
+          }
+
+          "BC_COMPILER_FOLDER=$cf" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "AL_COMPILER_VERSION=$ver" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "- AL compiler: ``Microsoft.Dynamics.BusinessCentral.Development.Tools $ver`` (nuget.org, same pin as ci.yml)" |
+            Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      # ---------------------------------------------------------------------------------
+      # Create a tenant encryption key (#248, #282).
       #
       # WHY THIS STEP EXISTS. `IsolatedStorage.SetEncrypted`, AL's ENCRYPT/DECRYPT and Data
       # Encryption Management all resolve their key through the same call chain
       # (TenantEncryptionProviderFactory -> TenantRsaEncryptionProvider). A container created
       # by New-BcContainer has no tenant encryption key, so BC correctly refuses with
-      # "An encryption key is required to complete the request." and cu 60378's
-      # IsolatedStorage_SetEncrypted_GetRoundTripsPlaintext fails. That is a property of the
-      # tier, not a BC divergence -- so the tier is what gets fixed.
+      # "An encryption key is required to complete the request." and cu 60378's two encryption
+      # tests (and cu 72522 Decrypt_EmptyText) fail. That is a property of the tier, not a BC
+      # divergence -- so the tier is what gets fixed.
       #
-      # This is also the only tier in this repository that exercises REAL cryptography here.
-      # ci.yml's Linux image installs StartupHook Patch #26, a pass-through fake that reports
-      # "encryption present" and makes Encrypt() return its plaintext input unchanged. So a
-      # green on Linux says nothing about encryption; a green here, with a real RSA key
-      # created by BC's own cmdlet, does.
+      # WHY NOT THE NAV CMDLETS (#282). The earlier version of this step ran New-NAVEncryptionKey and
+      # Import-NAVEncryptionKey -ServerInstance BC, and verified with Export-NAVEncryptionKey. That
+      # loads the key of the SERVER INSTANCE (the one that protects the database password). AL reads
+      # the key of the TENANT, so the export succeeded (1680 bytes) while AL still had no key: run
+      # 38858383715 (BC 29.0) failed both cu 60378 encryption tests with the step green.
       #
-      # WHY THE CMDLETS ARE BC'S AND NOT BcContainerHelper'S. BcContainerHelper ships no
-      # encryption-key cmdlet at all -- there is no New-BcContainerTenantEncryptionKey. The
-      # three that exist are BC's own, in Microsoft.Dynamics.Nav.Management.dll:
-      # New-NAVEncryptionKey, Import-NAVEncryptionKey, Export-NAVEncryptionKey. There is no
-      # Get-, which is why the verification below is Export- succeeding rather than a query.
+      # WHAT IT DOES NOW. It creates the tenant key the way BC itself does (the "Data Encryption
+      # Management" page): AL's CreateEncryptionKey(), from a small app in
+      # .github/nightly-windows/encryption-key. The install trigger creates the key; if it is still
+      # missing, Invoke-NAVCodeunit runs the same code once more. Neither runs inside a test
+      # transaction (creating a key inside a nested transaction fails). Then it VERIFIES AT THE
+      # SCOPE AL READS: Invoke-NAVCodeunit runs Verify(), which raises unless EncryptionEnabled()
+      # and EncryptionKeyExists() are true and Decrypt(Encrypt(x)) = x with a ciphertext that is not
+      # x. Afterwards the app is unpublished again (the key stays), so the corpus runs on the same
+      # set of apps as before.
       #
-      # WHY IT THROWS RATHER THAN WARNING. Same reasoning the culture pin already uses above:
-      # a nightly that silently continues without a key re-reports cu 60378 forever, and
-      # everyone learns to ignore a failure that is really a setup defect. If the key cannot
-      # be created, that is a fact about this run that must stop it, not a footnote.
+      # WHY IT THROWS RATHER THAN WARNING. A nightly that silently continues without a key
+      # re-reports cu 60378 forever, and everyone learns to ignore a failure that is really a
+      # setup defect. If the key cannot be created, that is a fact about this run that must stop it.
       - name: Create a tenant encryption key
         run: |
           $ErrorActionPreference = 'Stop'
           Import-Module BcContainerHelper -DisableNameChecking
           $c = $env:CONTAINER_NAME
+          $cred = Import-Clixml (Join-Path $env:RUNNER_TEMP 'bccred.xml')
+          $folder = Join-Path $env:GITHUB_WORKSPACE '.github/nightly-windows/encryption-key'
+          $outDir = Join-Path $env:GITHUB_WORKSPACE '.output-encryption-key'
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          $appJson = Get-Content (Join-Path $folder 'app.json') -Raw | ConvertFrom-Json
 
-          $keyPassword = [guid]::NewGuid().ToString() + 'aA1!'
+          # The latest AL compiler on the host, not the container's (see "Install the latest AL compiler").
+          $appFile = Compile-AppWithBcCompilerFolder -compilerFolder $env:BC_COMPILER_FOLDER `
+            -appProjectFolder $folder -appOutputFolder $outDir `
+            -appSymbolsFolder (Join-Path $outDir 'symbols') -failOn 'error'
+          # The install trigger (OnInstallAppPerDatabase) creates the key.
+          Publish-BcContainerApp -containerName $c -credential $cred `
+            -appFile $appFile -skipVerification -sync -install
 
-          $result = Invoke-ScriptInBcContainer -containerName $c -argumentList $keyPassword -scriptblock {
-            param($keyPassword)
-            $ErrorActionPreference = 'Stop'
-            $secure = ConvertTo-SecureString $keyPassword -AsPlainText -Force
-
-            # PRECHECK ON PARAMETERS, NOT ON NAMES (#255).
-            #
-            # The previous version of this step looped over the three cmdlet NAMES with
-            # Get-Command and passed -- while passing three parameters that do not exist, so
-            # every call failed to bind and the step failed on every run. The names were never
-            # the risk: they have been stable since NAV. What varies, and what actually broke
-            # here, is the PARAMETER SET. So probe the parameters themselves, and name the
-            # cmdlet and the missing parameter when one is absent.
-            $required = @{
-              'New-NAVEncryptionKey'    = @('KeyPath', 'Password', 'Force')
-              'Import-NAVEncryptionKey' = @('ServerInstance', 'KeyPath', 'Password', 'Force',
-                                            'ApplicationDatabaseServer', 'ApplicationDatabaseName')
-              'Export-NAVEncryptionKey' = @('ServerInstance', 'KeyPath', 'Password', 'Force')
-              # Not an encryption cmdlet, but this step now depends on its -KeyName spelling
-              # to derive the database coordinates below, so it is checked on the same terms.
-              'Get-NAVServerConfiguration' = @('ServerInstance', 'KeyName')
-            }
-            foreach ($cmd in $required.Keys) {
-              $g = Get-Command $cmd -ErrorAction SilentlyContinue
-              if (-not $g) {
-                throw "$cmd is not available in this container's NAV management module. Cannot create a tenant encryption key."
-              }
-              $missing = $required[$cmd] | Where-Object { -not $g.Parameters.ContainsKey($_) }
-              if ($missing) {
-                throw ("$cmd exists but does not accept: {0}. This BC build's parameter set differs from the one this step was written against (verified identical on 27.0, 27.3, 27.5, 28.0, 28.1, 28.2, 28.3, 28.4). Refusing to guess -- see corpus issue #255." -f ($missing -join ', '))
-              }
-            }
-
-            # DERIVE THE DATABASE COORDINATES, DO NOT HARDCODE THEM (#255).
-            #
-            # Import-NAVEncryptionKey takes the application database as two MANDATORY
-            # parameters, ApplicationDatabaseServer and ApplicationDatabaseName. Inside a
-            # BcContainerHelper container these are conventionally localhost\SQLEXPRESS and
-            # CRONUS, but "conventionally" is not "always" -- a container pointed at an
-            # external SQL host, or built from a differently-named database, has neither. A
-            # hardcoded pair that happens to work today is the next silent breakage, so read
-            # the values the service instance is ACTUALLY configured with.
-            #
-            # HOW THIS READS THEM, and why -KeyName rather than parsing the whole document.
-            # Get-NAVServerConfiguration has three output shapes, and only one of them needs no
-            # assumption about object structure (decompiled from
-            # Microsoft.BusinessCentral.Management.dll, GetNavServerConfiguration, BC 28.1):
-            #   -KeyName X  -> writes the bare `value` ATTRIBUTE as a string. One value, no shape.
-            #   -AsXml      -> writes a single XmlNode for the whole configuration document.
-            #   (neither)   -> writes a STREAM of `add` XmlNodes, each carrying key/value.
-            # The last two would each need a property path that is right about how PowerShell
-            # adapts an XmlNode; -KeyName returns the string itself, so there is nothing to get
-            # wrong. It is also the spelling this workflow already uses for LicenseFile below.
-            $dbServer   = Get-NAVServerConfiguration -ServerInstance BC -KeyName DatabaseServer
-            $dbInstance = Get-NAVServerConfiguration -ServerInstance BC -KeyName DatabaseInstance
-            $dbName     = Get-NAVServerConfiguration -ServerInstance BC -KeyName DatabaseName
-
-            # Check before combining, so a missing value is reported as itself rather than as a
-            # confusing half-built server string.
-            if ([string]::IsNullOrWhiteSpace($dbServer) -or [string]::IsNullOrWhiteSpace($dbName)) {
-              throw "Could not read DatabaseServer/DatabaseName from Get-NAVServerConfiguration -ServerInstance BC (got server='$dbServer' instance='$dbInstance' name='$dbName'). Import-NAVEncryptionKey needs both and this step will not guess them."
-            }
-
-            # DatabaseInstance is a SEPARATE setting from DatabaseServer, and SQL addresses a
-            # named instance as SERVER\INSTANCE. This mirrors BC's own rule rather than
-            # inventing one: ServerUserSettings.CombineDatabaseServerAndInstance (decompiled
-            # from Microsoft.Dynamics.Nav.Types.dll, BC 28.1) trims a trailing backslash off
-            # the server and appends \<instance> only when DatabaseInstance is non-empty. An
-            # empty DatabaseInstance means the default instance, where the bare name is right.
-            $dbServerFull = $dbServer.TrimEnd([char]92)
-            if (-not [string]::IsNullOrEmpty($dbInstance)) { $dbServerFull = "$dbServerFull\$dbInstance" }
-
-            Write-Host "application database: $dbServerFull / $dbName"
-
-            $keyPath = Join-Path $env:TEMP 'tenant-encryption.key'
-            if (Test-Path $keyPath) { Remove-Item $keyPath -Force }
-
-            # -Force: the instance is stopped and restarted around key generation by the
-            # cmdlet itself; without it the cmdlet prompts and a non-interactive session hangs.
-            # No -ServerInstance: this cmdlet does not have one. It writes a key FILE and does
-            # not talk to an instance at all -- the instance only enters at Import- below.
-            New-NAVEncryptionKey -KeyPath $keyPath -Password $secure -Force
-            if (-not (Test-Path $keyPath)) {
-              throw "New-NAVEncryptionKey reported success but wrote no key file at $keyPath."
-            }
-            Import-NAVEncryptionKey -ServerInstance BC -KeyPath $keyPath -Password $secure `
-              -ApplicationDatabaseServer $dbServerFull -ApplicationDatabaseName $dbName -Force
-
-            # VERIFY, do not assume. There is no Get-NAVEncryptionKey, so the check is that
-            # the tier can now EXPORT a key -- which it can only do if one is loaded.
-            $verifyPath = Join-Path $env:TEMP 'tenant-encryption-verify.key'
-            if (Test-Path $verifyPath) { Remove-Item $verifyPath -Force }
-            Export-NAVEncryptionKey -ServerInstance BC -KeyPath $verifyPath -Password $secure -Force
-            if (-not (Test-Path $verifyPath)) {
-              throw "Export-NAVEncryptionKey wrote no file: the service instance has no usable tenant encryption key after import."
-            }
-            $bytes = (Get-Item $verifyPath).Length
-            Remove-Item $verifyPath -Force -ErrorAction SilentlyContinue
-
-            "OK key exported, $bytes bytes"
+          $company = (Get-CompanyInBcContainer -containerName $c | Select-Object -First 1).CompanyName
+          Write-Host "company for Invoke-NAVCodeunit: $company"
+          function Invoke-KeyCodeunit([string]$method) {
+            $p = @{ containerName = $c; CompanyName = $company; CodeunitId = 81849 }
+            if ($method) { $p['MethodName'] = $method }
+            Invoke-NavContainerCodeunit @p
+          }
+          function Get-KeyState {
+            # Report() always raises; its message is the state and the log of every attempt.
+            try { Invoke-KeyCodeunit 'Report'; 'Report did not raise' } catch { $_.Exception.Message }
+          }
+          function Test-Key {
+            try { Invoke-KeyCodeunit 'Verify'; $true } catch { Write-Host "verify: $($_.Exception.Message)"; $false }
           }
 
-          # $result is the scriptblock's whole output stream, and the NAV cmdlets can emit
-          # objects of their own onto it, so match the sentinel ANYWHERE in it rather than
-          # anchoring at the start -- an anchored test would throw on a successful run whose
-          # output merely had something printed ahead of the sentinel.
-          $resultText = ($result | Out-String)
-          Write-Host "tenant encryption key step returned:"
-          Write-Host $resultText
-          if ($resultText -notmatch 'OK key exported, \d+ bytes') {
-            throw "Tenant encryption key setup did not confirm success. Refusing to run: cu 60378's SetEncrypted test would then fail for a setup reason and be read as a BC divergence. Output was: $resultText"
+          # Measured (runs 39223200014, 39223203793, 39223208230: BC 29.0 sandbox, 29.0 onprem, 27.5 onprem): the install
+          # trigger creates the key and Verify passes. The second attempt below is a fallback that has not been needed yet.
+          $ok = Test-Key
+          if (-not $ok) {
+            Write-Host ("after install: " + (Get-KeyState))
+            # Still no usable key: run the same creation once more, from a session of its own.
+            try { Invoke-KeyCodeunit '' } catch { Write-Host "invoke OnRun raised: $($_.Exception.Message)" }
+            $ok = Test-Key
           }
-          "TENANT_ENCRYPTION_KEY=created (New-NAVEncryptionKey, verified by Export-NAVEncryptionKey)" |
+          $state = if ($ok) { 'verified' } else { Get-KeyState }
+          Write-Host "tenant encryption key: $state"
+
+          # Remove the helper app again; the key belongs to the tenant and stays. Not fatal: an
+          # installed helper app changes nothing the corpus asserts.
+          try {
+            $u = @{ containerName = $c; appName = $appJson.name; publisher = $appJson.publisher; version = $appJson.version; uninstall = $true }
+            if ((Get-Command Unpublish-BcContainerApp).Parameters.ContainsKey('doNotSaveData')) { $u['doNotSaveData'] = $true }
+            Unpublish-BcContainerApp @u
+          } catch { Write-Host "::warning::could not unpublish the encryption key app: $($_.Exception.Message)" }
+
+          if (-not $ok) {
+            throw "No working tenant encryption key (Verify failed). Refusing to run: cu 60378's encryption tests would then fail for a setup reason and be read as a BC divergence. $state"
+          }
+          "TENANT_ENCRYPTION_KEY=created (CreateEncryptionKey from AL, verified by an Encrypt/Decrypt round trip)" |
             Out-File $env:GITHUB_ENV -Append -Encoding utf8
 
       # ---------------------------------------------------------------------------------
@@ -602,7 +652,7 @@ jobs:
               }
               ($out -join "`n")
             }
-          }
+          } 'probe failed: no license text came back from Get-NAVServerLicenseInformation, Export-NAVServerLicenseInformation -FilePath or Get-NAVServerConfiguration LicenseFile. This says nothing about the license itself.'
           # Keep the whole license dump in the artifact, but put a one-line identity in the table.
           $license | Out-File 'license-information.txt' -Encoding utf8
           $licenseLine = ($license -split "`n" | Where-Object { $_ -match '\S' } | Select-Object -First 6) -join ' / '
@@ -636,6 +686,24 @@ jobs:
           $env_table | ConvertTo-Json | Out-File 'environment.json' -Encoding utf8
           $env_table.GetEnumerator() | ForEach-Object { Write-Host ("{0,-26}: {1}" -f $_.Key, $_.Value) }
 
+      # The apps' app.json says runtime 18.0 (the newest). A BC 27 or 28 server refuses a newer runtime than its own
+      # ("17.1 or earlier"), so set the runtime per leg, the same values ci.yml uses (27 -> 16.1, 28 -> 17.1,
+      # 29 -> 18.0). Changes the checkout of this job only; no test file is committed.
+      - name: Set the app runtime for this BC version
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $major = [int]($env:BC_VERSION -split '\.')[0]
+          $rt = switch ($major) { 27 { '16.1' } 28 { '17.1' } default { '18.0' } }
+          Write-Host "app runtime for BC $env:BC_VERSION : $rt"
+          foreach ($f in Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'tests') -Filter app.json -Recurse -Depth 2) {
+            $raw = [IO.File]::ReadAllText($f.FullName)
+            $new = [regex]::Replace($raw, '("runtime"\s*:\s*)"[0-9.]+"', ('${1}"' + $rt + '"'))
+            if ($new -ne $raw) {
+              [IO.File]::WriteAllText($f.FullName, $new, (New-Object Text.UTF8Encoding($false)))
+              Write-Host "runtime $rt -> $($f.FullName)"
+            }
+          }
+
       - name: Compile and publish the corpus apps
         run: |
           $ErrorActionPreference = 'Stop'
@@ -646,7 +714,7 @@ jobs:
           # Same symbols ci.yml computes, from the same rule.
           $major = [int]($env:BC_VERSION -split '\.')[0]
           $symbols = @()
-          foreach ($v in 27, 28) { if ($v -le $major) { $symbols += "BC${v}PLUS" } }
+          foreach ($v in 27, 28, 29) { if ($v -le $major) { $symbols += "BC${v}PLUS" } }
           Write-Host ("preprocessor symbols: {0}" -f ($symbols -join ','))
 
           # Order matters: the fixture is a dependency of al-language, which is in turn a
@@ -658,17 +726,25 @@ jobs:
           foreach ($folder in $apps) {
             Write-Host "::group::compile $folder"
             $sw = [Diagnostics.Stopwatch]::StartNew()
-            $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+            # The latest AL compiler on the host, not the container's (see "Install the latest AL compiler").
+            # -CopyAppToSymbolsFolder: the next app in the list compiles against this one.
+            $appFile = Compile-AppWithBcCompilerFolder -compilerFolder $env:BC_COMPILER_FOLDER `
               -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $folder) `
               -appOutputFolder $outDir `
               -appSymbolsFolder (Join-Path $outDir 'symbols') `
-              -UpdateSymbols -preProcessorSymbols $symbols -failOn 'error'
+              -CopyAppToSymbolsFolder -preProcessorSymbols $symbols -failOn 'error'
             Write-Host ("compiled {0} in {1:n0}s -> {2}" -f $folder, $sw.Elapsed.TotalSeconds, $appFile)
             Write-Host "::endgroup::"
 
             Write-Host "::group::publish $folder"
+            # THROUGH THE DEV ENDPOINT, as the test user (#376). ci.yml (MsDyn365Bc.On.Linux) publishes through the dev
+            # endpoint, so the install triggers run as the user who publishes (ADMIN, SUPER, client type SOAP).
+            # Publish-NAVApp/Install-NAVApp (the default of Publish-BcContainerApp) run them as SYSTEM: no User row, not
+            # SUPER, client type Background (measured on BC 27.5 and 29.0, runs 39223200014, 39223203793, 39223208230).
+            # With the cmdlets, cu 60589 TestInstall_SessionUserIsSuperDuringInstall failed on Windows only because the
+            # two tiers installed the app in two different ways.
             Publish-BcContainerApp -containerName $c -credential $cred `
-              -appFile $appFile -skipVerification -sync -install
+              -appFile $appFile -skipVerification -sync -install -useDevEndpoint
             Write-Host "::endgroup::"
           }
 
@@ -676,6 +752,28 @@ jobs:
           Get-BcContainerAppInfo -containerName $c |
             Select-Object Name, Publisher, Version, IsInstalled | Format-Table -AutoSize
 
+      # ---------------------------------------------------------------------------------
+      # Run the corpus: EVERY test codeunit of each app, in chunks, with restarts.
+      #
+      # WHY CHUNKS. One Run-TestsInBcContainer call per app used to run the whole app. When the
+      # test runner stopped partway, the call returned normally and every later codeunit was
+      # silently missing. Measured: run 39227679359 (BC 29.0) stopped after codeunit 67202 on
+      # "ERROR DIALOG: We can't save your changes right now, because a record in table 'Test
+      # Method Line' is being updated in a transaction done by another session." and reported
+      # 558 of 2423 test codeunits. (The scheduled runs looked complete only because they
+      # measured `master`, which then ended at codeunit 69982.)
+      #
+      # HOW. The list of expected codeunits comes from the compiled .app (SymbolReference.json:
+      # Subtype = Test with at least one [Test] method), read by test-codeunit-coverage.py.
+      # Each call runs the next chunk of not-yet-reported codeunits, selected by
+      # -testCodeunitRange (a range filter that never spans another corpus app's test codeunit
+      # or one that already reported). When a call reports nothing, the first codeunit of the
+      # chunk is halved until the first codeunit runs alone; if it still reports nothing, it is a
+      # "runner stop": written into the XUnit file as one failed test with the reason, and the run
+      # goes on with the next codeunit (run 39390812023: onprem 61276 "LT Q File Probes"). Each call writes its own XUnit file; they are merged into
+      # xunit-<app>.xml. The step "Every test codeunit reported" below fails the job when any
+      # codeunit is silently missing (not reported and not a runner stop).
+      # ---------------------------------------------------------------------------------
       - name: Run the corpus
         id: run_tests
         run: |
@@ -688,10 +786,42 @@ jobs:
           # formatting. If this build of BcContainerHelper cannot pin it, stop: an unpinned run
           # would report those three as BC divergences on any European-defaulting image.
           $rt = Get-Command Run-TestsInBcContainer
-          foreach ($p in 'culture', 'timezone') {
+          foreach ($p in 'culture', 'timezone', 'testCodeunitRange', 'interactionTimeout') {
             if (-not $rt.Parameters.ContainsKey($p)) {
               throw "Run-TestsInBcContainer has no -$p parameter in BcContainerHelper $env:BCCH_VERSION. Refusing to run with an undeclared session $p."
             }
+          }
+
+          $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
+          $allApps = @(Get-ChildItem -Path $outDir -Filter '*.app' -File)
+          $coverage = Join-Path $env:GITHUB_WORKSPACE '.github/scripts/test-codeunit-coverage.py'
+          $chunkSize = 100
+
+          # "a..b|c..d" over $ids, split wherever a $blocked id lies between two neighbours.
+          function ConvertTo-RangeFilter([int[]]$ids, [int[]]$sortedBlocked) {
+            $parts = @(); $start = $ids[0]; $prev = $ids[0]
+            foreach ($i in ($ids | Select-Object -Skip 1)) {
+              $k = [Array]::BinarySearch($sortedBlocked, $prev + 1); if ($k -lt 0) { $k = -bnot $k }
+              if ($k -lt $sortedBlocked.Length -and $sortedBlocked[$k] -lt $i) {
+                $parts += $(if ($start -eq $prev) { "$start" } else { "$start..$prev" }); $start = $i
+              }
+              $prev = $i
+            }
+            $parts += $(if ($start -eq $prev) { "$start" } else { "$start..$prev" })
+            $parts -join '|'
+          }
+          function Get-ReportedIds([string]$file) {
+            $set = [System.Collections.Generic.HashSet[int]]::new()
+            if (Test-Path $file) {
+              try {
+                [xml]$x = [IO.File]::ReadAllText($file)
+                foreach ($a in $x.SelectNodes('//assembly')) {
+                  $head = ($a.GetAttribute('name') -split ' ', 2)[0]
+                  $n = 0; if ([int]::TryParse($head, [ref]$n)) { [void]$set.Add($n) }
+                }
+              } catch { Write-Host "::warning::cannot read $file : $($_.Exception.Message)" }
+            }
+            ,$set
           }
 
           $suites = @(
@@ -701,20 +831,97 @@ jobs:
 
           foreach ($s in $suites) {
             $appJson = Get-Content (Join-Path $env:GITHUB_WORKSPACE "$($s.folder)/app.json") -Raw | ConvertFrom-Json
+            $app = $allApps | Where-Object { $_.Name -eq "$($appJson.publisher)_$($appJson.name)_$($appJson.version).app" } | Select-Object -First 1
+            if (-not $app) { throw "No compiled .app for $($s.folder) in $outDir." }
+            $others = @($allApps | Where-Object { $_.FullName -ne $app.FullName } | ForEach-Object { '--other'; $_.FullName })
+            $info = & python $coverage ids --app $app.FullName @others | ConvertFrom-Json
+            $expected = @($info.tests | ForEach-Object { [int]$_ })
+            $blockedBase = [System.Collections.Generic.HashSet[int]]::new()
+            foreach ($i in @($info.foreign) + @($info.no_methods)) { [void]$blockedBase.Add([int]$i) }
+            Write-Host ("{0}: {1} test codeunits expected ({2}..{3})" -f $s.name, $expected.Count, $expected[0], $expected[-1])
+            "$($s.name)=$($app.FullName)" | Out-File (Join-Path $env:RUNNER_TEMP 'suite-apps.txt') -Append -Encoding utf8
+
             $out = Join-Path $env:GITHUB_WORKSPACE "xunit-$($s.name).xml"
-            Write-Host "::group::run $($s.name) ($($appJson.id))"
+            # Under the workspace: Run-TestsInBcContainer writes the file from inside the container, and
+            # only the workspace is shared with it (run 39379151878: RUNNER_TEMP "is not shared with the container").
+            $partsDir = Join-Path $env:GITHUB_WORKSPACE ".xunit-parts/$($s.name)"
+            New-Item -ItemType Directory -Force -Path $partsDir | Out-Null
+            [xml]$merged = '<?xml version="1.0" encoding="UTF-8"?><assemblies/>'
+            $done = [System.Collections.Generic.HashSet[int]]::new()
+            $aborted = @()
+            $abortedInARow = 0
+            $size = $chunkSize
+            $call = 0
             $sw = [Diagnostics.Stopwatch]::StartNew()
-            try {
-              Run-TestsInBcContainer -containerName $c -credential $cred `
-                -extensionId $appJson.id `
-                -culture $env:CULTURE -timezone $env:TIMEZONE `
-                -XUnitResultFileName $out -AzureDevOps 'no' -GitHubActions 'no' `
-                -detailed -returnTrueIfAllPassed | Out-Null
-            } catch {
-              # A failing test must not abort the other suite -- the artifact is the deliverable.
-              Write-Host "::warning::Run-TestsInBcContainer for $($s.name) raised: $($_.Exception.Message)"
+            Write-Host "::group::run $($s.name) ($($appJson.id))"
+            while ($true) {
+              $remaining = @($expected | Where-Object { -not $done.Contains($_) -and $aborted -notcontains $_ })
+              if ($remaining.Count -eq 0) { break }
+              $call++
+              if ($call -gt 200) { Write-Host "::warning::$($s.name): stopped after 200 test runner calls"; break }
+              $chunk = @($remaining | Select-Object -First $size)
+              $chunkSet = [System.Collections.Generic.HashSet[int]]::new([int[]]$chunk)
+              $blocked = [System.Collections.Generic.HashSet[int]]::new($blockedBase)
+              foreach ($i in $expected) { if (-not $chunkSet.Contains($i)) { [void]$blocked.Add($i) } }
+              $filter = ConvertTo-RangeFilter $chunk ([int[]]@($blocked | Sort-Object))
+              $part = Join-Path $partsDir ("part-{0:d3}.xml" -f $call)
+              Write-Host ("call {0}: {1} codeunit(s) from {2}, filter {3}" -f $call, $chunk.Count, $chunk[0], $filter)
+              try {
+                Run-TestsInBcContainer -containerName $c -credential $cred `
+                  -extensionId $appJson.id -testCodeunitRange $filter `
+                  -interactionTimeout ([timespan]::FromMinutes(10)) `
+                  -culture $env:CULTURE -timezone $env:TIMEZONE `
+                  -XUnitResultFileName $part -AzureDevOps 'no' -GitHubActions 'no' `
+                  -detailed -returnTrueIfAllPassed | Out-Null
+                $lastError = 'the test runner returned without a result for this codeunit'
+              } catch {
+                $lastError = $_.Exception.Message
+                Write-Host "::warning::Run-TestsInBcContainer for $($s.name) (call $call, from $($chunk[0])) raised: $lastError"
+              }
+              $got = Get-ReportedIds $part
+              $outside = @($got | Where-Object { -not $chunkSet.Contains($_) })
+              if ($outside.Count) {
+                throw "The codeunit range filter was not applied: call $call reported codeunits outside its chunk ($($outside[0..4] -join ', ')). Refusing to merge duplicate results."
+              }
+              if (Test-Path $part) {
+                [xml]$px = [IO.File]::ReadAllText($part)
+                foreach ($a in $px.SelectNodes('//assembly')) { [void]$merged.DocumentElement.AppendChild($merged.ImportNode($a, $true)) }
+              }
+              foreach ($i in $got) { [void]$done.Add($i) }
+              # Progress: grow the chunk again. No result at all (the runner threw and lost its file,
+              # or stopped on the first codeunit): halve it, down to the first codeunit alone; a
+              # codeunit that reports nothing even alone is recorded as aborted and skipped.
+              if ($got.Count -gt 0) {
+                $size = [Math]::Min($chunkSize, $size * 2); $abortedInARow = 0
+                if ($got.Count -lt $chunk.Count) { Write-Host "call $call stopped early after $($got.Count) of $($chunk.Count) codeunit(s); continuing with the rest"; Start-Sleep -Seconds 20 }
+              } elseif ($chunk.Count -eq 1) {
+                Write-Host "::warning::$($s.name): runner stop during codeunit $($chunk[0]); recorded as a failed codeunit, continuing with the next one"
+                $aborted += $chunk[0]; $size = $chunkSize; $abortedInARow++
+                # Recorded as ONE failed test of that codeunit, with the reason, so the results say
+                # "runner stop" instead of leaving the codeunit out. The run goes on after it.
+                $cuName = "$($info.names."$($chunk[0])")"
+                $asm = $merged.CreateElement('assembly')
+                foreach ($kv in @(@('name', "$($chunk[0]) $cuName"), @('test-framework', 'PS Test Runner'), @('total', '1'), @('passed', '0'), @('failed', '1'), @('skipped', '0'), @('time', '0'))) { $asm.SetAttribute($kv[0], $kv[1]) }
+                $col = $merged.CreateElement('collection')
+                foreach ($kv in @(@('name', $cuName), @('total', '1'), @('passed', '0'), @('failed', '1'), @('skipped', '0'), @('time', '0'))) { $col.SetAttribute($kv[0], $kv[1]) }
+                $t = $merged.CreateElement('test')
+                foreach ($kv in @(@('name', "${cuName}:RunnerStop_NoResult"), @('method', 'RunnerStop_NoResult'), @('time', '0'), @('result', 'Fail'))) { $t.SetAttribute($kv[0], $kv[1]) }
+                $f = $merged.CreateElement('failure'); $m = $merged.CreateElement('message')
+                $m.InnerText = "Runner stop: the test runner stopped during codeunit $($chunk[0]) and reported no result, also when it ran alone. Last error: $lastError"
+                [void]$f.AppendChild($m); [void]$t.AppendChild($f); [void]$col.AppendChild($t); [void]$asm.AppendChild($col)
+                [void]$merged.DocumentElement.AppendChild($asm)
+                # Three codeunits in a row that report nothing even alone: the runner itself is broken
+                # (setup, connection, container), not a codeunit. Stop instead of crawling through the app.
+                if ($abortedInARow -ge 3) { throw "$($s.name): $abortedInARow codeunits in a row reported nothing ($($aborted[-3..-1] -join ', ')); the test runner is not working. Last error above." }
+                Start-Sleep -Seconds 20
+              } else {
+                $size = [Math]::Max(1, [int][Math]::Floor($chunk.Count / 2))
+                Write-Host "call $call reported nothing; retrying with $size codeunit(s)"; Start-Sleep -Seconds 20
+              }
             }
-            Write-Host ("$($s.name) finished in {0:n1} min" -f $sw.Elapsed.TotalMinutes)
+            $merged.Save($out)
+            "ABORTED_$($s.name -replace '-', '_')=$($aborted -join ',')" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host ("$($s.name): {0} of {1} codeunits reported in {2} call(s), {3:n1} min" -f $done.Count, $expected.Count, $call, $sw.Elapsed.TotalMinutes)
             Write-Host "::endgroup::"
           }
 
@@ -722,7 +929,8 @@ jobs:
             ForEach-Object { Write-Host ("{0}: {1:n0} KB" -f $_.Name, ($_.Length/1KB)) }
 
       # ---------------------------------------------------------------------------------
-      # Isolation probe (AL Runner #4826). ADDITIVE: it runs after the corpus, writes its own
+      # Isolation probe (first asked for in BusinessCentral.AL.Runner issue 4826; al-runtime-rs
+      # reads its XUnit files as an oracle). ADDITIVE: it runs after the corpus, writes its own
       # XUnit files, never reaches the headline or the #213 comparison above, and cannot fail
       # the job (continue-on-error). ci.yml's Linux legs never compile this app.
       #
@@ -752,11 +960,11 @@ jobs:
           $folder = 'tests/al-language-isolation-probe'
           $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          $appFile = Compile-AppInBcContainer -containerName $c -credential $cred `
+          # The latest AL compiler on the host, not the container's (see "Install the latest AL compiler").
+          $appFile = Compile-AppWithBcCompilerFolder -compilerFolder $env:BC_COMPILER_FOLDER `
             -appProjectFolder (Join-Path $env:GITHUB_WORKSPACE $folder) `
             -appOutputFolder $outDir `
-            -appSymbolsFolder (Join-Path $outDir 'symbols') `
-            -UpdateSymbols -failOn 'error'
+            -appSymbolsFolder (Join-Path $outDir 'symbols') -failOn 'error'
           Publish-BcContainerApp -containerName $c -credential $cred `
             -appFile $appFile -skipVerification -sync -install
 
@@ -802,6 +1010,29 @@ jobs:
             --run "TestIsolation = Function (runner 61300)=xunit-isolation-function.xml" \
             --run "TestIsolation = Codeunit control (runner 61301)=xunit-isolation-codeunit.xml" \
             --outdir test-results
+
+      # Fails the job, loudly, when a test codeunit is silently missing: neither reported nor
+      # recorded as a runner stop. It
+      # runs after the comparison and before the upload, so the partial results still land in
+      # the artifact. The counts and the highest id that reported go into the run summary.
+      - name: Every test codeunit reported
+        if: always() && steps.run_tests.outcome != 'skipped'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $list = Join-Path $env:RUNNER_TEMP 'suite-apps.txt'
+          if (-not (Test-Path $list)) { throw "The run step recorded no test apps: no test codeunit was run." }
+          $failed = 0
+          "### Test codeunits that reported" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          foreach ($line in Get-Content $list) {
+            $name, $app = $line -split '=', 2
+            $aborted = [Environment]::GetEnvironmentVariable("ABORTED_$($name -replace '-', '_')")
+            & python (Join-Path $env:GITHUB_WORKSPACE '.github/scripts/test-codeunit-coverage.py') check `
+              --app $app --xunit (Join-Path $env:GITHUB_WORKSPACE "xunit-$name.xml") --name $name `
+              --aborted "$aborted" --summary $env:GITHUB_STEP_SUMMARY
+            if ($LASTEXITCODE -ne 0) { $failed++ }
+          }
+          if ($failed) { throw "$failed test app(s) did not report every test codeunit." }
 
       - name: Disk (after)
         if: always()

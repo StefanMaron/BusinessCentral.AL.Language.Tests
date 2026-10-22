@@ -19,9 +19,4 @@ Closes #<!-- issue number, or "n/a" -->
 - [ ] Doc-link comment block is present at the top of each new file
 - [ ] Out-of-scope tests are in `out-of-scope/` and confirm the error only
 - [ ] Version-gated code uses `#if BC28PLUS` (or equivalent) with an explanatory comment
-- [ ] CI passes on this branch (both BC 27.5 and BC 28.1 matrix legs)
-
-## Runner gap (if applicable)
-
-<!-- Does this test expose a discrepancy between BC Cloud and BusinessCentral.AL.Runner?
-     If so, link the runner issue or describe the difference. -->
+- [ ] CI passes on this pull request (all required checks: BC 27.5, 28.5 and 29.0)

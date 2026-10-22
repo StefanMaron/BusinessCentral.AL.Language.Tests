@@ -279,8 +279,164 @@ codeunit 60951 "Test MediaSet Persistence"
         Assert.AreEqual(1, Rec.Images.Count(), 'Count() must be 1 after Modify()+Get() on a temporary record');
     end;
 
+    // Corpus issue 668 item 73 (writer br): Item() renumbers after Remove of the first item; a MediaSet field copied by assignment to the
+    // same field of another row, to a field with the same id in another table, and to a field with another id.
+    local procedure BrImport(var Rec: Record "ALT Media"; Payload: Text)
+    var
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        OutStr: OutStream;
+    begin
+        TempBlob.CreateOutStream(OutStr);
+        OutStr.WriteText(Payload);
+        TempBlob.CreateInStream(InStr);
+        Rec.Images.ImportStream(InStr, Payload);
+    end;
+
+    [Test]
+    procedure MediaSet_RemoveFirstItem_ItemsRenumber()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rec: Record "ALT Media";
+        I1: Guid;
+        I2: Guid;
+        I3: Guid;
+    begin
+        Initialize();
+        Rec.Code := 'BR1';
+        Rec.Insert();
+        BrImport(Rec, 'first-bytes');
+        BrImport(Rec, 'second-bytes');
+        BrImport(Rec, 'third-bytes');
+        Rec.Modify();
+        Rec.Get('BR1');
+        Observer.Observe('count', Format(Rec.Images.Count()));
+        I1 := Rec.Images.Item(1);
+        I2 := Rec.Images.Item(2);
+        I3 := Rec.Images.Item(3);
+        Observer.Observe('distinct', Format((I1 <> I2) and (I2 <> I3) and (I1 <> I3)));
+        Observer.Observe('remove first', Format(Rec.Images.Remove(I1)));
+        Observer.Observe('count after remove', Format(Rec.Images.Count()));
+        Observer.Observe('item1 is old item2', Format(Rec.Images.Item(1) = I2));
+        Observer.Observe('item2 is old item3', Format(Rec.Images.Item(2) = I3));
+        Rec.Modify();
+        Rec.Get('BR1');
+        Observer.Observe('after modify get', Format(Rec.Images.Count()) + '|' + Format(Rec.Images.Item(1) = I2) + '|' + Format(Rec.Images.Item(2) = I3));
+        Observer.Expect('count', '3');
+        Observer.Expect('distinct', 'Yes');
+        Observer.Expect('remove first', 'Yes');
+        Observer.Expect('count after remove', '2');
+        Observer.Expect('item1 is old item2', 'Yes');
+        Observer.Expect('item2 is old item3', 'Yes');
+        Observer.Expect('after modify get', '2|Yes|Yes');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure BrTryAssign(var Target: Record "LT BR MediaSet Copy"; var Source: Record "ALT Media"; SameId: Boolean)
+    begin
+        if SameId then
+            Target.Images := Source.Images
+        else
+            Target.Other := Source.Images;
+    end;
+
+    [Test]
+    procedure MediaSet_CopyToSameFieldOfAnotherRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Source: Record "ALT Media";
+        Target: Record "ALT Media";
+    begin
+        Initialize();
+        Source.Code := 'BR2';
+        Source.Insert();
+        BrImport(Source, 'copy-bytes');
+        Source.Modify();
+        Target.Code := 'BR3';
+        Target.Insert();
+        Target.Images := Source.Images;
+        Observer.Observe('assigned count', Format(Target.Images.Count()));
+        Target.Modify();
+        Target.Get('BR3');
+        Observer.Observe('stored', Format(Target.Images.Count()) + '|' + Format(Target.Images.Item(1) = Source.Images.Item(1)) + '|' + Format(Target.Images.MediaId() = Source.Images.MediaId()));
+        Observer.Expect('assigned count', '1');
+        Observer.Expect('stored', '1|Yes|Yes');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure MediaSet_CopyToSameFieldIdOfAnotherTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        Source: Record "ALT Media";
+        Target: Record "LT BR MediaSet Copy";
+    begin
+        Initialize();
+        Target.DeleteAll();
+        Source.Code := 'BR4';
+        Source.Insert();
+        BrImport(Source, 'copy-bytes');
+        Source.Modify();
+        Target.Code := 'BR4';
+        Target.Insert();
+        ClearLastError();
+        if BrTryAssign(Target, Source, true) then
+            Observer.Observe('assign', 'ok|' + Format(Target.Images.Count()))
+        else
+            Observer.Observe('assign', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Target.Modify();
+        Target.Get('BR4');
+        Observer.Observe('stored', Format(Target.Images.Count()));
+        Observer.Expect('assign', 'ok|1');
+        Observer.Expect('stored', '1');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure MediaSet_CopyToOtherFieldIdOfAnotherTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        Source: Record "ALT Media";
+        Target: Record "LT BR MediaSet Copy";
+    begin
+        Initialize();
+        Target.DeleteAll();
+        Source.Code := 'BR5';
+        Source.Insert();
+        BrImport(Source, 'copy-bytes');
+        Source.Modify();
+        Target.Code := 'BR5';
+        Target.Insert();
+        ClearLastError();
+        if BrTryAssign(Target, Source, false) then
+            Observer.Observe('assign', 'ok|' + Format(Target.Other.Count()))
+        else
+            Observer.Observe('assign', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Target.Modify();
+        Target.Get('BR5');
+        Observer.Observe('stored', Format(Target.Other.Count()));
+        Observer.Expect('assign', 'ok|1');
+        Observer.Expect('stored', '1');
+        Observer.Verify();
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();
     end;
+}
+
+table 82969 "LT BR MediaSet Copy"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Code"; Code[20]) { }
+        field(4; Images; MediaSet) { }
+        field(5; Other; MediaSet) { }
+    }
+
+    keys { key(PK; "Code") { Clustered = true; } }
 }

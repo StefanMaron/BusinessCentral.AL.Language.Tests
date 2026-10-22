@@ -47,6 +47,7 @@ codeunit 60175 "Test Security Filtering"
         Rec: Record "ALT Universal";
         i: Integer;
     begin
+        Rec.DeleteAll(); // a row another codeunit left in the shared fixture must not count (bump 28 staging run 39285388937, BC 27.5)
         // Insert test records
         for i := 1 to 3 do begin
             Rec."Entry No." := i;
@@ -66,6 +67,7 @@ codeunit 60175 "Test Security Filtering"
         Rec: Record "ALT Universal";
         i: Integer;
     begin
+        Rec.DeleteAll(); // a row another codeunit left in the shared fixture must not count (bump 28 staging run 39285388937, BC 27.5)
         // In test context, admin user sees all records — Filtered = Ignored for admin
         for i := 1 to 3 do begin
             Rec."Entry No." := i;
@@ -115,6 +117,7 @@ codeunit 60175 "Test Security Filtering"
         Rec: Record "ALT Universal";
         Rec2: Record "ALT Universal";
     begin
+        Rec.DeleteAll(); // a row another codeunit left in the shared fixture must not count (bump 28 staging run 39285388937, BC 27.5)
         // Insert test record
         Rec."Entry No." := 1;
         Rec.Insert();

@@ -433,4 +433,74 @@ codeunit 60186 "Test Loop Contracts"
                 exit(Count);
         end;
     end;
+
+    // corpus issue 664 (writer BN): for-loop bounds are converted to the type of the control variable (Learn: control statements).
+    // A literal bound outside the Integer range does not compile: tests/must-not-compile/cases/1404. Here the bound is a BigInteger or
+    // Decimal variable. Observed on BC (probe form: Observer.Finish).
+    [Test]
+    procedure BN_ForLoop_BoundConvertedToControlType()
+    var
+        Observer: Codeunit "Probe Observer";
+        Big: BigInteger;
+        Count: Integer;
+    begin
+        Big := 100000000000000L;
+        if TryForBig(Big, Count) then
+            Observer.Observe('biginteger bound 1e14', 'ok|' + Format(Count))
+        else
+            Observer.ObserveError('biginteger bound 1e14');
+        Big := 3;
+        if TryForBig(Big, Count) then
+            Observer.Observe('biginteger bound 3', 'ok|' + Format(Count))
+        else
+            Observer.ObserveError('biginteger bound 3');
+        // A Decimal bound with a fraction raises an error when the loop starts (corpus CI run 39242251403 on BC 29.0: "Overflow under
+        // conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32."), so each Decimal form runs in a TryFunction.
+        ObserveDecLoop(Observer, 'decimal bound 2.5', 1, 2.5);
+        ObserveDecLoop(Observer, 'decimal bound 2.6', 1, 2.6);
+        ObserveDecLoop(Observer, 'decimal bound 3.0', 1, 3);
+        ObserveDecLoop(Observer, 'decimal start 0.5', 0.5, 2);
+        Observer.Expect('biginteger bound 1e14|text', 'Overflow under conversion of System.Int64 value 100000000000000 to System.Int32.');
+        Observer.Expect('biginteger bound 1e14|code', 'ConversionCast');
+        Observer.Expect('biginteger bound 3', 'ok|3');
+        Observer.Expect('decimal bound 2.5|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32.');
+        Observer.Expect('decimal bound 2.5|code', 'ConversionCast');
+        Observer.Expect('decimal bound 2.6|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.6 to System.Int32.');
+        Observer.Expect('decimal bound 2.6|code', 'ConversionCast');
+        Observer.Expect('decimal bound 3.0', 'ok|1,2,3,|3');
+        Observer.Expect('decimal start 0.5|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 0.5 to System.Int32.');
+        Observer.Expect('decimal start 0.5|code', 'ConversionCast');
+        Observer.Verify();
+    end;
+
+    local procedure ObserveDecLoop(var Observer: Codeunit "Probe Observer"; Name: Text; StartAt: Decimal; EndAt: Decimal)
+    var
+        R: Text;
+        Count: Integer;
+    begin
+        if TryForDec(StartAt, EndAt, R, Count) then
+            Observer.Observe(Name, 'ok|' + R + '|' + Format(Count))
+        else
+            Observer.ObserveError(Name);
+    end;
+
+    [TryFunction]
+    local procedure TryForDec(StartAt: Decimal; EndAt: Decimal; var R: Text; var Count: Integer)
+    begin
+        R := '';
+        for Count := StartAt to EndAt do
+            R += Format(Count) + ',';
+    end;
+
+    [TryFunction]
+    local procedure TryForBig(Big: BigInteger; var Count: Integer)
+    var
+        Turns: Integer;
+    begin
+        for Count := 1 to Big do begin
+            Turns += 1;
+            if Turns >= 5 then
+                exit;
+        end;
+    end;
 }

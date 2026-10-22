@@ -135,4 +135,87 @@ codeunit 60500 "TableExt Field Modify"
           'still a Text field', Format(FldRef.Value),
           'modify(...) must leave the field''s TYPE assignable exactly as the table declared it');
     end;
+
+    // ── Added by writer bs (corpus issue #668, items 81, 85, 100) ───────────────────────
+
+    [Test]
+    procedure TableExtModify_FieldTable_FieldCaption_AnswersTheExtensionsCaption()
+    // CLAIM (issue #668 item 100): the virtual Field table reads the Caption a tableextension's modify(...) set, as FieldCaption and
+    // FieldRef.Caption do above; the unmodified field keeps the table's Caption.
+    var
+        Observer: Codeunit "Probe Observer";
+        FieldRec: Record Field;
+    begin
+        FieldRec.Get(60506, 10);
+        Observer.Observe('field_table_caption_modified', FieldRec."Field Caption");
+        FieldRec.Get(60506, 11);
+        Observer.Observe('field_table_caption_untouched', FieldRec."Field Caption");
+        Observer.Expect('field_table_caption_modified', 'Extension Overridden Caption');
+        Observer.Expect('field_table_caption_untouched', 'Original Untouched Caption');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure TableExt_CaptionProperty_TableCaptionAndMetadata()
+    // CLAIM (issue #668 item 81): a tableextension may set Caption (it compiles on runtimes 16.1, 17.1 and 18.0). Which caption do
+    // TableCaption, RecordRef.Caption and AllObjWithCaption answer for the extended table: the table's or the extension's?
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+        RecRef: RecordRef;
+        AllObj: Record AllObjWithCaption;
+    begin
+        Observer.Observe('table_caption', Base.TableCaption());
+        RecRef.Open(Database::"LT BS Base");
+        Observer.Observe('recordref_caption', RecRef.Caption());
+        RecRef.Close();
+        AllObj.Get(AllObj."Object Type"::Table, Database::"LT BS Base");
+        Observer.Observe('allobj_table_caption', AllObj."Object Caption");
+        AllObj.Get(AllObj."Object Type"::TableExtension, 83150);
+        Observer.Observe('allobj_tableextension_caption', AllObj."Object Caption");
+        Observer.Expect('table_caption', 'LT BS Ext Caption');
+        Observer.Expect('recordref_caption', 'LT BS Ext Caption');
+        Observer.Expect('allobj_table_caption', 'LT BS Ext Caption');
+        Observer.Expect('allobj_tableextension_caption', 'LT BS Base Ext One');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure TableExt_FieldNameLongerThan30_NameAndValue()
+    // CLAIM (issue #668 item 85): a tableextension field named with 35 characters compiles with warning AL0468 only. The app publishes; what
+    // do FieldName, FieldRef.Name and the Field table give, and does the column store and read a value?
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+        FieldRec: Record Field;
+        RecRef: RecordRef;
+    begin
+        Base.DeleteAll();
+        Base.Init();
+        Base.Id := 1;
+        Base."LT BS Field Name Longer Than Thirty" := 42;
+        Base.Insert();
+        Base.Get(1);
+        Observer.Observe('value', Format(Base."LT BS Field Name Longer Than Thirty"));
+        Observer.Observe('field_name', Base.FieldName("LT BS Field Name Longer Than Thirty"));
+        Observer.Observe('field_caption', Base.FieldCaption("LT BS Field Name Longer Than Thirty"));
+        RecRef.GetTable(Base);
+        Observer.Observe('fieldref_name', RecRef.Field(83150).Name());
+        FieldRec.Get(Database::"LT BS Base", 83150);
+        Observer.Observe('field_table_name', FieldRec.FieldName);
+        Observer.Observe('field_table_name_length', Format(StrLen(FieldRec.FieldName)));
+        Base.SetRange("LT BS Field Name Longer Than Thirty", 42);
+        Observer.Observe('filter_count', Format(Base.Count()));
+        Observer.Observe('get_filters', Base.GetFilters());
+        Base.DeleteAll();
+        Observer.Expect('value', '42');
+        Observer.Expect('field_name', 'LT BS Field Name Longer Than Thirty');
+        Observer.Expect('field_caption', 'LT BS Field Name Longer Than Thirty');
+        Observer.Expect('fieldref_name', 'LT BS Field Name Longer Than Thirty');
+        Observer.Expect('field_table_name', 'LT BS Field Name Longer Than T');
+        Observer.Expect('field_table_name_length', '30');
+        Observer.Expect('filter_count', '1');
+        Observer.Expect('get_filters', 'LT BS Field Name Longer Than Thirty: 42');
+        Observer.Verify();
+    end;
 }
