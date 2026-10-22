@@ -134,6 +134,14 @@ codeunit 99418 "LT RE Query Metadata Shapes"
         Observer.Observe('columns', Result);
         Columns.DeleteAll();
         TenantWebService.Delete(true);
-        Observer.Finish();
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('metadata is null', 'No');
+        Observer.Expect('fields count', '7');
+        // One entry per column in query order: the FlowField columns carry their field number, the nested data item's columns its table,
+        // the Method = Count column field number 0; FieldName is the column name.
+        Observer.Expect('fields', '[1|99415|HeadId][2|99415|HeadName][3|99415|LineTotal][4|99415|LineCountFlow][4|99416|LineDescription][3|99416|LineAmount][0|99416|Lines]');
+        // A field with no column (1 of the line table, 9 of the header) still gets a row, with a blank Field Name.
+        Observer.Expect('columns', '[99415|1|HeadId|Yes][99415|2|HeadName|Yes][99415|3|LineTotal|Yes][99415|4|LineCountFlow|Yes][99416|4|LineDescription|Yes][99416|3|LineAmount|Yes][99416|0|Lines|Yes][99416|1||Yes][99415|9||Yes]');
+        Observer.Verify();
     end;
 }

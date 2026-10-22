@@ -6,8 +6,7 @@
 // as text and code. Object id 67107.
 // Writer QX (Microsoft's DemoTool): Media Resources codes of a fresh tenant, Media Reference.ImportStream and Blob rows by Code; Tenant Report
 //   Layout Selection rows of a fresh tenant and the Insert(true)-else-Modify(true) of a report layout; OData Edm Type keys and the Edm Xml Blob.
-// Writer RE (Microsoft's DemoTool): Description and Edm Xml text of the 6 OData Edm Type rows of a fresh tenant (Edm Xml read line by line with
-//   InStream.ReadText, the lines joined with LF).
+// Writer RE (Microsoft's DemoTool): Description and Edm Xml text of the 6 OData Edm Type rows of a fresh tenant (the same on BC 27, 28 and 29).
 
 codeunit 67107 "LT PT Cloud Tables"
 {
@@ -495,9 +494,7 @@ codeunit 67107 "LT PT Cloud Tables"
     end;
 
     // ---- Writer RE (Microsoft's DemoTool, Graph Mgt - General Tools.InsertOrUpdateODataType from UpdateAPIData): Description and Edm Xml of the
-    // 6 OData Edm Type rows of a fresh tenant (their keys are pinned in QX_ODataEdmType_RowsAndEdmXml). The Edm Xml text is read in parts of
-    // 1200 characters, one test per part, so that each observation fits the failure message; ReadText drops the line breaks, the lines
-    // are joined with LF. ----
+    // 6 OData Edm Type rows of a fresh tenant (their keys are pinned in QX_ODataEdmType_RowsAndEdmXml). Each Edm Xml text is one line. ----
 
     local procedure ReEdmXml(EdmKey: Code[50]): Text
     var
@@ -523,15 +520,13 @@ codeunit 67107 "LT PT Cloud Tables"
         exit(Txt);
     end;
 
-    local procedure ReObserveEdmXmlPart(EdmKey: Code[50]; Part: Integer)
+    local procedure ReVerifyEdmXml(EdmKey: Code[50]; Expected: Text)
     var
         Observer: Codeunit "Probe Observer";
-        Txt: Text;
     begin
-        Txt := ReEdmXml(EdmKey);
-        Observer.Observe('length', Format(StrLen(Txt)));
-        Observer.Observe('part ' + Format(Part), CopyStr(Txt, (Part - 1) * 1200 + 1, 1200));
-        Observer.Finish();
+        Observer.Observe('edm xml', ReEdmXml(EdmKey));
+        Observer.Expect('edm xml', Expected);
+        Observer.Verify();
     end;
 
     [Test]
@@ -564,114 +559,48 @@ codeunit 67107 "LT PT Cloud Tables"
             Observer.Observe('POSTALADDRESS', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
         else
             Observer.Observe('POSTALADDRESS', '<no row>');
-        Observer.Finish();
+        Observer.Expect('BOOKINGSDATE', 'description=[Graph CDM - Bookings Date complex type] edm xml length=168');
+        Observer.Expect('DIMENSION', 'description=[Graph CDM - Dimension complex type.] edm xml length=306');
+        Observer.Expect('DOCUMENTLINEOBJECTDETAILS', 'description=[Graph API - Complex type exposing details of the line object that is being sold.] edm xml length=218');
+        Observer.Expect('ITEM-UOM', 'description=[Graph CDM - Unit of Measure complex type on Item Entity page] edm xml length=357');
+        Observer.Expect('ITEM-UOM-CONVERSION', 'description=[Graph CDM - Unit of Measure Conversions complex type on Item Entity page] edm xml length=225');
+        Observer.Expect('POSTALADDRESS', 'description=[Graph CDM - Postal Address complex type] edm xml length=440');
+        Observer.Verify();
     end;
 
     [Test]
-    procedure RE_ODataEdmType_EdmXml_BookingsDate_1()
+    procedure RE_ODataEdmType_EdmXml_BookingsDate()
     begin
-        ReObserveEdmXmlPart('BOOKINGSDATE', 1);
+        ReVerifyEdmXml('BOOKINGSDATE', '<ComplexType Name="dateTimeTimeZoneType">  <Property Name="dateTime" Type="Edm.String" Nullable="false" />  <Property Name="timeZone" Type="Edm.String" /></ComplexType>');
     end;
 
     [Test]
-    procedure RE_ODataEdmType_EdmXml_BookingsDate_2()
+    procedure RE_ODataEdmType_EdmXml_Dimension()
     begin
-        ReObserveEdmXmlPart('BOOKINGSDATE', 2);
+        ReVerifyEdmXml('DIMENSION', '<ComplexType Name="dimensionType"><Property Name="code" Type="Edm.String" Nullable="false" /><Property Name="displayName" Type="Edm.String" Nullable="true" /><Property Name="valueCode" Type="Edm.String" Nullable="false" /><Property Name="valueDisplayName" Type="Edm.String" Nullable="true" /></ComplexType>');
     end;
 
     [Test]
-    procedure RE_ODataEdmType_EdmXml_BookingsDate_3()
+    procedure RE_ODataEdmType_EdmXml_DocumentLineObjectDetails()
     begin
-        ReObserveEdmXmlPart('BOOKINGSDATE', 3);
+        ReVerifyEdmXml('DOCUMENTLINEOBJECTDETAILS', '<ComplexType Name="documentLineObjectDetailsType"><Property Name="number" Type="Edm.String" Nullable="true" MaxLength="20"/><Property Name="displayName" Type="Edm.String" Nullable="true" MaxLength="100"/></ComplexType>');
     end;
 
     [Test]
-    procedure RE_ODataEdmType_EdmXml_Dimension_1()
+    procedure RE_ODataEdmType_EdmXml_ItemUom()
     begin
-        ReObserveEdmXmlPart('DIMENSION', 1);
+        ReVerifyEdmXml('ITEM-UOM', '<ComplexType Name="unitOfMeasureType"><Property Name="code" Type="Edm.String" Nullable="true" MaxLength="10" /><Property Name="displayName" Type="Edm.String" Nullable="true" MaxLength="50" /><Property Name="symbol" Type="Edm.String" Nullable="true" MaxLength="10" /><Property Name="unitConversion" Type="ITEM-UOM-CONVERSION" Nullable="true" /></ComplexType>');
     end;
 
     [Test]
-    procedure RE_ODataEdmType_EdmXml_Dimension_2()
+    procedure RE_ODataEdmType_EdmXml_ItemUomConversion()
     begin
-        ReObserveEdmXmlPart('DIMENSION', 2);
+        ReVerifyEdmXml('ITEM-UOM-CONVERSION', '<ComplexType Name="itemUnitOfMeasureConversionType"><Property Name="toUnitOfMeasure" Type="Edm.String" Nullable="true" MaxLength="10" /><Property Name="fromToConversionRate" Type="Edm.Decimal" Nullable="true" /></ComplexType>');
     end;
 
     [Test]
-    procedure RE_ODataEdmType_EdmXml_Dimension_3()
+    procedure RE_ODataEdmType_EdmXml_PostalAddress()
     begin
-        ReObserveEdmXmlPart('DIMENSION', 3);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_DocumentLineObjectDetails_1()
-    begin
-        ReObserveEdmXmlPart('DOCUMENTLINEOBJECTDETAILS', 1);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_DocumentLineObjectDetails_2()
-    begin
-        ReObserveEdmXmlPart('DOCUMENTLINEOBJECTDETAILS', 2);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_DocumentLineObjectDetails_3()
-    begin
-        ReObserveEdmXmlPart('DOCUMENTLINEOBJECTDETAILS', 3);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_ItemUom_1()
-    begin
-        ReObserveEdmXmlPart('ITEM-UOM', 1);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_ItemUom_2()
-    begin
-        ReObserveEdmXmlPart('ITEM-UOM', 2);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_ItemUom_3()
-    begin
-        ReObserveEdmXmlPart('ITEM-UOM', 3);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_ItemUomConversion_1()
-    begin
-        ReObserveEdmXmlPart('ITEM-UOM-CONVERSION', 1);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_ItemUomConversion_2()
-    begin
-        ReObserveEdmXmlPart('ITEM-UOM-CONVERSION', 2);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_ItemUomConversion_3()
-    begin
-        ReObserveEdmXmlPart('ITEM-UOM-CONVERSION', 3);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_PostalAddress_1()
-    begin
-        ReObserveEdmXmlPart('POSTALADDRESS', 1);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_PostalAddress_2()
-    begin
-        ReObserveEdmXmlPart('POSTALADDRESS', 2);
-    end;
-
-    [Test]
-    procedure RE_ODataEdmType_EdmXml_PostalAddress_3()
-    begin
-        ReObserveEdmXmlPart('POSTALADDRESS', 3);
+        ReVerifyEdmXml('POSTALADDRESS', '<ComplexType Name="postalAddressType"><Property Name="street" Type="Edm.String" Nullable="true" MaxLength="152" /><Property Name="city" Type="Edm.String" Nullable="true" MaxLength="30" /><Property Name="state" Type="Edm.String" Nullable="true" MaxLength="30" /><Property Name="countryLetterCode" Type="Edm.String" Nullable="true" MaxLength="10" /><Property Name="postalCode" Type="Edm.String" Nullable="true" MaxLength="20" /></ComplexType>');
     end;
 }

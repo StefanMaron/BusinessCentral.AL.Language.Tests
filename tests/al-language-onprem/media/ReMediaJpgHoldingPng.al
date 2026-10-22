@@ -71,11 +71,21 @@ codeunit 98041 "LT RE Media Jpg Holding Png"
         if not Tenant.Get(Id) then
             exit('no tenant media row');
         Tenant.CalcFields(Content);
+        exit('description=[' + Tenant.Description + '] mime=[' + Tenant."Mime Type" + '] width=' + Format(Tenant.Width) +
+            ' height=' + Format(Tenant.Height) + ' hascontent=' + Format(Tenant.Content.HasValue()));
+    end;
+
+    local procedure TenantFileName(Id: Guid; Src: Text): Text
+    var
+        Tenant: Record "Tenant Media";
+        Name: Text;
+    begin
+        if not Tenant.Get(Id) then
+            exit('no tenant media row');
         Name := Tenant."File Name";
         Name := Name.Replace(TemporaryPath(), '<tmp>');
         Name := Name.Replace(CopyStr(Src, StrLen(TemporaryPath()) + 1), '<name>');
-        exit('description=[' + Tenant.Description + '] mime=[' + Tenant."Mime Type" + '] file name=[' + Name + '] width=' + Format(Tenant.Width) +
-            ' height=' + Format(Tenant.Height) + ' hascontent=' + Format(Tenant.Content.HasValue()));
+        exit(Name);
     end;
 
     local procedure ContentLength(Id: Guid): Integer
@@ -113,6 +123,7 @@ codeunit 98041 "LT RE Media Jpg Holding Png"
         Observer.Observe('media hasvalue', Format(Row.Pic.HasValue()));
         Row.Insert();
         Observer.Observe('media tenant', DescribeTenant(Id, Src));
+        Observer.Observe('media file name', TenantFileName(Id, Src));
         Observer.Observe('media content length', Format(ContentLength(Id)));
         Row.Code := 'LTREB';
         Clear(Row.Pic);
@@ -123,12 +134,33 @@ codeunit 98041 "LT RE Media Jpg Holding Png"
         Observer.Observe('mediaset id = MediaId', Format(Id = Row.Set.MediaId()));
         Row.Insert();
         Observer.Observe('mediaset item 1 tenant', DescribeTenant(Row.Set.Item(1), Src));
+        Observer.Observe('mediaset file name', TenantFileName(Row.Set.Item(1), Src));
         Observer.Observe('mediaset return tenant', DescribeTenant(Id, Src));
         Observer.Observe('mediaset content length', Format(ContentLength(Row.Set.Item(1))));
         Row.Get('LTREB');
         Observer.Observe('mediaset count after get', Format(Row.Set.Count()));
         Row.DeleteAll();
         Cleanup(Src);
-        Observer.Finish();
+        Observer.Expect('file length', '73');
+        Observer.Expect('media id is null', 'No');
+        Observer.Expect('media id = MediaId', 'Yes');
+        Observer.Expect('media hasvalue', 'Yes');
+        // The Mime Type follows the .jpg file name, not the PNG data; Width and Height are read from the PNG data.
+        Observer.Expect('media tenant', 'description=[Item picture] mime=[image/jpeg] width=3 height=2 hascontent=Yes');
+        Observer.Expect('media file name', '<tmp><name>');
+        // The stored content is re-encoded (111 bytes on the Linux tiers); Windows re-encodes images differently (see MediaFiles.al), not asserted.
+        Observer.Ignore('media content length');
+        Observer.Expect('mediaset id is null', 'No');
+        Observer.Expect('mediaset count', '1');
+        // MediaSet.ImportFile returns the MediaSet id, not the id of the media it adds: no Tenant Media row has that id.
+        Observer.Expect('mediaset id = Item(1)', 'No');
+        Observer.Expect('mediaset id = MediaId', 'Yes');
+        Observer.Expect('mediaset item 1 tenant', 'description=[Item picture] mime=[image/jpeg] width=3 height=2 hascontent=Yes');
+        // Linux tiers give 'TEMP\<name>', Windows gives '<name>' (Windows check of QX_MediaAndMediaSet_ImportFile_Jpeg, 2026-10-22): not asserted.
+        Observer.Ignore('mediaset file name');
+        Observer.Expect('mediaset return tenant', 'no tenant media row');
+        Observer.Ignore('mediaset content length');
+        Observer.Expect('mediaset count after get', '1');
+        Observer.Verify();
     end;
 }
