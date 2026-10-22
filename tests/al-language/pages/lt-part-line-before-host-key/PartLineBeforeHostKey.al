@@ -809,6 +809,36 @@ codeunit 67582 "LT DL Tests"
         Log.Reset();
     end;
 
+    // Corpus issue 688 (owner OK 2026-10-22): how often the part's OnNewRecord fires while the client shows a blank draft line depends on the
+    // service tier (handlers/TestPagePartOnNewRecordCount.al documents six firings on one tier and three on another), and so does the
+    // L.OnValidate(Document No.) entry that comes with each firing. This form observes the log without those two entries, which keeps the
+    // order of every other trigger, plus whether the part's OnNewRecord fired at least once, which every measured tier does.
+    local procedure StepPortable(var Observer: Codeunit "Probe Observer"; Name: Text; Ok: Boolean)
+    var
+        Log: Codeunit "LT DL Log";
+        Entry: Text;
+        Kept: Text;
+        Dump: Text;
+        PartNewRecords: Integer;
+    begin
+        Observer.Observe(Name, Format(Ok));
+        if not Ok then
+            Observer.ObserveError(Name + '_error');
+        Dump := Log.Dump();
+        Dump := CopyStr(Dump, 2, StrLen(Dump) - 2);
+        foreach Entry in Dump.Split(' | ') do
+            if Entry.StartsWith('LP.OnNewRecord:') then
+                PartNewRecords += 1
+            else
+                if not Entry.StartsWith('L.OnValidate(Document No.):') then begin
+                    if Kept <> '' then
+                        Kept += ' | ';
+                    Kept += Entry;
+                end;
+        Observer.Observe(Name + '_log_portable', '[' + Kept + '] LP.OnNewRecord fired: ' + Format(PartNewRecords >= 1));
+        Log.Reset();
+    end;
+
     local procedure Stored(var Observer: Codeunit "Probe Observer"; Name: Text)
     var
         Header: Record "LT DL Header";
@@ -846,7 +876,7 @@ codeunit 67582 "LT DL Tests"
         Host: TestPage "LT DL Document";
     begin
         Seed();
-        Step(Observer, 'open_new', TryOpenNew(Host));
+        StepPortable(Observer, 'open_new', TryOpenNew(Host));
         Step(Observer, 'new_line', TryNewLine(Host));
         Step(Observer, 'description_before_key', TryDescription(Host, 'first'));
         Step(Observer, 'quantity_before_key', TryQuantity(Host, 3));
@@ -859,7 +889,7 @@ codeunit 67582 "LT DL Tests"
         Step(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
         Observer.Expect('open_new', 'Yes');
-        Observer.Expect('open_new_log', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('open_new_log_portable', '[HP.OnNewRecord] LP.OnNewRecord fired: Yes');
         Observer.Expect('new_line', 'Yes');
         Observer.Expect('new_line_log', '[HP.OnInsertRecord: | H.OnInsert: | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
         Observer.Expect('description_before_key', 'Yes');
@@ -903,8 +933,8 @@ codeunit 67582 "LT DL Tests"
         Host: TestPage "LT DL Document";
     begin
         Seed();
-        Step(Observer, 'open_new', TryOpenNew(Host));
-        Step(Observer, 'type_key', TryKey(Host, 'D2'));
+        StepPortable(Observer, 'open_new', TryOpenNew(Host));
+        StepPortable(Observer, 'type_key', TryKey(Host, 'D2'));
         Stored(Observer, 'after_key');
         Step(Observer, 'new_line', TryNewLine(Host));
         Step(Observer, 'description', TryDescription(Host, 'second'));
@@ -914,9 +944,9 @@ codeunit 67582 "LT DL Tests"
         Step(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
         Observer.Expect('open_new', 'Yes');
-        Observer.Expect('open_new_log', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('open_new_log_portable', '[HP.OnNewRecord] LP.OnNewRecord fired: Yes');
         Observer.Expect('type_key', 'Yes');
-        Observer.Expect('type_key_log', '[H.OnValidate(No.):D2 | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('type_key_log_portable', '[H.OnValidate(No.):D2] LP.OnNewRecord fired: Yes');
         Observer.Expect('after_key_headers', '0');
         Observer.Expect('after_key_header_rows', '');
         Observer.Expect('after_key_lines', '0');
@@ -1224,7 +1254,7 @@ codeunit 67582 "LT DL Tests"
         Host: TestPage "LT DL Document";
     begin
         Seed();
-        Step(Observer, 'open_new', TryOpenNew(Host));
+        StepPortable(Observer, 'open_new', TryOpenNew(Host));
         Step(Observer, 'type_name', TryName(Host, 'N1'));
         Stored(Observer, 'after_name');
         Step(Observer, 'type_key', TryKey(Host, 'D7'));
@@ -1236,7 +1266,7 @@ codeunit 67582 "LT DL Tests"
         Step(Observer, 'close', TryClose(Host));
         Stored(Observer, 'after_close');
         Observer.Expect('open_new', 'Yes');
-        Observer.Expect('open_new_log', '[HP.OnNewRecord | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
+        Observer.Expect('open_new_log_portable', '[HP.OnNewRecord] LP.OnNewRecord fired: Yes');
         Observer.Expect('type_name', 'Yes');
         Observer.Expect('type_name_log', '[HP.OnInsertRecord: | H.OnInsert: | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord: | H.OnValidate(Name):N1 key= | L.OnValidate(Document No.): | LP.OnNewRecord: | LP.OnNewRecord: | L.OnValidate(Document No.): | LP.OnNewRecord:]');
         Observer.Expect('after_name_headers', '1');
