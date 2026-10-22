@@ -1,4 +1,7 @@
 // Probe: page background tasks under a TestPage. Order of several enqueued tasks, task ids, cancel on a row move, ErrorCode of a failing task, ErrorLevel, RunPageBackgroundTask with completion triggers, and what a worker can do (Delete, DeleteAll, ModifyAll, Commit, Codeunit.Run guarded and unguarded, IsInWriteTransaction).
+// Writer QP (al-runtime-rs ask: the TaskId argument of OnPageBackgroundTaskCompleted against the page variable the enqueue filled):
+//   page 87144 enqueues two tasks per row from OnAfterGetCurrRecord into the page variables TaskA and TaskB; the completion trigger logs
+//   which variable equals its TaskId argument and whether the argument and the variables are nonzero (relations only, no task ids). QP_ tests.
 // Settles: md:285 (all tasks run before the call returns and in which order, cancel on row move, task id numbering, ErrorCode, RunPageBackgroundTask(..., true) task id, ErrorLevel), md:286 (other writes, Commit, unguarded run, failing guarded run and the caller's pending rows).
 
 table 68700 "W2 Bg Row"
@@ -275,6 +278,58 @@ page 68708 "W2 Bg Level Card"
     begin
         Log.Add('error(id=' + 'n' + ',row=' + Rec."No." + ',handled_in=false)');
     end;
+}
+
+page 87144 "LT QP Bg Id Card"
+{
+    PageType = Card;
+    ApplicationArea = All;
+    SourceTable = "W2 Bg Row";
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("No."; Rec."No.") { ApplicationArea = All; }
+        }
+    }
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "W2 Bg Log";
+        Params: Dictionary of [Text, Text];
+    begin
+        if Rec."No." = '' then
+            exit;
+        Params.Add('Tag', 'A-' + Rec."No.");
+        Params.Add('Op', 'echo');
+        CurrPage.EnqueueBackgroundTask(TaskA, Codeunit::"W2 Bg Worker", Params, 5000);
+        Clear(Params);
+        Params.Add('Tag', 'B-' + Rec."No.");
+        Params.Add('Op', 'echo');
+        CurrPage.EnqueueBackgroundTask(TaskB, Codeunit::"W2 Bg Worker", Params, 5000);
+        Log.Add('enqueued(' + Rec."No." + ',a_nonzero=' + Format(TaskA <> 0) + ',b_nonzero=' + Format(TaskB <> 0) + ',a_eq_b=' + Format(TaskA = TaskB) + ')');
+    end;
+
+    trigger OnPageBackgroundTaskCompleted(TaskId: Integer; Results: Dictionary of [Text, Text])
+    var
+        Log: Codeunit "W2 Bg Log";
+        Tag: Text;
+        Match: Text;
+    begin
+        Results.Get('Tag', Tag);
+        Match := 'none';
+        if TaskId = TaskA then
+            Match := 'TaskA';
+        if TaskId = TaskB then
+            Match += '+TaskB';
+        Log.Add('done(tag=' + Tag + ',current=' + Rec."No." + ',arg_nonzero=' + Format(TaskId <> 0) + ',arg_equals=' + Match + ')');
+    end;
+
+    var
+        TaskA: Integer;
+        TaskB: Integer;
 }
 
 codeunit 68703 "W2 Bg Tests"
@@ -670,5 +725,23 @@ codeunit 68703 "W2 Bg Tests"
     local procedure OpenLevel(var Pg: TestPage "W2 Bg Level Card")
     begin
         Pg.OpenView();
+    end;
+
+    [Test]
+    procedure QP_CompletedTaskId_AgainstPageVariable_OpenView()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "W2 Bg Log";
+        Pg: TestPage "LT QP Bg Id Card";
+    begin
+        Seed('echo');
+        Pg.OpenView();
+        Observer.Observe('open_log', Log.Take());
+        Pg.GoToKey('N2');
+        Observer.Observe('second_row_log', Log.Take());
+        Pg.Close();
+        Observer.Expect('open_log', 'done(tag=A-N1,current=N1,arg_nonzero=Yes,arg_equals=TaskA);done(tag=B-N1,current=N1,arg_nonzero=Yes,arg_equals=none+TaskB);enqueued(N1,a_nonzero=Yes,b_nonzero=Yes,a_eq_b=No);');
+        Observer.Expect('second_row_log', 'done(tag=A-N1,current=N1,arg_nonzero=Yes,arg_equals=TaskA);done(tag=B-N1,current=N1,arg_nonzero=Yes,arg_equals=none+TaskB);enqueued(N1,a_nonzero=Yes,b_nonzero=Yes,a_eq_b=No);done(tag=A-N2,current=N2,arg_nonzero=Yes,arg_equals=TaskA);done(tag=B-N2,current=N2,arg_nonzero=Yes,arg_equals=none+TaskB);enqueued(N2,a_nonzero=Yes,b_nonzero=Yes,a_eq_b=No);');
+        Observer.Verify();
     end;
 }

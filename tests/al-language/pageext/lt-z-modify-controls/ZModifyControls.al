@@ -106,6 +106,26 @@ pageextension 76330 "LT Z Mod Ext" extends "LT Z Mod Base"
     end;
 }
 
+// Writer BP (corpus issue 664, microsoft/AL issue 5261): CaptionClass set in modify() to the result of a procedure call of the page
+// extension, once with area 3 (plain text) and once with the area LTZ that "LT Z Caption Resolver" resolves.
+pageextension 82551 "LT BP Z Cap Ext" extends "LT Z Mod Base"
+{
+    layout
+    {
+        modify(Mask) { CaptionClass = BpCaptionClass(Rec.FieldNo(Name)); }
+        modify(DtPlain) { CaptionClass = BpResolvedClass(); }
+    }
+
+    local procedure BpCaptionClass(FieldNumber: Integer): Text
+    begin
+        exit('3,From procedure ' + Format(FieldNumber));
+    end;
+
+    local procedure BpResolvedClass(): Text
+    begin
+        exit('LTZ,' + 'from procedure');
+    end;
+}
 codeunit 76362 "LT Z Mod Log"
 {
     SingleInstance = true;
@@ -417,6 +437,22 @@ codeunit 76360 "LT Z Modify Controls Tests"
         Observer.Expect('mand before', 'One');
         Observer.Expect('mand after empty', '');
         Observer.Expect('stored name', '');
+        Observer.Verify();
+    end;
+
+    // Writer BP (corpus issue 664): CaptionClass in modify() whose value is a procedure call of the page extension.
+    [Test]
+    procedure ZBP_CaptionClass_ProcedureCallInModify()
+    var
+        P: TestPage "LT Z Mod Base";
+    begin
+        Seed();
+        P.OpenEdit();
+        Observer.Observe('area 3', P.Mask.Caption());
+        Observer.Observe('resolved', P.DtPlain.Caption());
+        P.Close();
+        Observer.Expect('area 3', 'From procedure 2');
+        Observer.Expect('resolved', 'resolved:from procedure');
         Observer.Verify();
     end;
 

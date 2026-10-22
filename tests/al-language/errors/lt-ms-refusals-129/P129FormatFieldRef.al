@@ -41,6 +41,25 @@ table 73301 "LT P129 FR Row"
     keys { key(PK; Id) { Clustered = true; } }
 }
 
+// Corpus issue 672 item 24: Decimal fields with a DecimalPlaces property, a Blob and a Date, for Format(FieldRef) against
+// Format(FieldRef.Value).
+table 83351 "LT BT FR Places"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Dec22; Decimal) { DecimalPlaces = 2 : 2; }
+        field(3; Dec05; Decimal) { DecimalPlaces = 0 : 5; }
+        field(4; Dec33; Decimal) { DecimalPlaces = 3 : 3; }
+        field(5; Bin; Blob) { }
+        field(6; D; Date) { }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
 codeunit 73302 "LT P129 Format FieldRef"
 {
     Subtype = Test;
@@ -253,6 +272,110 @@ codeunit 73302 "LT P129 Format FieldRef"
         Observer.Expect('blank f11 std 9', '');
         Observer.Expect('blank f12 default', 'None');
         Observer.Expect('blank f12 std 9', '0');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryFormatOne(var RecRef: RecordRef; FieldNo: Integer; Form: Integer; var Result: Text)
+    var
+        FR: FieldRef;
+    begin
+        FR := RecRef.Field(FieldNo);
+        case Form of
+            0:
+                Result := Format(FR);
+            1:
+                Result := Format(FR.Value);
+            2:
+                Result := Format(FR, 0, 1);
+            3:
+                Result := Format(FR.Value, 0, 1);
+            4:
+                Result := Format(FR, 0, 9);
+            5:
+                Result := Format(FR.Value, 0, 9);
+        end;
+    end;
+
+    local procedure FieldVsValue(var RecRef: RecordRef; FieldNo: Integer): Text
+    var
+        Form: Integer;
+        One: Text;
+        Result: Text;
+    begin
+        for Form := 0 to 5 do begin
+            ClearLastError();
+            if not TryFormatOne(RecRef, FieldNo, Form, One) then
+                One := 'err:' + GetLastErrorText() + ':' + GetLastErrorCode();
+            if Form > 0 then
+                Result += '|';
+            Result += One;
+        end;
+        exit(Result);
+    end;
+
+    // Corpus issue 672 item 24: Format(FieldRef) against Format(FieldRef.Value), each with no format number, format 1 and format 9
+    // (FR | FR.Value | FR 0,1 | FR.Value 0,1 | FR 0,9 | FR.Value 0,9), for Decimal fields with DecimalPlaces 2:2, 0:5 and 3:3 and a Date (also after
+    // GlobalLanguage(1031)); Format(Rec.Field) for the Decimals.
+    [Test]
+    procedure BT_FormatFieldRef_AgainstFormatValue()
+    var
+        Observer: Codeunit "Probe Observer";
+        Places: Record "LT BT FR Places";
+        RecRef: RecordRef;
+        Saved: Integer;
+    begin
+        Places.Id := 1;
+        Places.Dec22 := 1234.5;
+        Places.Dec05 := 1234.5;
+        Places.Dec33 := 2;
+        Places.D := 20240305D;
+        Observer.Observe('rec dec22', Format(Places.Dec22) + '|' + Format(Places.Dec22, 0, 1));
+        Observer.Observe('rec dec05', Format(Places.Dec05));
+        Observer.Observe('rec dec33', Format(Places.Dec33));
+        RecRef.GetTable(Places);
+        Observer.Observe('dec22', FieldVsValue(RecRef, 2));
+        Observer.Observe('dec05', FieldVsValue(RecRef, 3));
+        Observer.Observe('dec33', FieldVsValue(RecRef, 4));
+        Observer.Observe('date', FieldVsValue(RecRef, 6));
+        Saved := GlobalLanguage();
+        GlobalLanguage(1031);
+        Observer.Observe('date 1031', FieldVsValue(RecRef, 6));
+        Observer.Observe('dec22 1031', FieldVsValue(RecRef, 2));
+        GlobalLanguage(Saved);
+        Observer.Expect('rec dec22', '1,234.50|1234.50');
+        Observer.Expect('rec dec05', '1,234.5');
+        Observer.Expect('rec dec33', '2.000');
+        Observer.Expect('dec22', '1,234.5|1,234.5|1234.5|1234.5|1234.5|1234.5');
+        Observer.Expect('dec05', '1,234.5|1,234.5|1234.5|1234.5|1234.5|1234.5');
+        Observer.Expect('dec33', '2|2|2|2|2|2');
+        Observer.Expect('date', '03/05/24|03/05/24|03/05/24|03/05/24|2024-03-05|2024-03-05');
+        Observer.Expect('date 1031', '03/05/24|03/05/24|03/05/24|03/05/24|2024-03-05|2024-03-05');
+        Observer.Expect('dec22 1031', '1,234.5|1,234.5|1234.5|1234.5|1234.5|1234.5');
+        Observer.Verify();
+    end;
+
+    // Corpus issue 672 item 24, second part: the same comparison for a Blob with content, an Option with captions and an Enum.
+    [Test]
+    procedure BT_FormatFieldRef_AgainstFormatValue_BlobOptionEnum()
+    var
+        Observer: Codeunit "Probe Observer";
+        Places: Record "LT BT FR Places";
+        RecRef: RecordRef;
+        OutS: OutStream;
+    begin
+        Places.Id := 1;
+        Places.Bin.CreateOutStream(OutS);
+        OutS.WriteText('abc');
+        RecRef.GetTable(Places);
+        Observer.Observe('blob', FieldVsValue(RecRef, 5));
+        Clear(RecRef);
+        Filled(RecRef);
+        Observer.Observe('option', FieldVsValue(RecRef, 9));
+        Observer.Observe('enum', FieldVsValue(RecRef, 12));
+        Observer.Expect('blob', '*|*|*|*|*|*');
+        Observer.Expect('option', 'Dos|Dos|Dos|Dos|2|2');
+        Observer.Expect('enum', 'Big Kind|Big Kind|Big Kind|Big Kind|1|1');
         Observer.Verify();
     end;
 }

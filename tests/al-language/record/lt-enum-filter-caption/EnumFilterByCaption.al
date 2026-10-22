@@ -186,4 +186,44 @@ codeunit 70652 "LT EFCap Filter"
         Observer.Expect('partial_caption|code', 'Filter:CSide');
         Observer.Verify();
     end;
+
+    local procedure EvalFromFilter(var Observer: Codeunit "Probe Observer"; Prefix: Text; K: Enum "LT EFCap Kind")
+    var
+        Row: Record "LT EFCap Row";
+        Target: Record "LT EFCap Row";
+        Ok: Boolean;
+    begin
+        Row.SetRange(Kind, K);
+        Target.Kind := Target.Kind::Plain;
+        Ok := Evaluate(Target.Kind, Row.GetFilter(Kind));
+        Observer.Observe(Prefix + ' ' + Format(K.AsInteger()), Row.GetFilter(Kind) + '|' + Format(Ok) + '|' + Format(Target.Kind.AsInteger()));
+    end;
+
+    // Corpus issue 672 item 19 (AL issue 4948): Evaluate(EnumField, Other.GetFilter(EnumField)) for a one-value SetRange of each
+    // member (GetFilter | Evaluate result | ordinal read back), in the session language and after GlobalLanguage(1031). This app has
+    // no translation file, so the captions are the same in both languages.
+    [Test]
+    procedure BT_Evaluate_FromGetFilter_Language()
+    var
+        Observer: Codeunit "Probe Observer";
+        Saved: Integer;
+        Ordinal: Integer;
+    begin
+        Saved := GlobalLanguage();
+        foreach Ordinal in "LT EFCap Kind".Ordinals() do
+            EvalFromFilter(Observer, '1033', "LT EFCap Kind".FromInteger(Ordinal));
+        GlobalLanguage(1031);
+        foreach Ordinal in "LT EFCap Kind".Ordinals() do
+            EvalFromFilter(Observer, '1031', "LT EFCap Kind".FromInteger(Ordinal));
+        GlobalLanguage(Saved);
+        Observer.Expect('1033 0', 'Plain|Yes|0');
+        Observer.Expect('1033 1', 'Primary Item|Yes|1');
+        Observer.Expect('1033 2', 'Third|Yes|2');
+        Observer.Expect('1033 3', 'Fourth Item|Yes|3');
+        Observer.Expect('1031 0', 'Plain|Ja|0');
+        Observer.Expect('1031 1', 'Primary Item|Ja|1');
+        Observer.Expect('1031 2', 'Third|Ja|2');
+        Observer.Expect('1031 3', 'Fourth Item|Ja|3');
+        Observer.Verify();
+    end;
 }

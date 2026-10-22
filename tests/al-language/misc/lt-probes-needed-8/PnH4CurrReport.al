@@ -244,7 +244,13 @@ codeunit 70613 "LT PnH CurrRpt Tests"
         Observer.Expect('en-US', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1033 region=[];after dec=1,234.5 date=03/05/24 bool=Yes;get dec=1,234.5 date=03/05/24 bool=Yes;post dec=1,234.5 bool=Yes;');
         Observer.Expect('af227', 'no error');
         Observer.Expect('af227', 'no error');
+#if BC29PLUS
+        // BC 29: the fr-FR group separator is U+00A0 (no-break space), as on Windows BC 27.5, 28.5 and 29.0 (full corpus runs on the
+        // Windows containers, 2026-10-20) and on bc-linux bcc60c1c BC 29. BC 27 and 28 on Linux still give U+202F (narrow no-break space).
+        Observer.Expect('fr-FR', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1033 region=[fr-FR];after dec=1 234,5 date=05/03/24 bool=Yes;get dec=1 234,5 date=05/03/24 bool=Yes;post dec=1 234,5 bool=Yes;');
+#else
         Observer.Expect('fr-FR', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1033 region=[fr-FR];after dec=1 234,5 date=05/03/24 bool=Yes;get dec=1 234,5 date=05/03/24 bool=Yes;post dec=1 234,5 bool=Yes;');
+#endif
         Observer.Expect('af227', 'no error');
         Observer.Expect('af227', 'no error');
         Observer.Expect('da-DK', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1033 region=[da-DK];after dec=1.234,5 date=05-03-24 bool=Yes;get dec=1.234,5 date=05-03-24 bool=Yes;post dec=1.234,5 bool=Yes;');
@@ -302,7 +308,13 @@ codeunit 70613 "LT PnH CurrRpt Tests"
         Observer.Observe('fr-FR + 1031', L.Take());
         L.SetCulture('', 0);
         Observer.Expect('de-DE + 1036', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1036 region=[de-DE];after dec=1.234,5 date=05.03.24 bool=Oui;get dec=1.234,5 date=05.03.24 bool=Oui;post dec=1.234,5 bool=Oui;');
+#if BC29PLUS
+        // BC 29: the fr-FR group separator is U+00A0 (no-break space), as on Windows BC 27.5, 28.5 and 29.0 (full corpus runs on the
+        // Windows containers, 2026-10-20) and on bc-linux bcc60c1c BC 29. BC 27 and 28 on Linux still give U+202F (narrow no-break space).
+        Observer.Expect('fr-FR + 1031', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1031 region=[fr-FR];after dec=1 234,5 date=05/03/24 bool=Ja;get dec=1 234,5 date=05/03/24 bool=Ja;post dec=1 234,5 bool=Ja;');
+#else
         Observer.Expect('fr-FR + 1031', 'before dec=1,234.5 date=03/05/24 bool=Yes;language=1031 region=[fr-FR];after dec=1 234,5 date=05/03/24 bool=Ja;get dec=1 234,5 date=05/03/24 bool=Ja;post dec=1 234,5 bool=Ja;');
+#endif
         Observer.Verify();
     end;
 }

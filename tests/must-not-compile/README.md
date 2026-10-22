@@ -96,6 +96,11 @@ is only a reference.
 | 0111 | AL0130 | this passed to a var parameter of another codeunit. |
 | 0112 | AL0296 | SecretText.Unwrap named from a Cloud app (the method has scope OnPrem). |
 | 0113 | AL0296 | A variable of the File data type in a Cloud app. |
+| 0640 | AL0666 | `JsonArray.SelectTokens` needs runtime 17; the BC 27 app runs on 16.1 (BC 28 and 29 compile it) |
+| 0641, 0642 | AL0126 | `MediaSet.ImportStream` and `Media.ImportStream` with a file name as fourth argument (0642: on 27, 28 and 29) |
+| 0643 to 0646 | AL0296 | `Media.ExportFile`, `Media.ImportFile`, `MediaSet.ExportFile` and `MediaSet.ImportFile` named from a Cloud app (Scope = OnPrem) |
+| 0647 to 0650 | AL0133 | `Query.SaveAsCsv` and `Query.SaveAsXml` with a file name (instance and by object number): in a Cloud app only the OutStream forms exist |
+| 0651 to 0653 | AL0296 | `HttpClient.UseDefaultNetworkWindowsAuthentication` and `UseWindowsAuthentication` (Text and SecretText) named from a Cloud app |
 | 0660 | AL0296 | Report.SaveAsExcel, SaveAsHtml, SaveAsPdf, SaveAsWord and SaveAsXml of the global Report object (object id and file name) are Scope = OnPrem: a Target = Cloud app cannot name them. (5 diagnostics) |
 | 0661 | AL0296 | Report.SaveAsExcel, SaveAsHtml, SaveAsPdf, SaveAsWord and SaveAsXml on a Report variable (file name) are Scope = OnPrem: a Target = Cloud app cannot call them. (5 diagnostics) |
 | 0664 | AL0666 | The fully qualified name overloads of Report.Run, Report.RunModal, Report.Execute, Page.Run and RecordRef.Open and RecordRef.FullyQualifiedName need runtime 17.0: the BC 27 app runtime is 16.1 and cannot call them (the BC 28 and 29 apps run on 17.1 and 18.0, where tests/al-language pins them). (6 diagnostics) |
@@ -142,6 +147,42 @@ is only a reference.
 | 0724 | AL0282 | A subscriber to Reporting Triggers.GetPrinterName declares a parameter the event does not have. |
 | 0725 | AL0280 | A subscriber names an event that Company Triggers does not declare (OnCompanyOpened). |
 | 0740 | AL0161 | An app subscribes to GetRoleCenterBannerPartID of the platform codeunit "System Action Triggers"; the event is declared an InternalEvent. |
+| 0760 | AL0844 | A Date field cannot carry DateFormula = true (the property exists only on Text-like fields). |
+| 0761 | AL0843 | SQLDataType is allowed on Code fields only. |
+| 0762 | AL0169 | MaskType takes None or Concealed. |
+| 0763 | AL0103 | Width on a table field with a value that does not fit an Integer. |
+| 0764 | AL0232 | Width with a negative value. |
+| 0765 | AL0169 | AllowInCustomizations takes ToBeClassified, Never, AsReadOnly or AsReadWrite. |
+| 0766 | AL0169 | Same as 0765, on a table extension. |
+| 0767 | AL0186 | ColumnStoreIndex names a field the table does not have. |
+| 0768 | AL0223 | LinkedInTransaction on a table that is not LinkedObject. |
+| 0769 | AL0185 | DrillDownPageId of a table extension names a page that does not exist. |
+| 0770 | AL0185 | LookupPageId of a table extension names a page that does not exist. |
+| 0771 | AL0169 | modify() of a field with an invalid MaskType value. |
+| 0772 | AL0103 | modify() of a field with a Width out of range. |
+| 0773 | AL0876 | MaskType = Concealed together with ExtendedDatatype = Masked. |
+| 0774 | AL0843 | SQLTimestamp on an Integer field. |
+| 0775 | AL0843 | OptionCaptionML on a Text field. |
+| 0777 | AL0666 | BC 28 only: a page content area and an action area take none of ObsoleteState, ObsoleteReason and ObsoleteTag (not available in runtime 17.1). (6 diagnostics) |
+| 0778 | AL0666 | BC 29 and later: the same as 0777 at runtime 18.0. (6 diagnostics) |
+| 0780 | AL0223 | RequiredTestIsolation is only allowed on a codeunit with Subtype = Test. |
+| 0781 | AL0223 | TestType is only allowed on a codeunit with Subtype = Test. |
+| 0782 | AL0169 | TestType takes UnitTest, IntegrationTest, Uncategorized or AITest. |
+| 0783 | AL0169 | RequiredTestIsolation takes None, Disabled, Codeunit or Function. |
+| 0784 | AL0666, AL0928 | BC 27 only: TestHandlers needs runtime 18.0, and the BC 27 symbols lack the system enum TestHandler. (2 diagnostics) |
+| 0787 | AL0103 | MaximumHeight of a control add-in does not fit an Integer. |
+| 0788 | AL0103 | MaximumWidth of a control add-in does not fit an Integer. |
+| 0789 | AL0223 | AssignmentCompatibilityReason needs AssignmentCompatibility = true. |
+| 0790 | AL0185 | ExcludedPermissionSets names a permission set that does not exist. |
+| 0791 | AL0428, AL0543 | A query sets HelpLink and ContextSensitiveHelpPage together. (3 diagnostics) |
+| 0792 | AL0543 | ContextSensitiveHelpPage on a query needs contextSensitiveHelpUrl in app.json. |
+| 0793 | AL0471 | HelpLink on a query with a text that is not a URL. |
+| 0794 | AL0223 | EntityCaption on a query that is not of QueryType API. |
+| 0795 | AL0160 | ProfileDescriptionML with a language code that does not exist. |
+| 0796 | AL0428 | EntityCaption together with EntityCaptionML, and EntitySetCaption together with EntitySetCaptionML, on a query. (4 diagnostics) |
+| 0797 | AL0169 | Removed is not a value of ObsoleteState for page controls and actions. (11 diagnostics) |
+| 0798 | AL0169 | Removed is not a value of ObsoleteState for a table field group, page customization, permission set, profile, query column and query filter. (8 diagnostics) |
+| 0799 | AL0666 | BC 27 only: the same as 0777 at runtime 16.1. (6 diagnostics) |
 | 0800 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
 | 0801 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
 | 0802 | AL0666 | Report parts need runtime 18.0 (BC 29). BC 27 compiles at runtime 16.1, BC 28 at 17.1: the text differs only in the version, so the recorded text stops before it. BC 29: positive test report/lt-y-report-props/YReportParts.al. (@until BC 28) |
@@ -275,10 +316,275 @@ is only a reference.
 | 1051 | AL0124 | XmlPort textelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
 | 1052 | AL0124 | XmlPort tableelement: Occurrence belongs to attributes; elements use MinOccurs and MaxOccurs. |
 | 1053 | AL0169 | XmlPort fieldattribute: Occurrence takes Optional or Required. |
+| 1150 | AL0122 | A Text character by index plus or minus a one-character literal is an Integer: it does not assign to a Text (three statements). |
 | 1060 | AL0316 | A tree repeater whose IndentationColumn is a Decimal field. |
+| 1360 | AL0271 | A page extension adds to area Creation of a ListPart page that declares no actions (a ListPart has no implicit Creation area). |
+| 1361 | AL0193 | SetFilter on a Decimal field with a %1 placeholder whose value is a Text constant. |
 | 1061 | AL0316 | A tree repeater whose IndentationColumn is a Text field. |
 | 1062 | AL0316 | A tree repeater whose IndentationColumn is an Option field. |
+| 1696 | AL0161 | Rec.CurrFieldNo in a table extension procedure is inaccessible; the unqualified CurrFieldNo := 10 compiles. |
 | 1063 | AL0171 | An XmlPort table element sets LinkFields but no LinkTable. |
+| 1090 | AL0132 | CurrPage.PromptMode is set to PromptMode::Lookup on a PromptDialog page: PromptMode has no member Lookup. |
+| 1091 | AL0124 | ApplicationArea on a page group: the property is not available on a group. |
+| 1270 | AL0270 | A page extension adds to an area name that is not a layout area (FactBoxes is accepted even when the base page does not declare it). |
+| 1140 | AL0133 | RecordRef.GetTable with a RecordRef argument (a Variant that holds the RecordRef compiles). |
+| 1141 | AL0196 | Record.TestField(Field, Value) with a Byte variable: ambiguous between the Integer and BigInteger overloads. |
+| 1530 | AL0369 | A for loop over an Integer control variable with a BigInteger literal end bound above the Integer range. |
+| 1531, 1532, 1533 | AL0172 | Unary minus on an Option variable, on an Option table field, and on an Enum. |
+| 1534 | AL0530 | A Code[2049] variable (Code[1025] to Code[2048] compile). |
+| 1535, 1536 | AL0154 | A Code[2049] and a Text[2049] table field. |
+| 1537 | AL0581 | A Code[0] variable. |
+| 1538 | AL0133 | A Code[20] variable passed to a var Text parameter. |
+| 1539 | AL0133 | A Text[100] table field passed to a var Code[20] parameter. |
+| 1540, 1541, 1542 | AL0204 | BC 27/28 only (AL 16 and 17): a CalcFormula or TableRelation where clause that filters an Integer or Enum field by a BigInteger field (AL 18 and later warn, AL0662/AL0663). |
+| 1080 | AL0777 | Guid assigned to Text[10]. |
+| 1120 | AL0132 | A TestRequestPage data item (TestFilter) has no SetRange, GetRangeMin or GetRangeMax. |
+| 1121 | AL0721 | A report rendering section without DefaultRenderingLayout. |
+| 1122 | AL0379 | A report column name with a space. |
+| 1160, 1161 | AL0196 | A Decimal variable and a Decimal literal passed to a procedure whose only overloads take Integer and BigInteger. |
+| 1162 | AL0193 | CopyArray with a two-dimensional destination and a one-dimensional source. |
+| 1170 | AL0132 | CommitBehavior with a member other than Ignore and Error. |
+| 1171 | AL0238 | The CommitBehavior attribute without its argument. |
+| 1172 | AL0433 | The removed User Group Member table. |
+| 1180 | AL0169 | A report layout with ObsoleteState = Removed (a layout takes only No and Pending). |
+| 1190, 1191 | AL0122 | A Boolean assigned to a Text and to a Code variable. |
+| 1192 | AL0111 | A number literal with an exponent (1e19) is a syntax error. |
+| 1193 | AL0122 | A Date assigned to a DateTime variable. |
+| 1240 | AL0296 | OnPrem-scoped platform tables of BC 28 and 29 used from a Cloud app (the BC 27 list is 0020 to 0024). |
+| 1241 | AL0162 | Triggers of other object types (OnRun, OnInsert, OnValidate, OnAction, OnPreReport, OnBeforeOpen, ...) in a page extension. |
+| 1242 | AL0440 | Foo(var A: Integer) next to Foo(A: Integer): var does not make a different signature. |
+| 1243 | AL0440 | Two procedures with the same name and parameter types in a table, a page and a report. |
+| 1244 | AL0124 | assemblyProbingPaths in app.json of a Target = OnPrem app at runtime 16.0. |
+| 1245 | AL0124 | assemblyProbingPaths in app.json of a Cloud app at runtime 18.0. |
+| 1246 | AL0132 | An unknown field of a table that has a table extension, and of a table of a dependency app. |
+| 1247 | AL0118 | A bare call of an unknown name in a report extension, a table extension, a query trigger and an xmlport trigger. |
+| 1248 | AL0197 | Two table extensions and two report extensions of one name. |
+| 1249 | AL0133 | An enum value passed by value to a parameter of another enum type without AssignmentCompatibility. |
+| 1250 | AL0122 | Integer from a Text variable, Code from an Integer, Text from an Integer expression. |
+| 1251 | AL0122 | A two-character literal assigned to a BigInteger and to a Decimal. |
+| 1252 to 1258 | AL0591, AL0314 | Cue group, file upload, freeze column, grid, indentation and tree properties on a plain group. |
+| 1259, 1260 | AL0591 | CuegroupLayout and GridLayout on a repeater. |
+| 1261 | AL0171 | SubPageLink on a system part. |
+| 1262 | AL0171 | SubPageView on a system part. |
+| 1263 | AL0543 | ContextSensitiveHelpPage on a page extension without the manifest property contextSensitiveHelpUrl. |
+| 1264 | AL1150 | A contextSensitiveHelpUrl in app.json that is not a URL. |
+| 1310 | AL0296 | File.IsPathTemporary from a Cloud app. |
+| 1311 | AL0296 | File.Download from a Cloud app. |
+| 1312 | AL0296 | Database.DataFileInformation from a Cloud app. |
+| 1210 | AL0240 | A ModalPageHandler with a Page parameter and no var Response: Action. |
+| 1211 | AL0241 | A ModalPageHandler with a TestPage parameter and a Response parameter. |
+| 1212 | AL0132 | A TestPage has no Delete method for the standard Delete action. |
+| 1370 | AL0779 | ModifyAll on a FlowField (Sum, Lookup); ModifyAll on a FlowFilter and assignments to either compile (corpus #664 item 4). |
+| 1371 | AL0777 | A Guid assigned to Text[10] or Code[20] overflows; Code[50] and Text take it (corpus #664 item 5). |
+| 1372 | AL0774 | exit(false) / exit(true) in a [TryFunction]; a bare exit compiles (corpus #664 item 6). |
+| 1373 | AL0896 | FlowFields whose CalcFormula forms a cycle, directly or through a second FlowField (corpus #664 item 9). |
+| 1374 | AL0873 | continue outside a loop (corpus #664 item 11). |
+| 1375 | AL0855, AL0155, AL0379 | A variable named ""; a query data item and column named "" (corpus #664 item 13). |
+| 1376 | AL0926, AL0104 | Table fields and keys after a procedure, on BC 27, 28 and 29 alike (corpus #664 item 15). |
+| 1377 | AL0582, AL0922 | A local procedure, and a Scope OnPrem procedure, as an interface implementation (corpus #664 item 19). |
+| 1378 | AL0104, AL0107 | '?' or '*' in a variable name (corpus #664 item 22). |
+| 1379 | AL0224, AL0111, AL0104, AL0198 | Nested block comments; braces used as a comment in a procedure body (corpus #664 items 23, 24). |
+| 1380 | AL0353, AL0815 | A query column whose source is a FlowFilter (corpus #664 item 5). |
+| 1381 | AL0190 | Time literals with fewer than six digits: 2359T, 1130T, 12T, 123T (corpus #664 item 27). |
+| 1382 | AL0111, AL0224, AL0104 | Lower-case literal suffixes 0d, 0t, 0dt, 20200101d, 120000t; DMY2Date(1, , 2020) (corpus #664 items 28, 34). |
+| 1383 | AL0623, AL0622 | A #region that starts outside an #if and ends inside it (corpus #664 item 29). |
+| 1384 | AL0831, AL0582 | A [TryFunction] as an interface implementation (corpus #664 item 6). |
+| 1385 | AL0806 | Record "18": a quoted object id (corpus #664 item 31). |
+| 1386 | AL0870, AL0224, AL0111 | @ not followed by a quote (corpus #664 item 11). |
+| 1387 | AL0165, AL0750, AL0118 | Trigger called directly; chained enum value; "17".DeleteAll and Customer.Count without a variable (corpus #664 items 30, 32, 33). |
+| 1388 | AL0185, AL0851 | 'as' with a target that is not an interface (corpus #664 item 19). |
+| 1389 | AL0159 | Blob and TestPage as return types; the other complex types and the Http types compile (corpus #664 items 35, 36). |
+| 1490 | AL0839 | a table and its table extension in the same app both set `Caption` (same XLIFF trans-unit id; Caption on a table extension alone compiles) |
+| 1491 | AL0404 | `Clustered` and `Unique` on a key that a table extension adds (`MaintainSqlIndex = false` compiles) |
+| 1492 | AL0246 | `CompressionType` on a table extension |
+| 1493 | AL0690, AL0687 | `IncludedFields` on the primary key / a secondary key whose `IncludedFields` names a primary-key field |
+| 1494 | AL0246 | `DataPerCompany` on a table extension |
+| 1495 | AL0525 | a table extension of the system table `User` and of the virtual table `Integer` |
+| 1496 | AL0564 | a table extension of a table with `Extensible = false` |
+| 1497 | AL0440 | a table extension procedure with the name (case-insensitive) and parameter types of a procedure of its table (an overload compiles) |
+| 1498 | AL0404 | `SqlTimestamp` on a field that a table extension adds |
+| 1499 | AL0171 | `modify()` of a base table field in a table extension sets `CalcFormula` |
+| 1500 | AL0926 | a table that declares `fieldgroups` before `keys` |
+| 1501 | AL0246 | a page extension changes `ApplicationArea` of a base part with `modify` (on a field control it compiles) |
+| 1502 | AL0378 | triggers in a page extension of a Role Center page (one diagnostic per trigger) |
+| 1503 | AL0322 | a page extension `modify()` sets `Editable` to a procedure call (a constant or a Boolean variable compiles) |
+| 1200 | AL0666 | BC 27 only: JsonToken.SelectTokens needs runtime 17. |
+| 1340 | AL0122 | BC 28 and 29: the result of Page.Run(FullyQualifiedName, Record, FieldNo) assigned; the overload returns nothing. |
+| 1341 | AL0133 | BC 28 and 29: Page.Run with a fully qualified name and a FieldRef (no such overload). |
+| 1570 to 1572 | AL0187 (and AL0666 on BC 27 and 28) | [RequiredPending] on an interface method; one case per BC major (corpus #664 item 19). |
+| 1573 | AL0625 | #define after the first token of a file (corpus #664 item 29). |
+| 1574 to 1576 | AL0629, AL0631 | Preprocessor operators that do not exist: '!', '&&', '== true' (corpus #664 item 29). |
+| 1390 | AL0304 | A local variable name of 121 characters (120 compile). |
+| 1391 | AL0121 | Two local variables whose names differ only in letter case. |
+| 1392 | AL0757 | From BC 28: a global variable `_operator` and a procedure `Operator` in one codeunit: both metadata names clash. |
+| 1393 | AL0117 | `continue;` with a local variable named Continue in scope reads as the bare variable. |
+| 1394 | AL0309 | A table with 41 keys (40 compile). |
+| 1395 | AL0154 | A table field of type Text[2049] (Text[2048] compiles). |
+| 1396 | AL0368 | An array with 11 dimensions (10 compile). |
+| 1397 | AL0146 | An array of 1,000,001 elements (1,000,000 compile). |
+| 1398 | AL0155 | An enum extension declares the same value name and ordinal twice: duplicate name only, no AL0231. |
+| 1399 | AL0231 | An enum extension declares one ordinal twice under two names. |
+| 1400 | AL0118 | Another procedure names a member of an option parameter through the parameter name. |
+| 1401 | AL0405 | `case Enum::"X" of` with the enum type instead of a value. |
+| 1402 | AL0311 | `E.FromInteger(1)` on an enum instance. |
+| 1403 | AL0156 | A page field whose source expression is the name of an enum object. |
+| 1404 | AL0103 | A for loop with an Integer control variable and a literal bound outside the Integer range. |
+| 1405 | AL0122 | `Txt := Cond ? '1' : ''`: the Char true branch sets the type and the empty Text literal does not convert. |
+| 1406 | AL0122 | `V := Cond ? CurrentDateTime() : Today()` into a Variant: the Date branch does not convert to DateTime. |
+| 1407 | AL0666 | BC 27 and 28: a bare IsDirty() in a TableNo codeunit's OnRun binds to Record.IsDirty (runtime 18.0) before the local procedure. |
+| 1408 | AL0757 | BC 27: a global variable `_operator` and a procedure `Operator`: error on the variable, only warning AL0758 on the procedure. |
+| 1680 | AL0757 | Two event publishers, and two event subscribers, named `Foo Bar` and `Foo_Bar` in one codeunit. |
+| 1681 | AL0155 | Two event publishers with one name and different parameter types; an event publisher named `Run` in a codeunit. |
+| 1682 | AL0286, AL0283, AL0287 | An event publisher with a statement, a return value, a local variable, a local Label. |
+| 1683 | AL0132 | An event subscriber with `ObjectType::TableExtension`. |
+| 1684 | AL0118 | A table event subscriber naming the table with `Table::Customer` instead of `Database::Customer`. |
+| 1685 | AL0288 | A subscriber declares `var` on a parameter the publisher passes by value. |
+| 1686 | AL0284 | Subscriber parameter types: Enum as Integer, Option as Integer or Enum, a GlobalVarAccess global as Text, RunTrigger as Integer. |
+| 1687 | AL0282 | Subscriber parameters matching no publisher parameter: RunTrigger on OnAfterValidateEvent, `Record` instead of `Rec`, an unknown global. |
+| 1616 | AL0865 | A chartpart control in a page layout: the control type is not supported (an error on every leg, not the AL0864 warning). |
+| 1728 | AL0172 | Unary minus on an Option variable (`-Alignment`). |
+| 1729 | AL0172 | Unary minus on an Enum variable. |
+| 1730 | AL0530 | A `Code[2049]` variable: the maximum for a Code variable is 2048 (Code[1025] compiles). |
+| 1731 | AL0154 | A `Code[2049]` table field: the maximum for a Code field is 2048. |
+| 1732 | AL0103 | A for loop over an Integer with the end bound literal 100000000000000. |
+| 1733 | AL0369 | The same for loop with the BigInteger literal 100000000000000L as end bound. |
+| 1734 | AL0427 | An Enum lookup FlowField over a BigInteger field. |
+| 1735 | AL0103 | `InitValue = 3000000000` on an Integer field. |
+| 1832 | AL0133 | A BigText passed to "Base64 Convert".FromBase64: no overload takes a BigText. |
+| 1833 | AL0122 | A BigText assigned to a Text variable: no implicit conversion. |
+| 1864 | AL0132 | A TestPage cannot reach a system part, file upload action, custom action, view or user control. |
+| 1865 | AL0171 | SubPageLink and SubPageView on a system part. (two diagnostics) |
+| 1866 | AL0543 | ContextSensitiveHelpPage on a page extension without the manifest property contextSensitiveHelpUrl. |
+| 1888 | AL0779 | ModifyAll on a FlowField with RunTrigger = true. |
+| 1430 | AL0528 | API page field control names with a space or a quoted special character (digit inside, leading digit, underscore compile). (two diagnostics) |
+| 1431 | AL0666 | Importance = Optional on a page field: not available in the app runtime. |
+| 1432 | AL0298 | StyleExpr set to a PageStyle variable. |
+| 1433 | AL0155 | A page field and a page action with the same name. (two diagnostics) |
+| 1434 | AL0155 | An action group and an action inside it with the same name. (two diagnostics) |
+| 1435 | AL0844 | BlankZero on a Guid table field and on a page control bound to it. (two diagnostics) |
+| 1436 | AL0843 | DecimalPlaces on page fields whose source is an Integer variable or the literal 0 (0.0 compiles). (two diagnostics) |
+| 1437 | AL0114 | AutoFormatType set to a value of the enum "Auto Format" (integer literal expected). |
+| 1438 | AL0204 | RunPageLink from a Text field to an Option field and to an Enum field. (two diagnostics) |
+| 1439 | AL0255 | A request page action with RunObject = page and RunPageView. |
+| 1440 | AL0107 | XMLport FieldValidate = true / false (each also AL0116; Yes, No, Undefined compile). (four diagnostics) |
+| 1441 | AL0397 | A report column named like the hidden format column of a Decimal column (AmountFormat). |
+| 1442 | AL0196 | System.GetUrl with a Variant record argument: ambiguous between the Table and RecordRef overloads. |
+| 1443 | AL0676 | A codeunit with a protected var section. |
+| 1444 | AL0371 | BigInteger assigned a product of Integer literals that overflows Integer. |
+| 1445 | AL0198 | `internal interface` (access modifier before the keyword). |
+| 1446 | AL0118 | A page field whose source is the bare name SystemId, with the feature NoImplicitWith. |
+| 1450 | AL0166 | Record.SetRange with one argument that is an enum or option value, not a field. |
+| 1451 | AL0118 | Record.SetCurrentKey with the name of a key instead of its fields. |
+| 1452 | AL0779 | Record.ModifyAll on a FlowField (own FlowField and Customer."Balance (LCY)"). |
+| 1453 | AL0224, AL0104 | Record.Get with an empty argument in the middle of the key values. |
+| 1470 | AL0827 | Record.CalcSums with a Sum FlowField as the only argument and as the second argument. (two diagnostics) |
+| 1471 | AL0223 | OptimizeForTextSearch = true on a Lookup FlowField of type Text. |
+| 1472 | AL0223 | OptimizeForTextSearch = true on a FlowFilter field of type Text. |
+| 1473 | AL0124 | TableIDExpr on a TableFilter field of a table. |
+| 1510 | AL0175 | An Integer on the left of + with a Date on the right (Date + Integer compiles). (three diagnostics) |
+| 1511 | AL0175 | An Integer minus a Date. |
+| 1512 | AL0175 | An Integer on the left of + and - with a Time or a DateTime on the right. (four diagnostics) |
+| 1600 | AL0245 | A local UI handler procedure (ModalPageHandler, MessageHandler). (two diagnostics) |
+| 1601 | AL0192 | TestPage.OK() and Cancel() as plain statements: the TestAction return value must be used. (two diagnostics) |
+| 1602 | AL0132 | A TestPage has no Delete or DeleteRow method. (two diagnostics) |
+| 1608 | AL0518 | a [ModalPageHandler] and a [MessageHandler] with the same name (overloads) in one test codeunit (a handler plus a plain same-name procedure compiles) |
+| 1609 | AL0499 | [HandlerFunctions] names a handler declared in another test codeunit |
+| 1610 | AL0378 | an OnAction trigger on an action of a Role Center page (a RunObject action compiles) |
+| 1632 | AL0132 | A TestPage of the base page names a procedure that a page extension adds. |
+| 1633 | AL0666 | BC 27 only: Page.Run, Page.RunModal and Report.Run with a RecordRef in the place of the record. (three diagnostics) |
+| 1634 | AL0133 | BC 28 and 29: Page.Run, Page.RunModal and Report.Run with a RecordRef in the place of the record. (three diagnostics) |
+| 1640 | AL0350 | A query OrderBy names the same column twice. |
+| 1641 | AL0815, AL0353 | A query column whose source is a FlowFilter field. |
+| 1648 | AL0347 | A query column with Method = Min over a Code field. |
+| 1649 | AL0347 | A query column with Method = Max over a Date field. |
+| 1656 | AL0161 | A report trigger calls a procedure of a part of its request page (from the request page OnOpenPage it compiles). |
+| 1672 | AL0162 | A report extension modify() of a base data item declares OnAfterGetRecord. |
+| 1736 | AL0133 | Text[100] field passed to a var Code[20] parameter |
+| 1744 | AL0107, AL0104 | Dictionary of [Guid, Option]: Option is not a type argument, the parser wants option members. |
+| 1745 | AL0104 | Dictionary of [Guid, Option "a","b"] does not parse either. (two diagnostics) |
+| 1746 | AL0107, AL0104 | List of [Option] does not parse. |
+| 1747 | AL0408 | Dictionary of [Text, Variant] and List of [Variant]. (two diagnostics) |
+| 1748 | AL0408 | Dictionary of [Integer, Record ...] and List of [Record ...] (List of [RecordRef] compiles). (two diagnostics) |
+| 1749 | AL0408 | List of [Blob]. |
+| 1750 | AL0133 | A Dictionary or a List passed to a var Variant parameter. (two diagnostics) |
+| 1752 | AL0831 | A [TryFunction] procedure as the implementation of an interface method. |
+| 1784 | AL0133 | A Record passed to a var Variant parameter. |
+| 1785 | AL0777 | A Guid (variable or SystemId) assigned to a Code[20]. (two diagnostics) |
+| 1786 | AL0133 | BC 28 and 29: Codeunit.Run(Id, RecordRef): no overload takes a RecordRef. |
+| 1787 | AL0666 | BC 27 only: Codeunit.Run(Id, RecordRef) matches an overload that needs runtime 17.0. |
+| 1788 | AL0157 | A variable of type Blob. |
+| 1792 | AL0175 | `FieldRef.Value = Text`: '=' between Joker and Text. |
+| 1793 | AL0175 | `FieldRef.Value = 2`: '=' between Joker and Integer. |
+| 1794 | AL0175 | A Variant compared with a Text using '='. |
+| 1800 | AL0884 | TestHttpResponseMessage status codes 300 and 304: redirect codes are not permitted. (two diagnostics) |
+| 1801 | AL0883 | TestHttpResponseMessage status codes 399, 99, 600, 599 and 0: not valid HTTP status codes. (five diagnostics) |
+| 1816 | AL0132 | JsonObject has no RemoveAll method. |
+| 1817 | AL0132 | JsonArray has no RemoveAll method. |
+| 1818 | AL0132 | JsonObject has no Clear method (Clear(variable) empties it). |
+| 1819 | AL0132 | JsonArray has no Clear method (Clear(variable) empties it). |
+| 1824 | AL0666 | BC 27 only: JsonToken.SelectTokens needs runtime 17. |
+| 1776 | AL0612 | An interface that declares a trigger: an interface member must be a procedure. |
+| 1777 | AL0675 | DefaultImplementation that lists the same interface twice. |
+| 1778 | AL0675 | An enum value's Implementation that lists the same interface twice. |
+| 1779 | AL0187, AL0919 | [Scope('Cloud')] on an interface member. |
+| 1780 | AL0132 | BC 29: a default interface method called on a codeunit variable whose codeunit does not declare it. |
+| 1781 | AL0922 | BC 29: a [Scope('OnPrem')] procedure overrides a default interface method. |
+| 1782 | AL0231 | An enumextension of Base Application "Sales Line Type" reuses an ordinal of the base enum (ordinal 6 compiles). |
+| 1872 | AL0122 | `V := Cond ? D : DT` (Date true, DateTime false): the DateTime branch does not convert to Date. |
+| 1873 | AL0122 | `'K' in [TLo .. THi]` and `'K' in ['a' .. THi]`: a one-character literal is a Char and the Text range ends do not convert. |
+| 1874 | AL0122 | `'K' in [CLo .. CHi]` with Code range ends: the Code ends do not convert to Char. |
+| 1875 | AL0135 | `continue;` in a codeunit whose only procedure Continue takes a parameter (read as a call without its argument). |
+| 1280 | AL0220 | A page extension sets InsertAllowed to a variable instead of a literal. |
+| 1281 | AL0220 | A page sets InsertAllowed to an expression instead of a literal. |
+| 1410 | AL0440 | Overloads that differ only in the length of a Text parameter, or only in the return type. |
+| 1411 | AL0243, AL0245, AL0240 | Handler attributes outside a test codeunit, on a local procedure, and with wrong signatures. |
+| 1412 | AL0161 | A local procedure called through a handle of its own object (codeunit variable, Rec./xRec., CurrPage.). |
+| 1413 | AL0161, AL0118 | An internal procedure of Base Application ("Assembly Line".ShowAssemblyDocument) called from this app. |
+| 1414 | AL0440 | Two extensions of one page (and of one table) in one app declare the same procedure. |
+| 1415 | AL0404 | A table extension field with AutoIncrement = true. |
+| 1416 | AL0124 | The Owner property on a Blob field and on an Integer field. (two diagnostics) |
+| 1417 | AL0450 | A field with ObsoleteState = Removed in an active key (table extension and table). (two diagnostics) |
+| 1418 | AL0166 | Record.FieldCaption with an enum value instead of a field. |
+| 1419 | AL0525 | A table extension of the system table "Record Link". |
+| 1420 | AL0757 | A table extension field named Timestamp: clashes with SystemRowVersion. |
+| 1421 | AL0163 | A table extension modify() trigger declares a local variable without var. |
+| 1422 | AL0365 | A codeunit with Subtype = Upgrade and TableNo. |
+| 1423 | AL0185 | A TableRelation to a misspelled table name. |
+| 1424 | AL0800, AL0844 | ExtendedDatatype = RichContent on a Text and on a Blob table field. (three diagnostics) |
+| 1425 | AL0433 | A field with ObsoleteState = Removed kept in a fieldgroup (Pending compiles). |
+| 1426 | AL0433 | A field of Base Application with ObsoleteState = Removed named by a dependent app. |
+| 1427 | AL0118, AL0132 | CurrFieldNo outside table and table extension code. |
+| 1428 | AL0104, AL0107 | An attribute on a parameter. |
+| 1429 | AL0296 | A Cloud app calls the OnPrem File Management / Excel Buffer methods UploadFile, ServerCreateDirectory, OpenBook, CreateBook. |
+| 1560 | AL0196 | An Integer argument to overloads that differ only by the enum type is ambiguous. |
+| 1712 | AL0296 | A permission set in a Cloud app names tabledata of the Scope = OnPrem table `User Property`. |
+| 1713 | AL0296 | A permission set in a Cloud app names the table object of the Scope = OnPrem table `User Property`. |
+| 1714 | AL0161 | A permission set names a codeunit that is Access = Internal in a dependency (System Application `Agent Impl.`). |
+| 1715 | AL0195 | AccessByPermission on a page field names a page with R (only X is allowed). |
+| 1716 | AL0195 | AccessByPermission on a page field names a codeunit with RIMD (only X is allowed). |
+| 1717 | AL0195 | AccessByPermission on page actions names a report with M, a query with R and an xmlport with R. |
+| 1718 | AL0195 | AccessByPermission on a page action names a table object with D (tabledata takes RIMD). |
+| 1720 | AL0124 | ExcludedPermissionSets in a permissionsetextension (only a permissionset may exclude sets). |
+| 1760 | AL0774 | `exit(false)` / `exit(true)` in a `[TryFunction]` without a return value (a bare `exit;` compiles) |
+| 1768 | AL0582 | An interface implementation omits `temporary` on a `var` record parameter. |
+| 1769 | AL0122 | An interface variable assigned from a field of an enum that does not implement the interface. |
+| 1770 | AL0698 | A `case` statement over a Record value. |
+| 1290 | AL0220 | A page sets its own Editable property to a page variable (controls accept an expression). |
+| 1688 | AL0284 | Subscriber parameter types: Record Vendor for Record Customer, a Codeunit for a Record, Decimal for Integer. |
+| 1689 | AL0271 | An action subscriber names the action by its caption (with and without the ampersand) or by an unknown name. |
+| 1690 | AL0155 | A page has an action group and an action with the same name. |
+| 1691 | AL0132, AL0161 | A table event subscriber reads `Rec.CurrFieldNo` (a table of another app, a table of the same app). |
+| 1856 | AL0107 | An XmlPort Namespaces entry with the empty prefix written as `''` (the quoted identifier `""` compiles). |
+| 1857 | AL0107 | An XmlPort Namespaces property written as one string `'soap=http://...'`. |
+| 1960, 1961 | AL0501 | An event subscriber in a test codeunit without `EventSubscriberInstance = Manual` (the default, and StaticAutomatic written out). |
+| 1992 | AL0193 | `Validate` of an Enum field with a Variant (writer QO). |
+| 1993 | AL0122 | A Variant assigned to an Enum field of a record (writer QO; 0263 is the Enum variable). |
+| 2000 | AL0322 | A field control of a page binds `Visible`, `Enabled` or `Editable` to a procedure call (writer QQ, AL Runner issue 3762; on an action it compiles with warning AL0573). |
+| 2008 | AL0398 | A Decimal constant as a case label of an Option (writer QS; =, <>, <, > of Option and Decimal compile: types/PROptionInteger.al). |
+| 2009 | AL0398 | Decimal constants in the `in` list of an Option (writer QS). |
+| 2010 | AL0385 | IncludeCaption on a report column whose source is a global variable (writer QS; 0015 is an expression). |
+| 2016 to 2039 | AL0104 / AL0105, AL0107 | A keyword as an unquoted parameter name, by value and after `var` (one file per word, both forms): `begin`, `procedure`, `trigger` give AL0104 ')' expected; `end`, `of`, `true`, `false`, `event`, `key`, `area`, `actions`, `chartpart`, `cuegroup`, `extends`, `fieldattribute`, `fieldelement`, `fieldgroups`, `pageextension`, `profileextension`, `tableelement`, `tableextension`, `textattribute`, `textelement` give AL0105; `var` gives AL0107; after `var` every word gives AL0107 first. The other diagnostics are the compiler's recovery (writer QT, AL Runner PR 5656). |
+| 2040 | AL0224 | A variable named by a keyword (`"If": Integer`) used unquoted in a statement (writer QT, AL Runner PR 5642; quoted use compiles: misc/lt-bn3-identifiers/Bn3Labels.al). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

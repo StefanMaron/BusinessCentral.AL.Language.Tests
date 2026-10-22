@@ -461,6 +461,7 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Expect('request page ok', 'Yes');
         Observer.Expect('request page error|text', '');
         Observer.Expect('request page error|code', '');
+        // Client-services sessions (Microsoft pipelines, the Linux runner) raise SetupPrinters(in=0) once on Report.RunRequestPage after SubstituteReport(...,ParametersOnly); web client sessions do not (bc-linux #168).
         Observer.Expect('request page log', 'SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
         Observer.Verify();
     end;
@@ -551,4 +552,327 @@ codeunit 69852 "LT V Platform Event Tests"
         Observer.Expect('WordDocumentMergerAppMode', 'Yes|saved=Yes|data=Yes|head=<?xml version="1.0" standalone="yes"?>|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
         Observer.Verify();
     end;
+    // ---- Writer PW: which Reporting Triggers events the other report calls raise (trust-refusals probe list: Report.Run, RunModal, Execute,
+    // the variable SaveAs, non-Xml formats; docs/probes-needed.md "Report runs and SaveAs": SubstituteReport and OnDocumentReady on calls
+    // other than the pinned static Xml SaveAs, the RequestPageXml and RecordRef arguments, the OnDocumentReady payload keys and stream). ----
+
+    [TryFunction]
+    local procedure PwTryCall(Which: Text; var Parameters: Text)
+    var
+        Rep: Report "LT V Report A";
+        ProcOnly: Report "LT PW V ProcOnly";
+        Parent: Record "Probe Rep Parent";
+        TempBlob: Codeunit "Temp Blob";
+        RecRef: RecordRef;
+        OutStr: OutStream;
+    begin
+        TempBlob.CreateOutStream(OutStr);
+        case Which of
+            'requestpage static':
+                Parameters := Report.RunRequestPage(Report::"LT V Report A");
+            'saveas var xml':
+                Rep.SaveAs('', ReportFormat::Xml, OutStr);
+            'saveas static params xml':
+                Report.SaveAs(Report::"LT V Report A", Parameters, ReportFormat::Xml, OutStr);
+            'saveas static record xml':
+                begin
+                    Parent.SetRange(Id, 1);
+                    RecRef.GetTable(Parent);
+                    Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Xml, OutStr, RecRef);
+                end;
+            'saveas static html':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Html, OutStr);
+            'run static nopage':
+                Report.Run(Report::"LT V Report A", false);
+            'runmodal static nopage':
+                Report.RunModal(Report::"LT V Report A", false);
+            'run var nopage':
+                begin
+                    Rep.UseRequestPage(false);
+                    Rep.Run();
+                end;
+            'runmodal var nopage':
+                begin
+                    Rep.UseRequestPage(false);
+                    Rep.RunModal();
+                end;
+            'execute static':
+                Report.Execute(Report::"LT V Report A", Parameters);
+            'execute var':
+                Rep.Execute(Parameters);
+            'saveas static pdf':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Pdf, OutStr);
+            'saveas static word':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Word, OutStr);
+            'saveas static excel':
+                Report.SaveAs(Report::"LT V Report A", '', ReportFormat::Excel, OutStr);
+            'procOnly run nopage':
+                Report.Run(Report::"LT PW V ProcOnly", false);
+            'procOnly execute var':
+                ProcOnly.Execute('');
+            'procOnly execute static':
+                Report.Execute(Report::"LT PW V ProcOnly", '');
+            'procOnly runmodal nopage':
+                Report.RunModal(Report::"LT PW V ProcOnly", false);
+            'procOnly run var nopage':
+                begin
+                    ProcOnly.UseRequestPage(false);
+                    ProcOnly.Run();
+                end;
+            'procOnly runmodal var nopage':
+                begin
+                    ProcOnly.UseRequestPage(false);
+                    ProcOnly.RunModal();
+                end;
+            'procOnly saveas xml':
+                Report.SaveAs(Report::"LT PW V ProcOnly", '', ReportFormat::Xml, OutStr);
+        end;
+    end;
+
+    local procedure PwCall(var Observer: Codeunit "Probe Observer"; Which: Text; var Parameters: Text)
+    var
+        Ok: Boolean;
+        Err: Text;
+    begin
+        Log.Start();
+        Ok := PwTryCall(Which, Parameters);
+        if not Ok then
+            Err := ' error=' + GetLastErrorCode() + ':' + CopyStr(GetLastErrorText(), 1, 120);
+        ClearLastError();
+        Observer.Observe(Which, Format(Ok) + Err + '|' + Log.Take());
+        Log.Stop();
+    end;
+
+    // Report.Run and RunModal of LT V Report A (an RDLC layout) end in the Linux tier's RDLC stub ('RDLC report rendering is not implemented on
+    // Linux BC'): they are asserted with the Windows values in the held tests PW_RaisedEvents_RunRunModal, _Execute and _OtherFormats below;
+    // the processing-only report has no layout to render.
+    [Test]
+    [HandlerFunctions('RequestPageA')]
+    procedure PW_RaisedEvents_RequestPage()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        // Execute of this RDLC report also ends in the Linux tier's RDLC stub (windows-queue.md).
+        PwCall(Observer, 'requestpage static', Parameters);
+        // Client-services sessions (Microsoft pipelines, the Linux runner) raise SetupPrinters(in=0) once on Report.RunRequestPage after SubstituteReport(...,ParametersOnly); web client sessions do not (bc-linux #168).
+        Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PW_RaisedEvents_ProcessingOnlyRuns()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'procOnly run nopage', Parameters);
+        PwCall(Observer, 'procOnly runmodal nopage', Parameters);
+        PwCall(Observer, 'procOnly run var nopage', Parameters);
+        PwCall(Observer, 'procOnly runmodal var nopage', Parameters);
+        PwCall(Observer, 'procOnly execute var', Parameters);
+        PwCall(Observer, 'procOnly execute static', Parameters);
+        Observer.Expect('procOnly run nopage', 'Yes|SubstituteReport(86147,Normal,in=-1);');
+        Observer.Expect('procOnly runmodal nopage', 'Yes|SubstituteReport(86147,RunModal,in=-1);');
+        Observer.Expect('procOnly run var nopage', 'Yes|');
+        Observer.Expect('procOnly runmodal var nopage', 'Yes|');
+        Observer.Expect('procOnly execute var', 'Yes|');
+        Observer.Expect('procOnly execute static', 'Yes|SubstituteReport(86147,Execute,in=-1);');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestPageA')]
+    procedure PW_RaisedEvents_SaveAsForms()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'saveas var xml', Parameters);
+        PwCall(Observer, 'requestpage static', Parameters);
+        PwCall(Observer, 'saveas static params xml', Parameters);
+        PwCall(Observer, 'saveas static record xml', Parameters);
+        PwCall(Observer, 'procOnly run nopage', Parameters);
+        PwCall(Observer, 'procOnly execute var', Parameters);
+        PwCall(Observer, 'procOnly saveas xml', Parameters);
+        // Client-services sessions (Microsoft pipelines, the Linux runner) raise SetupPrinters(in=0) once on Report.RunRequestPage after SubstituteReport(...,ParametersOnly); web client sessions do not (bc-linux #168).
+        Observer.Expect('saveas var xml', 'Yes|OnDocumentReady(69860,in=No);');
+        Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
+        Observer.Expect('saveas static params xml', 'Yes|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('saveas static record xml', 'Yes|SubstituteReport(69860,SaveAs,in=-1);OnDocumentReady(69860,in=No);');
+        Observer.Expect('procOnly run nopage', 'Yes|SubstituteReport(86147,Normal,in=-1);');
+        Observer.Expect('procOnly execute var', 'Yes|');
+        Observer.Expect('procOnly saveas xml', 'No error=ReportProcessingOnly:Report 86147 is a processing-only report. Output cannot be rendered and saved to a file.|SubstituteReport(86147,SaveAs,in=-1);');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PW_RaisedEvents_HtmlFormat()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        // Pdf, Word and Excel of this RDLC report end in the Linux tier's RDLC stub (windows-queue.md); Html is refused by BC itself.
+        PwCall(Observer, 'saveas static html', Parameters);
+        Observer.Expect('saveas static html', 'No error=ReportUnsupportedFormat:The Html output format is not supported by the current report layout format.|SubstituteReport(69860,SaveAs,in=-1);SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);ApplicationReportMergeStrategy(69860,Rdlc,in=No);');
+        Observer.Verify();
+    end;
+
+#if BC28PLUS
+    // Report.Run, RunModal and Execute of the RDLC report LT V Report A (no request page), and SaveAs Pdf/Word/Excel: the Reporting Triggers
+    // events BC raises, from Windows BC 28.5 and 29.0 (Windows checks 2026-10-20; 29.0 gives the same values). Before the bc-linux fixes
+    // the Linux image ended these calls in its RDLC stub or renderer error (bc-linux #144; BC 29.0: renderer off at boot, bc-linux #143).
+    // BC 27.5 through the TestRunnerHub ends Run/RunModal/Execute with CallbackNotAllowed (a client callback to download the file), so 27
+    // depends on the test runner and is not asserted.
+    [Test]
+    procedure PW_RaisedEvents_RunRunModal()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'run static nopage', Parameters);
+        PwCall(Observer, 'runmodal static nopage', Parameters);
+        PwCall(Observer, 'run var nopage', Parameters);
+        PwCall(Observer, 'runmodal var nopage', Parameters);
+        Observer.Expect('run static nopage', 'Yes|SubstituteReport(69860,Normal,in=-1);SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);GetPrinterName(69860,in=);GetPaperTrayForReport(69860,in=0/0/0);ApplicationReportMergeStrategy(69860,Rdlc,in=No);SetupPrinters(in=0);OnDocumentReady(69860,in=No);OnDocumentDownload(69860,in=No);');
+        Observer.Expect('runmodal static nopage', 'Yes|SubstituteReport(69860,RunModal,in=-1);SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);GetPrinterName(69860,in=);GetPaperTrayForReport(69860,in=0/0/0);ApplicationReportMergeStrategy(69860,Rdlc,in=No);SetupPrinters(in=0);OnDocumentReady(69860,in=No);OnDocumentDownload(69860,in=No);');
+        Observer.Expect('run var nopage', 'Yes|SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);GetPrinterName(69860,in=);GetPaperTrayForReport(69860,in=0/0/0);ApplicationReportMergeStrategy(69860,Rdlc,in=No);SetupPrinters(in=0);OnDocumentReady(69860,in=No);OnDocumentDownload(69860,in=No);');
+        Observer.Expect('runmodal var nopage', 'Yes|SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);GetPrinterName(69860,in=);GetPaperTrayForReport(69860,in=0/0/0);ApplicationReportMergeStrategy(69860,Rdlc,in=No);SetupPrinters(in=0);OnDocumentReady(69860,in=No);OnDocumentDownload(69860,in=No);');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestPageA')]
+    procedure PW_RaisedEvents_Execute()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'requestpage static', Parameters);
+        PwCall(Observer, 'execute static', Parameters);
+        PwCall(Observer, 'execute var', Parameters);
+        // Client-services sessions (Microsoft pipelines, the Linux runner) raise SetupPrinters(in=0) once on Report.RunRequestPage after SubstituteReport(...,ParametersOnly); web client sessions do not (bc-linux #168).
+        Observer.Expect('requestpage static', 'Yes|SubstituteReport(69860,ParametersOnly,in=-1);SetupPrinters(in=0);');
+        Observer.Expect('execute static', 'Yes|SubstituteReport(69860,Execute,in=-1);SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);GetPrinterName(69860,in=);GetPaperTrayForReport(69860,in=0/0/0);ApplicationReportMergeStrategy(69860,Rdlc,in=No);SetupPrinters(in=0);OnDocumentReady(69860,in=No);OnDocumentDownload(69860,in=No);');
+        Observer.Expect('execute var', 'Yes|SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);GetPrinterName(69860,in=);GetPaperTrayForReport(69860,in=0/0/0);ApplicationReportMergeStrategy(69860,Rdlc,in=No);SetupPrinters(in=0);OnDocumentReady(69860,in=No);OnDocumentDownload(69860,in=No);');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PW_RaisedEvents_OtherFormats()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        PwCall(Observer, 'saveas static pdf', Parameters);
+        PwCall(Observer, 'saveas static word', Parameters);
+        PwCall(Observer, 'saveas static excel', Parameters);
+        Observer.Expect('saveas static pdf', 'Yes|SubstituteReport(69860,SaveAs,in=-1);SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);ApplicationReportMergeStrategy(69860,Rdlc,in=No);OnDocumentReady(69860,in=No);');
+        Observer.Expect('saveas static word', 'Yes|SubstituteReport(69860,SaveAs,in=-1);SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);ApplicationReportMergeStrategy(69860,Rdlc,in=No);OnDocumentReady(69860,in=No);');
+        Observer.Expect('saveas static excel', 'Yes|SubstituteReport(69860,SaveAs,in=-1);SelectReportLayoutCode(69860,in=/None/No);HasCustomLayout(Report,69860,in=None);SelectedBuiltinLayoutType(69860,in=None);ApplicationReportMergeStrategy(69860,Rdlc,in=No);OnDocumentReady(69860,in=No);');
+        Observer.Verify();
+    end;
+#endif
+
+    local procedure PwArgs(var Observer: Codeunit "Probe Observer"; Which: Text; var Parameters: Text)
+    var
+        ArgSubs: Codeunit "LT PW V Arg Subs";
+        Ok: Boolean;
+    begin
+        BindSubscription(ArgSubs);
+        Log.Start();
+        Log.SetValue('pwcollect', 'yes');
+        Ok := PwTryCall(Which, Parameters);
+        if not Ok then
+            Observer.Observe(Which + ' error', GetLastErrorCode() + ':' + CopyStr(GetLastErrorText(), 1, 120));
+        ClearLastError();
+        Observer.Observe(Which, Format(Ok) + '|' + Log.GetValue('pwargs'));
+        Log.Take();
+        Log.Stop();
+        UnbindSubscription(ArgSubs);
+    end;
+
+    [Test]
+    [HandlerFunctions('RequestPageA')]
+    procedure PW_SubstituteReport_Arguments_And_DocumentReadyPayload()
+    var
+        Observer: Codeunit "Probe Observer";
+        Parameters: Text;
+    begin
+        Seed();
+        Parameters := '';
+        PwArgs(Observer, 'saveas var xml', Parameters);
+        PwArgs(Observer, 'requestpage static', Parameters);
+        PwArgs(Observer, 'saveas static params xml', Parameters);
+        PwArgs(Observer, 'saveas static record xml', Parameters);
+        Observer.Expect('saveas var xml', 'Yes|Ready(keys=filterviews,version,objectname,objectid,documenttype,invokedby,invokeddatetime,companyname,printername,duplex,color,defaultcopies,papertray,intent,layoutmodel,layoutname,layoutmimetype,layoutapplicationid,reportrunid, documenttype=text/xml head=Ù‹<?xml version="1.0" standalone="yes"?);');
+        Observer.Expect('requestpage static', 'Yes|Sub(ParametersOnly,xmlLen>0=No,xmlHasDataItem=No,xmlHasPrefix=No,recNo=0);');
+        Observer.Expect('saveas static params xml', 'Yes|Sub(SaveAs,xmlLen>0=Yes,xmlHasDataItem=Yes,xmlHasPrefix=Yes,recNo=0);Ready(keys=filterviews,version,objectname,objectid,documenttype,invokedby,invokeddatetime,companyname,printername,duplex,color,defaultcopies,papertray,intent,layoutmodel,layoutname,layoutmimetype,layoutapplicationid,reportrunid, documenttype=text/xml head=Ù‹<?xml version="1.0" standalone="yes"?);');
+        Observer.Expect('saveas static record xml', 'Yes|Sub(SaveAs,xmlLen>0=No,xmlHasDataItem=No,xmlHasPrefix=No,recNo=68300);Ready(keys=filterviews,version,objectname,objectid,documenttype,invokedby,invokeddatetime,companyname,printername,duplex,color,defaultcopies,papertray,intent,layoutmodel,layoutname,layoutmimetype,layoutapplicationid,reportrunid, documenttype=text/xml head=Ù‹<?xml version="1.0" standalone="yes"?);');
+        Observer.Verify();
+    end;
+}
+
+// Writer PW: a second subscriber to SubstituteReport and OnDocumentReady that records the arguments the LT V Subs subscribers do not log.
+// It writes only into the 'pwargs' setting of LT V Log, only while bound (manual subscription) by a PW test that set 'pwcollect'.
+codeunit 86146 "LT PW V Arg Subs"
+{
+    EventSubscriberInstance = Manual;
+
+    var
+        Log: Codeunit "LT V Log";
+
+    local procedure Append(Entry: Text)
+    begin
+        Log.SetValue('pwargs', Log.GetValue('pwargs') + Entry + ';');
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reporting Triggers", 'SubstituteReport', '', false, false)]
+    local procedure PwSubstitute(ReportId: Integer; RunMode: Option Normal,ParametersOnly,Execute,Print,SaveAs,RunModal; RequestPageXml: Text; RecordRef: RecordRef; var NewReportId: Integer)
+    begin
+        if not Log.Has('pwcollect') then
+            exit;
+        Append('Sub(' + Format(RunMode) + ',xmlLen>0=' + Format(StrLen(RequestPageXml) > 0) + ',xmlHasDataItem=' + Format(RequestPageXml.Contains('<DataItem')) +
+            ',xmlHasPrefix=' + Format(RequestPageXml.Contains('Prefix')) + ',recNo=' + Format(RecordRef.Number()) + ')');
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reporting Triggers", 'OnDocumentReady', '', false, false)]
+    local procedure PwDocumentReady(ObjectId: Integer; ObjectPayload: JsonObject; DocumentStream: InStream; var TargetStream: OutStream; var Success: Boolean)
+    var
+        Keys: Text;
+        K: Text;
+        Head: Text;
+        Tok: JsonToken;
+        DocType: Text;
+    begin
+        if not Log.Has('pwcollect') then
+            exit;
+        foreach K in ObjectPayload.Keys() do
+            Keys += K + ',';
+        if ObjectPayload.Get('documenttype', Tok) then
+            DocType := Tok.AsValue().AsText();
+        DocumentStream.ReadText(Head, 40);
+        Append('Ready(keys=' + Keys + ' documenttype=' + DocType + ' head=' + Head + ')');
+    end;
+}
+
+// Writer PW: a processing-only report with a request page, for the Reporting Triggers probes.
+report 86147 "LT PW V ProcOnly"
+{
+    UsageCategory = None;
+    ProcessingOnly = true;
+
+    dataset
+    {
+        dataitem(P; "Probe Rep Parent")
+        {
+        }
+    }
 }

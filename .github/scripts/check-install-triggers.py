@@ -11,6 +11,8 @@ import sys
 from pathlib import Path
 
 ALLOWED = {
+    # corpus issue 661 (writer BF): writes only `if Insert() then;` into a DataPerCompany = false log; reads that can fail run in a TryFunction.
+    'tests/al-language/install/lt-bf-install-probes/BfInstallFixtures.al',
     'tests/al-language/_fixtures/ALTInstallProbe.al',
     'tests/al-language/_fixtures/ALTQuotedInstallProbe.al',
     'tests/al-language/install/TestInstallSeeder.al',
@@ -19,6 +21,13 @@ ALLOWED = {
     'tests/al-language/types/TestBlankEnumInitInstaller.Codeunit.al',
     'tests/al-language/install/TestInstallStartSessionProbe.al',
     'tests/al-language/events/lt-trigger-pins/PUpgradeTriggers.al',
+    'tests/al-language-onprem-dotnet/lt-bb-dotnet/BbNavHelpersInstall.al',
+    'tests/al-language/record/lt-as-records/AsDtInstaller.al',
+    'tests/al-language/install/lt-cm-install-leads/CmInstallObjects.al',
+    # Not a corpus app: the helper app that nightly-windows.yml publishes to create the tenant encryption key (#282), and
+    # unpublishes again. ci.yml never compiles it. Its install trigger cannot raise (TryFunction); measured on Windows
+    # BC 27.5 onprem, 29.0 onprem and 29.0 sandbox (runs 39223208230, 39223203793, 39223200014).
+    '.github/nightly-windows/encryption-key/src/EncryptionKeySetup.al',
 }
 PATTERN = re.compile(r'^\s*Subtype\s*=\s*(Install|Upgrade)\s*;', re.M | re.I)
 

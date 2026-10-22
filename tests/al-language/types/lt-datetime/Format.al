@@ -3,6 +3,10 @@
 // Fixtures used: Probe Observer (codeunit 69160)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Topic: Format of Date, Time, DateTime, Duration with standard format numbers and custom strings
+// Writer QR (2026-10-21), QR_* tests: custom strings of ISO-like time stamps (<Filler Character,0> mid-string after <Hours24,2>, 'T' and ';'
+//   literals, <Hours24> without width, <Thousands>, <Second dec>) on a DateTime, a Time and a Date, and on 0DT, 0T and 0D.
+//   BC: on a DateTime <Hours24,2> pads with 0 (09), on a Time with a space ( 9) unless <Filler Character,0> is in the string; 0DT and 0D give ''
+//   for every string, 0T formats as 00:00:00 (12:00 AM).
 // BC versions: 29 (27 and 28 by CI)
 
 codeunit 73804 "LT DtT Format"
@@ -534,6 +538,225 @@ codeunit 73804 "LT DtT Format"
         Observer.Expect('dt len 30', '          2024-03-05T13:45:06Z');
         Observer.Expect('date len 5 fmt 0', '03/05');
         Observer.Expect('date len 5 custom', '2024-');
+        Observer.Verify();
+    end;
+
+    // Writer QR (2026-10-21): Format with a custom string of the forms an ISO-like time stamp is built from: <Filler Character,0> in the
+    // middle of the string after <Hours24,2>, ';' and 'T' as literals, <Hours24> without a width, the time codes on a DateTime, and the
+    // same strings on 0D, 0T and 0DT. Observation names are the index of the string in the procedure (the strings are in the code).
+    [TryFunction]
+    local procedure TryFmtStr(V: Variant; FormatString: Text; var Result: Text)
+    var
+        D: Date;
+        T: Time;
+        DT: DateTime;
+    begin
+        if V.IsDate() then begin
+            D := V;
+            Result := Format(D, 0, FormatString);
+        end else if V.IsTime() then begin
+            T := V;
+            Result := Format(T, 0, FormatString);
+        end else begin
+            DT := V;
+            Result := Format(DT, 0, FormatString);
+        end;
+    end;
+
+    local procedure FmtStr(V: Variant; FormatString: Text): Text
+    var
+        Result: Text;
+    begin
+        if TryFmtStr(V, FormatString, Result) then
+            exit('[' + Result + ']');
+        exit('ERR:' + GetLastErrorText());
+    end;
+
+    [Test]
+    procedure QR_DateTime_Format_StampStrings_Morning()
+    var
+        Observer: Codeunit "Probe Observer";
+        DT: DateTime;
+    begin
+        DT := CreateDateTime(20240305D, 090702.123T);
+        Observer.Observe('m1', FmtStr(DT, '<Year4>-<Month,2>-<Day,2>T<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('m2', FmtStr(DT, '<Year4><Month,2><Day,2><Hours24,2><Filler Character,0><Minutes,2><Seconds,2>'));
+        Observer.Observe('m3', FmtStr(DT, '<Year4>-<Month,2>-<Day,2>;<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('m4', FmtStr(DT, '<Year4>-<Month,2>-<Day,2>T<Hours24,2>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('m5', FmtStr(DT, '<Year4><Month,2><Day,2><Hours24,2><Minutes,2><Seconds,2>'));
+        Observer.Observe('m6', FmtStr(DT, '<Year,2><Month,2><Day,2><Hours24,2><Minutes,2><Seconds,2>'));
+        Observer.Observe('m7', FmtStr(DT, '<Day,2>/<Month,2>/<Year,2>;<Hours24,2>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('m8', FmtStr(DT, '<Hours24>'));
+        Observer.Observe('m9', FmtStr(DT, '<Hours24>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('m10', FmtStr(DT, '<Hours24,2>-<Minutes,2>-<Seconds,2>'));
+        Observer.Observe('m11', FmtStr(DT, '<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('m12', FmtStr(DT, '<Hours24><Minutes,2>'));
+        Observer.Observe('m13', FmtStr(DT, '<Minutes,2>'));
+        Observer.Observe('m14', FmtStr(DT, '<Thousands>'));
+        Observer.Observe('m15', FmtStr(DT, '<Second dec>'));
+        Observer.Observe('m16', FmtStr(DT, '<Seconds,2><Second dec>'));
+        Observer.Expect('m1', '[2024-03-05T09:07:02]');
+        Observer.Expect('m2', '[20240305090702]');
+        Observer.Expect('m3', '[2024-03-05;09:07:02]');
+        Observer.Expect('m4', '[2024-03-05T09:07:02]');
+        Observer.Expect('m5', '[20240305090702]');
+        Observer.Expect('m6', '[240305090702]');
+        Observer.Expect('m7', '[05/03/24;09:07:02]');
+        Observer.Expect('m8', '[9]');
+        Observer.Expect('m9', '[9:07:02]');
+        Observer.Expect('m10', '[09-07-02]');
+        Observer.Expect('m11', '[09:07:02]');
+        Observer.Expect('m12', '[907]');
+        Observer.Expect('m13', '[07]');
+        Observer.Expect('m14', '[123]');
+        Observer.Expect('m15', '[.123]');
+        Observer.Expect('m16', '[02.123]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QR_DateTime_Format_StampStrings_Afternoon()
+    var
+        Observer: Codeunit "Probe Observer";
+        DT: DateTime;
+    begin
+        DT := CreateDateTime(20241231D, 134506T);
+        Observer.Observe('a1', FmtStr(DT, '<Year4>-<Month,2>-<Day,2>T<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('a2', FmtStr(DT, '<Year4><Month,2><Day,2><Hours24,2><Filler Character,0><Minutes,2><Seconds,2>'));
+        Observer.Observe('a3', FmtStr(DT, '<Year4>-<Month,2>-<Day,2>;<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('a4', FmtStr(DT, '<Year4>-<Month,2>-<Day,2>T<Hours24,2>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('a5', FmtStr(DT, '<Year4><Month,2><Day,2><Hours24,2><Minutes,2><Seconds,2>'));
+        Observer.Observe('a6', FmtStr(DT, '<Year,2><Month,2><Day,2><Hours24,2><Minutes,2><Seconds,2>'));
+        Observer.Observe('a7', FmtStr(DT, '<Day,2>/<Month,2>/<Year,2>;<Hours24,2>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('a8', FmtStr(DT, '<Hours24>'));
+        Observer.Observe('a9', FmtStr(DT, '<Hours24>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('a10', FmtStr(DT, '<Hours24,2>-<Minutes,2>-<Seconds,2>'));
+        Observer.Observe('a11', FmtStr(DT, '<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('a12', FmtStr(DT, '<Hours24><Minutes,2>'));
+        Observer.Observe('a13', FmtStr(DT, '<Minutes,2>'));
+        Observer.Observe('a14', FmtStr(DT, '<Thousands>'));
+        Observer.Observe('a15', FmtStr(DT, '<Second dec>'));
+        Observer.Observe('a16', FmtStr(DT, '<Seconds,2><Second dec>'));
+        Observer.Expect('a1', '[2024-12-31T13:45:06]');
+        Observer.Expect('a2', '[20241231134506]');
+        Observer.Expect('a3', '[2024-12-31;13:45:06]');
+        Observer.Expect('a4', '[2024-12-31T13:45:06]');
+        Observer.Expect('a5', '[20241231134506]');
+        Observer.Expect('a6', '[241231134506]');
+        Observer.Expect('a7', '[31/12/24;13:45:06]');
+        Observer.Expect('a8', '[13]');
+        Observer.Expect('a9', '[13:45:06]');
+        Observer.Expect('a10', '[13-45-06]');
+        Observer.Expect('a11', '[13:45:06]');
+        Observer.Expect('a12', '[1345]');
+        Observer.Expect('a13', '[45]');
+        Observer.Expect('a14', '[0]');
+        Observer.Expect('a15', '[]');
+        Observer.Expect('a16', '[06]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QR_DateTime_Format_StampStrings_Undefined()
+    var
+        Observer: Codeunit "Probe Observer";
+        DT: DateTime;
+    begin
+        DT := 0DT;
+        Observer.Observe('u1', FmtStr(DT, '<Year4>-<Month,2>-<Day,2>T<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('u2', FmtStr(DT, '<Year4><Month,2><Day,2><Hours24,2><Filler Character,0><Minutes,2><Seconds,2>'));
+        Observer.Observe('u3', FmtStr(DT, '<Year4>-<Month,2>-<Day,2>;<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('u4', FmtStr(DT, '<Year4>-<Month,2>-<Day,2>T<Hours24,2>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('u5', FmtStr(DT, '<Year4><Month,2><Day,2><Hours24,2><Minutes,2><Seconds,2>'));
+        Observer.Observe('u6', FmtStr(DT, '<Year,2><Month,2><Day,2><Hours24,2><Minutes,2><Seconds,2>'));
+        Observer.Observe('u7', FmtStr(DT, '<Day,2>/<Month,2>/<Year,2>;<Hours24,2>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('u8', FmtStr(DT, '<Hours24>'));
+        Observer.Expect('u1', '[]');
+        Observer.Expect('u2', '[]');
+        Observer.Expect('u3', '[]');
+        Observer.Expect('u4', '[]');
+        Observer.Expect('u5', '[]');
+        Observer.Expect('u6', '[]');
+        Observer.Expect('u7', '[]');
+        Observer.Expect('u8', '[]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QR_Time_Format_StampStrings()
+    var
+        Observer: Codeunit "Probe Observer";
+        T: Time;
+    begin
+        T := 090702.123T;
+        Observer.Observe('t1', FmtStr(T, '<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('t2', FmtStr(T, '<Hours24,2>-<Minutes,2>-<Seconds,2>'));
+        Observer.Observe('t3', FmtStr(T, '<Hours24>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('t4', FmtStr(T, '<Hours24,2><Filler Character,0><Minutes,2>'));
+        Observer.Observe('t5', FmtStr(T, '<Hours12,2><Filler Character,0>:<Minutes,2> <AM/PM>'));
+        T := 0T;
+        Observer.Observe('z1', FmtStr(T, '<Hours24,2><Filler Character,0>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('z2', FmtStr(T, '<Hours24,2>-<Minutes,2>-<Seconds,2>'));
+        Observer.Observe('z3', FmtStr(T, '<Hours24>:<Minutes,2>:<Seconds,2>'));
+        Observer.Observe('z4', FmtStr(T, '<Hours24,2><Filler Character,0><Minutes,2>'));
+        Observer.Observe('z5', FmtStr(T, '<Hours12,2><Filler Character,0>:<Minutes,2> <AM/PM>'));
+        Observer.Expect('t1', '[09:07:02]');
+        Observer.Expect('t2', '[ 9-07-02]');
+        Observer.Expect('t3', '[9:07:02]');
+        Observer.Expect('t4', '[0907]');
+        Observer.Expect('t5', '[09:07 AM]');
+        Observer.Expect('z1', '[00:00:00]');
+        Observer.Expect('z2', '[ 0-00-00]');
+        Observer.Expect('z3', '[0:00:00]');
+        Observer.Expect('z4', '[0000]');
+        Observer.Expect('z5', '[12:00 AM]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QR_Date_Format_StampStrings()
+    var
+        Observer: Codeunit "Probe Observer";
+        D: Date;
+    begin
+        D := 20240305D;
+        Observer.Observe('d1', FmtStr(D, '<Year4>-<Month,2>-<Day,2>'));
+        Observer.Observe('d2', FmtStr(D, '<Day,2>.<Month,2>.<Year4>'));
+        Observer.Observe('d3', FmtStr(D, '<Day,2>/<Month,2>/<Year4>'));
+        Observer.Observe('d4', FmtStr(D, '<Year4>.<Month,2>.<Day,2>'));
+        Observer.Observe('d5', FmtStr(D, '<Day,2><Month,2><Year4>'));
+        Observer.Observe('d6', FmtStr(D, '<Day,2><Month,2><Year,2>'));
+        Observer.Observe('d7', FmtStr(D, '<DAY>. <MONTH text> <YEAR4>'));
+        Observer.Observe('d8', FmtStr(D, '<Weekday Text>'));
+        Observer.Observe('d9', FmtStr(D, '<Week>'));
+        D := 0D;
+        Observer.Observe('z1', FmtStr(D, '<Year4>-<Month,2>-<Day,2>'));
+        Observer.Observe('z2', FmtStr(D, '<Day,2>.<Month,2>.<Year4>'));
+        Observer.Observe('z3', FmtStr(D, '<Day,2>/<Month,2>/<Year4>'));
+        Observer.Observe('z4', FmtStr(D, '<Year4>.<Month,2>.<Day,2>'));
+        Observer.Observe('z5', FmtStr(D, '<Day,2><Month,2><Year4>'));
+        Observer.Observe('z6', FmtStr(D, '<Day,2><Month,2><Year,2>'));
+        Observer.Observe('z7', FmtStr(D, '<DAY>. <MONTH text> <YEAR4>'));
+        Observer.Observe('z8', FmtStr(D, '<Weekday Text>'));
+        Observer.Observe('z9', FmtStr(D, '<Week>'));
+        Observer.Expect('d1', '[2024-03-05]');
+        Observer.Expect('d2', '[05.03.2024]');
+        Observer.Expect('d3', '[05/03/2024]');
+        Observer.Expect('d4', '[2024.03.05]');
+        Observer.Expect('d5', '[05032024]');
+        Observer.Expect('d6', '[050324]');
+        Observer.Expect('d7', '[5. March 2024]');
+        Observer.Expect('d8', '[Tuesday]');
+        Observer.Expect('d9', '[10]');
+        Observer.Expect('z1', '[]');
+        Observer.Expect('z2', '[]');
+        Observer.Expect('z3', '[]');
+        Observer.Expect('z4', '[]');
+        Observer.Expect('z5', '[]');
+        Observer.Expect('z6', '[]');
+        Observer.Expect('z7', '[]');
+        Observer.Expect('z8', '[]');
+        Observer.Expect('z9', '[]');
         Observer.Verify();
     end;
 }

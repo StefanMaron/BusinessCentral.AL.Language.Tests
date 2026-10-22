@@ -922,4 +922,33 @@ codeunit 69677 "TGL Record Variable Tests"
         Seen += StrSubstNo(' clear:%1', Target.ExtGetCounter());
         Assert.AreEqual('1|2 clear:0', Seen, 'extension globals');
     end;
+
+    [Test]
+    procedure TableGlobals_RecordRef_GetTable_ThenFieldValidate_SeesWhichGlobals()
+    // CLAIM (corpus issue 668 item 45, writer br): after RecordRef.GetTable(Row) of a record whose globals were set by a procedure,
+    // FieldRef.Validate and Insert(true) on the RecordRef run on an instance that does or does not carry those globals; SetTable back
+    // to the same variable keeps or resets its globals.
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "TGL Row";
+        Stored: Record "TGL Row";
+        RecRef: RecordRef;
+    begin
+        Initialize();
+        Row."No." := 'G';
+        Row.Bump();
+        Row.Bump();
+        RecRef.GetTable(Row);
+        RecRef.Field(2).Validate(7);
+        RecRef.Insert(true);
+        Stored.Get('G');
+        Observer.Observe('seen by OnInsert through the RecordRef', Stored.Seen);
+        Observer.Observe('row counter after GetTable', Format(Row.GetCounter()));
+        RecRef.SetTable(Row);
+        Observer.Observe('row after SetTable back', Format(Row.GetCounter()) + '|' + Format(Row.Payload));
+        Observer.Expect('seen by OnInsert through the RecordRef', '1|V7');
+        Observer.Expect('row counter after GetTable', '2');
+        Observer.Expect('row after SetTable back', '2|7');
+        Observer.Verify();
+    end;
 }

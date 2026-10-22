@@ -122,4 +122,69 @@ codeunit 73981 "LT P95 GetUrl Objects"
         Observer.Verify();
     end;
 
+    // Corpus issue 670 (writer CY): GetUrl with a record and UseFilters for the service client types, and with an object type but no object id.
+    [TryFunction]
+    local procedure TryRec(CT: ClientType; OT: ObjectType; Id: Integer; var Cust: Record Customer; UseFilters: Boolean; var R: Text)
+    begin
+        R := GetUrl(CT, CompanyName(), OT, Id, Cust, UseFilters);
+    end;
+
+    local procedure OneRec(var Observer: Codeunit "Probe Observer"; Name: Text; CT: ClientType; OT: ObjectType; Id: Integer; UseFilters: Boolean)
+    var
+        Cust: Record Customer;
+        R: Text;
+    begin
+        Cust."No." := 'CYX';
+        Cust.SetRange("No.", 'CYA', 'CYZ');
+        ClearLastError();
+        if TryRec(CT, OT, Id, Cust, UseFilters, R) then
+            Observer.Observe(Name, Shape(R) + '|' + Tail(R))
+        else
+            Observer.Observe(Name, Err());
+    end;
+
+    [TryFunction]
+    local procedure TryTypeOnly(CT: ClientType; OT: ObjectType; var R: Text)
+    begin
+        R := GetUrl(CT, CompanyName(), OT);
+    end;
+
+    local procedure OneTypeOnly(var Observer: Codeunit "Probe Observer"; Name: Text; CT: ClientType; OT: ObjectType)
+    var
+        R: Text;
+    begin
+        ClearLastError();
+        if TryTypeOnly(CT, OT, R) then
+            Observer.Observe(Name, Shape(R) + '|' + Tail(R))
+        else
+            Observer.Observe(Name, Err());
+    end;
+
+    [Test]
+    procedure CY_GetUrl_ServiceClients_UseFilters_And_TypeWithoutId()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        OneRec(Observer, 'web_filters', ClientType::Web, ObjectType::Page, 21, true);
+        OneRec(Observer, 'soap_filters', ClientType::SOAP, ObjectType::Page, 21, true);
+        OneRec(Observer, 'soap_nofilters', ClientType::SOAP, ObjectType::Page, 21, false);
+        OneRec(Observer, 'odata_filters', ClientType::OData, ObjectType::Page, 21, true);
+        OneRec(Observer, 'odatav4_filters', ClientType::ODataV4, ObjectType::Page, 21, true);
+        OneRec(Observer, 'api_filters', ClientType::Api, ObjectType::Page, 21, true);
+        OneRec(Observer, 'web_table_filters', ClientType::Web, ObjectType::Table, 18, true);
+        OneTypeOnly(Observer, 'web_page_no_id', ClientType::Web, ObjectType::Page);
+        OneTypeOnly(Observer, 'web_report_no_id', ClientType::Web, ObjectType::Report);
+        OneTypeOnly(Observer, 'soap_page_no_id', ClientType::SOAP, ObjectType::Page);
+        Observer.Expect('web_filters', 'Yes|Yes|Yes|Yes|No|No|No|?company=<Company>&page=21&filter=%27No.%27%20IS%20%27CYA..CYZ%27');
+        Observer.Expect('soap_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('soap_nofilters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('odata_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('odatav4_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('api_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('web_table_filters', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('web_page_no_id', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('web_report_no_id', 'No|No|No|No|No|No|No|noquery');
+        Observer.Expect('soap_page_no_id', 'No|No|No|No|No|No|No|noquery');
+        Observer.Verify();
+    end;
 }

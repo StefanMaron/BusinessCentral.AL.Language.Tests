@@ -103,4 +103,72 @@ codeunit 60930 "TPCC Tests"
         Assert.ExpectedError('Sep 2026');
         Card.Close();
     end;
+
+    // ── Added by writer bs (corpus issue #668, item 99): tableextension 83160 and pageextension 83162 in
+    //    tableextension/lt-bs-tableext-leads/BsObjects.al ──
+
+    [Test]
+    procedure TestPageField_Caption_TableExtensionFieldCaptionClass()
+    // CLAIM (issue #668 item 99): a field that a tableextension ADDS declares CaptionClass = '3,LT BS Added Field Class' (and a Caption).
+    // A page extension control on it without its own CaptionClass: does the table field's CaptionClass apply? A second control on the same
+    // field with CaptionClass = '3,LT BS Page Class': which wins? What do FieldCaption and FieldRef.Caption give?
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "TPCC Card";
+        Row: Record "TPCC Row";
+        RecRef: RecordRef;
+    begin
+        Initialize();
+        OpenCard(Card);
+        Observer.Observe('page_control_no_class', Card.BsCapNew.Caption());
+        Observer.Observe('page_control_with_class', Card.BsCapNewPageClass.Caption());
+        Card.Close();
+        Observer.Observe('field_caption', Row.FieldCaption(BsCapNew));
+        RecRef.Open(Database::"TPCC Row");
+        Observer.Observe('fieldref_caption', RecRef.Field(83180).Caption());
+        RecRef.Close();
+        Observer.Expect('page_control_no_class', 'LT BS Added Field Class');
+        Observer.Expect('page_control_with_class', 'LT BS Page Class');
+        Observer.Expect('field_caption', 'LT BS Added Field Class');
+        Observer.Expect('fieldref_caption', 'LT BS Added Field Class');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure TestPageField_Caption_TableExtensionModifiedFieldCaptionClass_QB()
+    // CLAIM (issue #668 item 99, writer QB): a tableextension sets CaptionClass with modify() on a base field that has only a Caption
+    // (Remark) and on one that already has a CaptionClass (Amount). What do the page controls, FieldCaption and FieldRef.Caption give?
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT QB Cc Card";
+        Row: Record "LT QB Cc Row";
+        RecRef: RecordRef;
+    begin
+        Row.DeleteAll();
+        Row."No." := 'QB1';
+        Row.Insert();
+        Card.OpenView();
+        Observer.Observe('remark control', Card.RemarkCtl.Caption());
+        Observer.Observe('remark control with class', Card.RemarkPageClass.Caption());
+        Observer.Observe('amount control', Card.AmountCtl.Caption());
+        Observer.Observe('plain control', Card.PlainCtl.Caption());
+        Card.Close();
+        Observer.Observe('remark FieldCaption', Row.FieldCaption(Remark));
+        Observer.Observe('amount FieldCaption', Row.FieldCaption(Amount));
+        Observer.Observe('plain FieldCaption', Row.FieldCaption(Plain));
+        RecRef.Open(Database::"LT QB Cc Row");
+        Observer.Observe('remark FieldRef.Caption', RecRef.Field(2).Caption());
+        Observer.Observe('amount FieldRef.Caption', RecRef.Field(3).Caption());
+        RecRef.Close();
+        Observer.Expect('remark control', 'QB Modified Class');
+        Observer.Expect('remark control with class', 'QB Page Class');
+        Observer.Expect('amount control', 'QB Modified Over Base');
+        Observer.Expect('plain control', 'QB Plain Caption');
+        Observer.Expect('remark FieldCaption', 'QB Modified Class');
+        Observer.Expect('amount FieldCaption', 'QB Modified Over Base');
+        Observer.Expect('plain FieldCaption', 'QB Plain Caption');
+        Observer.Expect('remark FieldRef.Caption', 'QB Modified Class');
+        Observer.Expect('amount FieldRef.Caption', 'QB Modified Over Base');
+        Observer.Verify();
+    end;
 }

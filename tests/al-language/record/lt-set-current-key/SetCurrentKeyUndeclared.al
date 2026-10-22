@@ -262,4 +262,79 @@ codeunit 73238 "LT P163 SetCurrentKey"
         Observer.Expect('declared_then_flowfield', 'no error');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 16 (writer BQ): which key SetCurrentKey picks when several keys fit. LT BQ Key Pick (record/lt-bq-odd-leads/
+    // BqObjects.al) has K1 (A, B), K2 (A, C), K3 (C), K5 (D) with IncludedFields E, and K6 (F) with Enabled = false. Rows 1..4 all have A = 1
+    // and D = 0; B 2 1 4 3; C 3 4 1 2; E 4 3 2 1; F 1 4 3 2: the order of the ids shows which fields sort.
+    local procedure BqSeedKeyPick()
+    var
+        R: Record "LT BQ Key Pick";
+    begin
+        R.DeleteAll();
+        BqAddKeyPick(1, 2, 3, 4, 1);
+        BqAddKeyPick(2, 1, 4, 3, 4);
+        BqAddKeyPick(3, 4, 1, 2, 3);
+        BqAddKeyPick(4, 3, 2, 1, 2);
+    end;
+
+    local procedure BqAddKeyPick(Id: Integer; B: Integer; C: Integer; E: Integer; F: Integer)
+    var
+        R: Record "LT BQ Key Pick";
+    begin
+        R.Init();
+        R.Id := Id;
+        R.A := 1;
+        R.B := B;
+        R.C := C;
+        R.E := E;
+        R.F := F;
+        R.Insert();
+    end;
+
+    local procedure BqKeyPickIds(var R: Record "LT BQ Key Pick"): Text
+    var
+        Result: Text;
+    begin
+        if R.FindSet() then
+            repeat
+                Result += Format(R.Id);
+            until R.Next() = 0;
+        exit(R.CurrentKey() + '|' + Result);
+    end;
+
+    [Test]
+    procedure P163_SetCurrentKey_WhichKeyIsPicked_BQ()
+    var
+        R: Record "LT BQ Key Pick";
+        Observer: Codeunit "Probe Observer";
+    begin
+        BqSeedKeyPick();
+        R.SetCurrentKey(A);
+        Observer.Observe('a', BqKeyPickIds(R));
+        Observer.Observe('a_view', R.GetView());
+        R.SetCurrentKey(C);
+        Observer.Observe('c', BqKeyPickIds(R));
+        R.SetCurrentKey(A, C);
+        Observer.Observe('a_c', BqKeyPickIds(R));
+        R.SetCurrentKey(B);
+        Observer.Observe('b', BqKeyPickIds(R));
+        R.SetCurrentKey(D);
+        Observer.Observe('d', BqKeyPickIds(R));
+        R.SetCurrentKey(E);
+        Observer.Observe('e_included_only', BqKeyPickIds(R));
+        R.SetCurrentKey(F);
+        Observer.Observe('f_disabled_key', BqKeyPickIds(R));
+        R.SetCurrentKey(D, E);
+        Observer.Observe('d_e', BqKeyPickIds(R));
+        Observer.Expect('a', 'A,B|2143');
+        Observer.Expect('a_view', 'VERSION(1) SORTING(A,B)');
+        Observer.Expect('c', 'C|3412');
+        Observer.Expect('a_c', 'A,C|3412');
+        Observer.Expect('b', 'B|2143');
+        Observer.Expect('d', 'D|1234');
+        Observer.Expect('e_included_only', 'E|4321');
+        Observer.Expect('f_disabled_key', 'F|1432');
+        Observer.Expect('d_e', 'D,E|4321');
+        Observer.Verify();
+    end;
 }

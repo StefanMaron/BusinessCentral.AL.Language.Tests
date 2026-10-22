@@ -6,6 +6,50 @@
 // Facts: page field properties Importance, QuickEntry, StyleExpr, Style, ExtendedDatatype, NotBlank, ShowCaption, BlankZero: what a TestPage exposes for such fields
 // (Visible, Editable, Enabled, Caption, Value, IsMandatory, SetValue errors). Importance, QuickEntry, Style, StyleExpr and ExtendedDatatype have no TestPage member:
 // they are declared and their effect on Value is observed.
+// Added by writer BV (2026-10-19, Windows check 3 item AP): a page field with ExtendedDatatype = Ratio on a plain Decimal reads '0%' through TestPage Value()
+// for every value (0.5, 1, 12.5, 0.25, -0.5, 0.333), on the Linux tiers and on Windows BC 27.5 and 29.0; a plain control on the same field reads the value.
+// Self-contained table 83750 and page 83751; test P119_RatioNonZeroValues.
+
+table 83750 "LT BV Ratio Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Code"; Code[20]) { }
+        field(5; Rt; Decimal) { }
+    }
+
+    keys
+    {
+        key(PK; "Code") { Clustered = true; }
+    }
+}
+
+page 83751 "LT BV Ratio Card"
+{
+    PageType = Card;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT BV Ratio Row";
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+                field(RtF; Rec.Rt)
+                {
+                    ApplicationArea = All;
+                    ExtendedDatatype = Ratio;
+                }
+                field(RtPlain; Rec.Rt) { ApplicationArea = All; }
+            }
+        }
+    }
+}
 
 page 71629 "LT P119 Fields Card"
 {
@@ -271,6 +315,55 @@ codeunit 71630 "LT P119 Fields Tests"
         Observer.Expect('mail-good', 'a@b.example');
         Observer.Expect('mail-bad', 'no error');
         Observer.Expect('mail-after', 'not an email');
+        Observer.Verify();
+    end;
+
+    local procedure BvRatioRow(NewCode: Code[20]; V: Decimal)
+    var
+        Row: Record "LT BV Ratio Row";
+    begin
+        Row.Init();
+        Row."Code" := NewCode;
+        Row.Rt := V;
+        Row.Insert();
+    end;
+
+    // Windows check 3 (BC 27.5 and 29.0, run 39219539271 / 39219542141) gave exactly these values.
+    [Test]
+    procedure P119_RatioNonZeroValues()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BV Ratio Row";
+        TP: TestPage "LT BV Ratio Card";
+    begin
+        Row.DeleteAll();
+        BvRatioRow('R1', 0.5);
+        BvRatioRow('R2', 1);
+        BvRatioRow('R3', 12.5);
+        BvRatioRow('R4', 0.25);
+        BvRatioRow('R5', -0.5);
+        BvRatioRow('R6', 0.333);
+        TP.OpenView();
+        TP.GoToKey('R1');
+        Observer.Observe('0.5', TP."Code".Value() + '|' + TP.RtF.Value() + '|' + TP.RtPlain.Value());
+        TP.GoToKey('R2');
+        Observer.Observe('1', TP."Code".Value() + '|' + TP.RtF.Value() + '|' + TP.RtPlain.Value());
+        TP.GoToKey('R3');
+        Observer.Observe('12.5', TP."Code".Value() + '|' + TP.RtF.Value() + '|' + TP.RtPlain.Value());
+        TP.GoToKey('R4');
+        Observer.Observe('0.25', TP."Code".Value() + '|' + TP.RtF.Value() + '|' + TP.RtPlain.Value());
+        TP.GoToKey('R5');
+        Observer.Observe('-0.5', TP."Code".Value() + '|' + TP.RtF.Value() + '|' + TP.RtPlain.Value());
+        TP.GoToKey('R6');
+        Observer.Observe('0.333', TP."Code".Value() + '|' + TP.RtF.Value() + '|' + TP.RtPlain.Value());
+        TP.Close();
+        Row.DeleteAll();
+        Observer.Expect('0.5', 'R1|0%|0.50');
+        Observer.Expect('1', 'R2|0%|1.00');
+        Observer.Expect('12.5', 'R3|0%|12.50');
+        Observer.Expect('0.25', 'R4|0%|0.25');
+        Observer.Expect('-0.5', 'R5|0%|-0.50');
+        Observer.Expect('0.333', 'R6|0%|0.33');
         Observer.Verify();
     end;
 

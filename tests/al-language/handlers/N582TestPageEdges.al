@@ -356,4 +356,139 @@ codeunit 67604 "LT N582 Test Page Edges"
         Observer.Expect('view card id', 'No');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 62 (writer br): a FlowFilter field as the source of a page control: Editable() on a card in edit and view
+    // mode and on a list, and what SetValue on it does to the control and to a FlowField that uses the filter.
+    local procedure BrSeed()
+    var
+        Row: Record "LT BR FF Page Row";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Amt := 5;
+        Row.Insert();
+        Row.Id := 2;
+        Row.Amt := 7;
+        Row.Insert();
+    end;
+
+    [Test]
+    procedure BR_Editable_FlowFilterControl()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT BR FF Page Card";
+        List: TestPage "LT BR FF Page List";
+    begin
+        BrSeed();
+        Card.OpenEdit();
+        Observer.Observe('card edit amtfilter', Format(Card.AmtFilter.Editable()));
+        Observer.Observe('card edit datefilter', Format(Card.DateFilter.Editable()));
+        Observer.Observe('card edit total', Format(Card.Total.Editable()));
+        Observer.Observe('card edit amt', Format(Card.Amt.Editable()));
+        Observer.Observe('card edit amtfilter value', Card.AmtFilter.Value());
+        Card.Close();
+        Card.OpenView();
+        Observer.Observe('card view amtfilter', Format(Card.AmtFilter.Editable()));
+        Card.Close();
+        List.OpenEdit();
+        Observer.Observe('list edit amtfilter', Format(List.AmtFilter.Editable()));
+        List.Close();
+        Observer.Expect('card edit amtfilter', 'Yes');
+        Observer.Expect('card edit datefilter', 'Yes');
+        Observer.Expect('card edit total', 'No');
+        Observer.Expect('card edit amt', 'Yes');
+        Observer.Expect('card edit amtfilter value', '');
+        Observer.Expect('card view amtfilter', 'No');
+        Observer.Expect('list edit amtfilter', 'Yes');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure BrTrySetFilterControl(var Card: TestPage "LT BR FF Page Card"; NewValue: Text)
+    begin
+        Card.AmtFilter.SetValue(NewValue);
+    end;
+
+    [Test]
+    procedure BR_SetValue_FlowFilterControl()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "LT BR FF Page Card";
+    begin
+        BrSeed();
+        Card.OpenEdit();
+        Card.First();
+        Observer.Observe('total before', Card.Total.Value());
+        ClearLastError();
+        if BrTrySetFilterControl(Card, '7') then
+            Observer.Observe('setvalue 7', 'ok|' + Card.AmtFilter.Value() + '|total=' + Card.Total.Value())
+        else
+            Observer.Observe('setvalue 7', 'error|' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Card.Close();
+        Observer.Expect('total before', '12.00');
+        Observer.Expect('setvalue 7', 'ok|7.00|total=12.00');
+        Observer.Verify();
+    end;
+}
+
+table 82963 "LT BR FF Page Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Amt; Decimal) { }
+        field(3; AmtFilter; Decimal) { FieldClass = FlowFilter; }
+        field(4; DateFilter; Date) { FieldClass = FlowFilter; }
+        field(5; Total; Decimal)
+        {
+            FieldClass = FlowField;
+            CalcFormula = sum("LT BR FF Page Row".Amt where(Amt = field(AmtFilter)));
+            Editable = false;
+        }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+page 82963 "LT BR FF Page Card"
+{
+    PageType = Card;
+    ApplicationArea = All;
+    SourceTable = "LT BR FF Page Row";
+
+    layout
+    {
+        area(Content)
+        {
+            field(Id; Rec.Id) { }
+            field(Amt; Rec.Amt) { }
+            field(AmtFilter; Rec.AmtFilter) { }
+            field(DateFilter; Rec.DateFilter) { }
+            field(Total; Rec.Total) { }
+        }
+    }
+}
+
+page 82964 "LT BR FF Page List"
+{
+    PageType = List;
+    ApplicationArea = All;
+    SourceTable = "LT BR FF Page Row";
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(R)
+            {
+                field(Id; Rec.Id) { }
+                field(AmtFilter; Rec.AmtFilter) { }
+            }
+        }
+    }
 }

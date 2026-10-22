@@ -1,9 +1,13 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-dataitem-properties
 // Scope: in-scope
-// Fixtures used: tables and helper of RptFixtures.al; SingleInstance log 73830 is used only by test codeunit 73838
+// Fixtures used: tables and helper of RptFixtures.al; SingleInstance log 73830 is used only by test codeunit 73838; reports 84654-84655 (writer CJ, corpus issue 667 item 154)
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Data item filters: DataItemTableView (where, sorting), SetTableView, RequestFilterFields on the request page, DataItemLink,
 // ReqFilterFields observed through GetFilter and the parameters text, PrintOnlyIfDetail seen in the dataset of SaveAs Xml.
+// Writer QP (al-runtime-rs ask, Microsoft's Customer "Currency Filter" shape): report 87147 links its child to a FlowFilter field of the
+//   parent, DataItemLink = "Currency Code" = field("Currency Filter") (tables 87145, 87146). The parent has no filter on the FlowFilter,
+//   a single value, a range and an or-filter (set through SetTableView); the log shows the child's filter in OnPreDataItem and the child rows
+//   read in OnAfterGetRecord. QP_ tests in codeunit 73838.
 // BC versions: 29 (27 and 28 by CI)
 
 codeunit 73830 "LT RpT Filter Log"
@@ -177,6 +181,113 @@ report 73836 "LT RpT Bare"
 {
     ProcessingOnly = true;
     UseRequestPage = false;
+}
+
+report 84654 "LT CJ RpT Leaf PrintOnly"
+{
+    // Corpus issue 667, item 154: PrintOnlyIfDetail on a data item that has no child data item.
+    ProcessingOnly = false;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Row; "LT RpT Row")
+        {
+            PrintOnlyIfDetail = true;
+
+            column(RowId; Row.Id) { }
+        }
+    }
+}
+
+report 84655 "LT CJ RpT Leaf Child PrintOnly"
+{
+    // Corpus issue 667, item 154: PrintOnlyIfDetail on the leaf (child) data item of a parent/child dataset.
+    ProcessingOnly = false;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Row; "LT RpT Row")
+        {
+            column(RowId; Row.Id) { }
+
+            dataitem(Child; "LT RpT Child")
+            {
+                DataItemLink = ParentId = field(Id);
+                PrintOnlyIfDetail = true;
+
+                column(ChildId; Child.Id) { }
+            }
+        }
+    }
+}
+
+table 87145 "LT QP RpT FF Head"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; "Currency Filter"; Code[10]) { FieldClass = FlowFilter; }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+table 87146 "LT QP RpT FF Line"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; "Currency Code"; Code[10]) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+report 87147 "LT QP RpT FF Link"
+{
+    ProcessingOnly = true;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Head; "LT QP RpT FF Head")
+        {
+            dataitem(Line; "LT QP RpT FF Line")
+            {
+                DataItemLink = "Currency Code" = field("Currency Filter");
+
+                trigger OnPreDataItem()
+                begin
+                    L.Add('line pre filter=[' + Line.GetFilter("Currency Code") + ']');
+                end;
+
+                trigger OnAfterGetRecord()
+                begin
+                    L.Add('line ' + Format(Line.Id) + ' ' + Line."Currency Code");
+                end;
+            }
+
+            trigger OnAfterGetRecord()
+            begin
+                L.Add('head ' + Format(Head.Id) + ' ff=[' + Head.GetFilter("Currency Filter") + '] value=[' + Head."Currency Filter" + ']');
+            end;
+        }
+    }
+
+    var
+        L: Codeunit "LT RpT Filter Log";
 }
 
 codeunit 73838 "LT RpT Filters"
@@ -492,6 +603,130 @@ codeunit 73838 "LT RpT Filters"
         Rpt.Run();
         Observer.Observe('log', L.Take());
         Observer.Expect('log', 'handler grp=[] id=[1..3];handler after grp=[2] id=[1..3];pre filters=[Id: >=3, Grp: 2] grp=[2] id=[>=3];get 3;get 4;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure CJ_PrintOnlyIfDetail_LeafDataItem_Dataset()
+    var
+        Observer: Codeunit "Probe Observer";
+        Xml: Text;
+        Ok: Boolean;
+    begin
+        Seed();
+        Ok := Helper.Save(Report::"LT CJ RpT Leaf PrintOnly", '', Xml);
+        Observer.Observe('saved', Format(Ok));
+        Observer.Observe('RowId', Helper.Values(Xml, 'RowId'));
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('RowId', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure CJ_PrintOnlyIfDetail_LeafChildDataItem_Dataset()
+    var
+        Observer: Codeunit "Probe Observer";
+        Xml: Text;
+        Ok: Boolean;
+    begin
+        Seed();
+        Ok := Helper.Save(Report::"LT CJ RpT Leaf Child PrintOnly", '', Xml);
+        Observer.Observe('saved', Format(Ok));
+        Observer.Observe('RowId', Helper.Values(Xml, 'RowId'));
+        Observer.Observe('ChildId', Helper.Values(Xml, 'ChildId'));
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('RowId', '1,2,3,4,');
+        Observer.Expect('ChildId', '');
+        Observer.Verify();
+    end;
+
+    local procedure QP_SeedFlowFilterLink()
+    var
+        Head: Record "LT QP RpT FF Head";
+        Line: Record "LT QP RpT FF Line";
+    begin
+        Head.DeleteAll();
+        Line.DeleteAll();
+        L.Take();
+        Head.Id := 1;
+        Head.Insert();
+        Line.Id := 1;
+        Line."Currency Code" := '';
+        Line.Insert();
+        Line.Id := 2;
+        Line."Currency Code" := 'EUR';
+        Line.Insert();
+        Line.Id := 3;
+        Line."Currency Code" := 'USD';
+        Line.Insert();
+        Line.Id := 4;
+        Line."Currency Code" := 'GBP';
+        Line.Insert();
+        Commit();
+    end;
+
+    local procedure QP_RunFlowFilterLink(FilterText: Text; SetIt: Boolean): Text
+    var
+        Head: Record "LT QP RpT FF Head";
+        Rpt: Report "LT QP RpT FF Link";
+    begin
+        QP_SeedFlowFilterLink();
+        if SetIt then
+            Head.SetFilter("Currency Filter", FilterText);
+        Rpt.SetTableView(Head);
+        Rpt.Run();
+        exit(L.Take());
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_NoFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('log', QP_RunFlowFilterLink('', false));
+        Observer.Expect('log', 'head 1 ff=[] value=[];line pre filter=[];line 1 ;line 2 EUR;line 3 USD;line 4 GBP;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_SingleValue()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('log', QP_RunFlowFilterLink('EUR', true));
+        Observer.Expect('log', 'head 1 ff=[EUR] value=[];line pre filter=[];line 2 EUR;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_Range()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('log', QP_RunFlowFilterLink('E..G', true));
+        Observer.Expect('log', 'head 1 ff=[E..G] value=[];line pre filter=[];line 2 EUR;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_OrFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('log', QP_RunFlowFilterLink('EUR|USD', true));
+        Observer.Expect('log', 'head 1 ff=[EUR|USD] value=[];line pre filter=[];line 2 EUR;line 3 USD;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QP_DataItemLink_FlowFilter_ReportRunPlain()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QP_SeedFlowFilterLink();
+        Report.Run(Report::"LT QP RpT FF Link");
+        Observer.Observe('log', L.Take());
+        Observer.Expect('log', 'head 1 ff=[] value=[];line pre filter=[];line 1 ;line 2 EUR;line 3 USD;line 4 GBP;');
         Observer.Verify();
     end;
 }

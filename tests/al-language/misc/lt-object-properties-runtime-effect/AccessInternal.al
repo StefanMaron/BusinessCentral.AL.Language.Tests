@@ -19,6 +19,22 @@ codeunit 72466 "LT P194 AccImpl" implements "LT P194 IAccess"
     end;
 }
 
+// Corpus #664 item 7: an internal interface implemented by an internal procedure compiles with no AL0920 (AL 30 beta, runtime 16.1 to 18.0).
+interface "LT BM IInternalImpl"
+{
+    Access = Internal;
+
+    procedure Describe(): Text;
+}
+
+codeunit 81950 "LT BM InternalImpl" implements "LT BM IInternalImpl"
+{
+    internal procedure Describe(): Text
+    begin
+        exit('internal impl');
+    end;
+}
+
 tableextension 72465 "LT P194 Gen Acc" extends "LT P194 Gen"
 {
     fields
@@ -85,6 +101,24 @@ codeunit 72467 "LT P194 Access Test"
         Observer.Expect('type', 'Integer');
         Observer.Expect('length', '4');
         Observer.Expect('is_enabled_in_list', 'Yes');
+        Observer.Verify();
+    end;
+
+    // Corpus #664 item 7: the internal procedure runs when called through the internal interface and directly from the same app.
+    [Test]
+    procedure BM_InternalInterface_InternalProcedure_Call()
+    var
+        Impl: Codeunit "LT BM InternalImpl";
+        Acc: Interface "LT BM IInternalImpl";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Acc := Impl;
+        Observer.Observe('via_interface', Acc.Describe());
+        Observer.Observe('direct', Impl.Describe());
+        Observer.Observe('is', Format(Acc is "LT BM IInternalImpl"));
+        Observer.Expect('via_interface', 'internal impl');
+        Observer.Expect('direct', 'internal impl');
+        Observer.Expect('is', 'Yes');
         Observer.Verify();
     end;
 }

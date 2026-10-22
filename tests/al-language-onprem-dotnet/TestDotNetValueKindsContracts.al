@@ -51,6 +51,8 @@ dotnet
         type("System.String[]"; DnStringArray) { }
         type("System.Collections.ArrayList"; DnArrayList) { }
         type("System.Collections.Queue"; DnQueue) { }
+        type("System.Text.Encoding"; QaDnEncoding) { }
+        type("System.Byte[]"; QaDnByteArray) { }
     }
     assembly("System")
     {
@@ -406,5 +408,86 @@ codeunit 61400 "Test DotNet Value Kinds"
         Assert.AreEqual('', Format(Zone), 'Offset converts to a Duration; zero reads blank on this host');
         Shifted := LocalTime - Stamp.Offset;
         Assert.AreNotEqual(0DT, Shifted, 'DateTime minus Duration');
+    end;
+
+    // al-runtime-rs backlog (partner gap, owner 2026-10-20, writer QA): a .NET method or property that returns System.String, assigned straight to a
+    // SecretText variable, then IsEmpty, Unwrap, passed on as a SecretText parameter and through SecretStrSubstNo. Each case: ok|IsEmpty|Unwrap or the error.
+    // Measured on 27.5, 28.5 and 29.0 (the same): every case is accepted and keeps the string; an empty string and a null string (an unset
+    // environment variable) give an empty SecretText.
+    [TryFunction]
+    local procedure QaTrySecret(CaseNo: Integer; var Secret: SecretText)
+    var
+        Conv: DotNet DnConvert;
+        Str: DotNet DnString;
+        Enc: DotNet QaDnEncoding;
+        Bytes: DotNet QaDnByteArray;
+        Env: DotNet DnEnvironment;
+        Uri: DotNet DnUri;
+    begin
+        case CaseNo of
+            1:
+                begin
+                    Bytes := Enc.UTF8.GetBytes('Hello');
+                    Secret := Conv.ToBase64String(Bytes);
+                end;
+            2:
+                Secret := Str.Concat('ab', 'cd');
+            3:
+                Secret := Str.Concat('', '');
+            4:
+                Secret := Env.GetEnvironmentVariable('ARRS_NO_SUCH_VARIABLE_61400');
+            5:
+                begin
+                    Uri := Uri.Uri('https://example.com/path?q=1');
+                    Secret := Uri.Host;
+                end;
+            6:
+                begin
+                    Bytes := Conv.FromBase64String('SGVsbG8=');
+                    Secret := Enc.UTF8.GetString(Bytes);
+                end;
+        end;
+    end;
+
+    local procedure QaShowSecret(Secret: SecretText): Text
+    begin
+        exit(Format(Secret.IsEmpty()) + '|' + Secret.Unwrap());
+    end;
+
+    local procedure QaPassOn(Secret: SecretText): SecretText
+    begin
+        exit(Secret);
+    end;
+
+    [Test]
+    procedure QA_StringResult_IntoSecretText()
+    var
+        Observer: Codeunit "Probe Observer";
+        Secret: SecretText;
+        Conv: DotNet DnConvert;
+        Enc: DotNet QaDnEncoding;
+        CaseNo: Integer;
+    begin
+        for CaseNo := 1 to 6 do begin
+            Clear(Secret);
+            ClearLastError();
+            if QaTrySecret(CaseNo, Secret) then
+                Observer.Observe('case ' + Format(CaseNo), 'ok|' + QaShowSecret(Secret))
+            else
+                Observer.ObserveError('case ' + Format(CaseNo));
+        end;
+        Secret := QaPassOn(Conv.ToBase64String(Enc.UTF8.GetBytes('Hello')));
+        Observer.Observe('passed as argument', QaShowSecret(Secret));
+        Secret := SecretStrSubstNo('Basic %1', Conv.ToBase64String(Enc.UTF8.GetBytes('u:p')));
+        Observer.Observe('SecretStrSubstNo', QaShowSecret(Secret));
+        Observer.Expect('case 1', 'ok|No|SGVsbG8=');
+        Observer.Expect('case 2', 'ok|No|abcd');
+        Observer.Expect('case 3', 'ok|Yes|');
+        Observer.Expect('case 4', 'ok|Yes|');
+        Observer.Expect('case 5', 'ok|No|example.com');
+        Observer.Expect('case 6', 'ok|No|Hello');
+        Observer.Expect('passed as argument', 'No|SGVsbG8=');
+        Observer.Expect('SecretStrSubstNo', 'No|Basic dTpw');
+        Observer.Verify();
     end;
 }

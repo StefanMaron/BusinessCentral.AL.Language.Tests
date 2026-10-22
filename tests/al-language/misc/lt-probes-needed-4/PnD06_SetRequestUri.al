@@ -137,4 +137,29 @@ codeunit 72038 "LT PnD SetRequestUri"
         Observer.Expect('uriAfterThird', 'http://two.example/b');
         Observer.Verify();
     end;
+    // Writer PW: docs/probes-needed.md "Values and builtins": http: or https: followed by something other than // (http: and https: alone are
+    // invalid, SetRequestUri_SchemeOnlyAndOddSchemes).
+    [Test]
+    procedure PW_SetRequestUri_SchemeWithoutSlashes()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('http:x', TrySet('http:x'));
+        Observer.Observe('http:/x', TrySet('http:/x'));
+        Observer.Observe('https:x.y', TrySet('https:x.y'));
+        Observer.Observe('http:x/p?q=1', TrySet('http:x/p?q=1'));
+        Observer.Observe('https:/x.y/p', TrySet('https:/x.y/p'));
+        Observer.Observe('http:///x', TrySet('http:///x'));
+        Observer.Observe('http:\\x', TrySet('http:\\x'));
+        Observer.Observe('HTTP:x', TrySet('HTTP:x'));
+        Observer.Expect('http:x', 'result=No uri=[]');
+        Observer.Expect('http:/x', 'result=No uri=[]');
+        Observer.Expect('https:x.y', 'result=No uri=[]');
+        Observer.Expect('http:x/p?q=1', 'result=No uri=[]');
+        Observer.Expect('https:/x.y/p', 'result=No uri=[]');
+        Observer.Expect('http:///x', 'result=No uri=[]');
+        Observer.Expect('http:\\x', 'result=Yes uri=[http://x/]');
+        Observer.Expect('HTTP:x', 'result=No uri=[]');
+        Observer.Verify();
+    end;
 }

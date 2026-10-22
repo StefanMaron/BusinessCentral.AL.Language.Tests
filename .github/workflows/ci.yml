@@ -1,8 +1,9 @@
 name: AL Language Test Suite
 
-# Runs the full AL language coverage suite against a real BC Cloud sandbox on
-# every BC minor from 27.0 to 29.0 — the same floor and ceiling AL Runner's own
-# matrix enforces, so a green verdict here means what a consumer needs it to mean.
+# Runs the AL language coverage suite against a BC service tier on the newest
+# minor of each supported major (27.5, 28.5, 29.0). al-runtime-rs
+# (StefanMaron/al-runtime-rs) reads the JUnit files of these legs as its oracle.
+# The bc_version input runs one other minor on request.
 # All matrix legs boot BC on Linux (no Windows runner required) via
 # StefanMaron/MsDyn365Bc.On.Linux.
 #
@@ -25,6 +26,14 @@ on:
         description: 'Override BC version (e.g. 28.1). Runs only that version when set.'
         required: false
         default: ''
+      select_base:
+        description: 'Run only the tests affected by the diff from this commit or branch to the dispatched ref (see CONTRIBUTING.md, "Test selection in CI"). Empty runs everything.'
+        required: false
+        default: ''
+      select_codeunits:
+        description: 'Run only these test codeunits, a JSON object {"tests/al-language":"50010,50012..50015"} (see CONTRIBUTING.md, "Test selection in CI"). Takes precedence over select_base. Empty: select_base decides.'
+        required: false
+        default: ''
 
 # Supersede a run that no longer answers a question anyone is asking.
 #
@@ -32,7 +41,7 @@ on:
 # matrix and nothing ever cancelled the one it replaced. Measured on 2026-09-05: four PRs merged
 # in a row started four full master runs, none superseded — 32 legs where 8 would do. Three had
 # to be cancelled by hand. GitHub Actions concurrency is per ACCOUNT, not per repository, so
-# those legs also sit in front of StefanMaron/BusinessCentral.AL.Runner's own matrix.
+# those legs also sit in front of the other workflows of the account.
 #
 # THE GROUP KEY includes the event name as well as the ref, which is one step beyond the usual
 # `workflow-ref` pairing, and it is load-bearing here rather than decorative:
@@ -40,7 +49,7 @@ on:
 #   * pull_request  -> refs/pull/<n>/merge, already unique per PR.
 #   * push          -> refs/heads/master. This is the project's health check: a green master run
 #                      is the signal that the corpus still matches what a real BC service tier
-#                      does, and AL Runner's autonomous cycle reads it as exactly that.
+#                      does.
 #   * workflow_dispatch on master would otherwise share the push group and could CANCEL that
 #     health-check run. A manual dispatch is normally someone bisecting a red master with the
 #     bc_version override; killing the automatic run to serve it, or the reverse, loses the one
@@ -62,8 +71,9 @@ on:
 #   * Recovering the per-commit answer costs one workflow_dispatch on a branch pointing at the
 #     suspect commit — precisely the run the group key above protects from the next merge.
 #
-# This changes no job's `if:` and adds no skips. The eight `BC <version> / test` legs are this
-# repository's required status contexts; a cancelled run reports them as cancelled, never as
+# This changes no job's `if:` and adds no skips. The required checks of the master ruleset are
+# the `BC <version> / test`, `BC OnPrem <version> / test` and `BC OnPrem DotNet <version> / test`
+# legs for 27.5, 28.5 and 29.0, plus the object-id gate; a cancelled run reports them as cancelled, never as
 # skipped, so a superseded run can never satisfy a required check. ci.yml is the only workflow
 # registered here (the object-id gate is a job inside it), so this block covers everything.
 concurrency:
@@ -172,9 +182,64 @@ jobs:
     # already knows. Failing here means the matrix is never dispatched at all.
     needs: object-ids
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
+      # {test app dir: "id,id,..."}: the test codeunits each test job runs. {} (or a missing key) = the job's full
+      # codeunit_range. The job names and the required checks do not change; only the codeunits each leg runs.
+      subset: ${{ steps.select.outputs.subset || '{}' }}
     steps:
+      # depth 2: a pull request's merge commit and its first parent, the base branch the diff is taken from
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # Test selection (CONTRIBUTING.md, "Test selection in CI"). "Run AL tests" is about 21 of the 26 minutes of a
+      # BC leg, so a pull request runs only the test codeunits its change can affect; .github/scripts/select-tests.py
+      # decides which, or falls back to a full run, and writes why into this job's summary. Always a full run: a push
+      # (master), a corpus bump pull request (head al-runtime-rs-staging), a pull request with the label full-run, and
+      # a manual dispatch without select_base. A failure of this step also means a full run, never a red check.
+      # A dispatch with select_codeunits (the corpus CI batcher: the union of the selections of the branches it merged,
+      # because the merged diff has too many files to select from) runs that list as it is; select_base is then ignored.
+      - id: select
+        name: Select the test codeunits to run
+        continue-on-error: true
+        env:
+          EVENT: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LABELED_FULL: ${{ contains(github.event.pull_request.labels.*.name, 'full-run') }}
+          SELECT_BASE: ${{ github.event.inputs.select_base }}
+          SELECT_CODEUNITS: ${{ github.event.inputs.select_codeunits }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          FULL='' BASE='' GIVEN=''
+          case "$EVENT" in
+            pull_request)
+              # labels from the API, not only the event payload: "Re-run all jobs" after adding the label then works
+              LABELS=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/labels" --jq '.[].name' 2>/dev/null || true)
+              if [ "$HEAD_REF" = "al-runtime-rs-staging" ]; then FULL='corpus bump pull request (head branch al-runtime-rs-staging): always a full run'
+              elif [ "$LABELED_FULL" = "true" ] || grep -qx 'full-run' <<< "$LABELS"; then FULL='the pull request has the label full-run'
+              else BASE=$(git rev-parse HEAD^1); fi ;;
+            workflow_dispatch)
+              if [ -n "${SELECT_CODEUNITS:-}" ]; then GIVEN=1
+              elif [ -z "$SELECT_BASE" ]; then FULL='manual run without select_base: always a full run'
+              elif git fetch --no-tags --quiet --depth=1 origin "$SELECT_BASE"; then BASE=$(git rev-parse FETCH_HEAD)
+              else FULL="select_base $SELECT_BASE could not be fetched"; fi ;;
+            *) FULL="$EVENT on $GITHUB_REF: always a full run" ;;
+          esac
+          if [ -n "$FULL" ]; then
+            python3 .github/scripts/select-tests.py --full-reason "$FULL" --github
+          elif [ -n "$GIVEN" ]; then
+            python3 .github/scripts/select-tests.py --codeunits "$SELECT_CODEUNITS" --github
+          else
+            python3 .github/scripts/select-tests.py --base "$BASE" --head HEAD --github
+          fi || { echo "::warning title=Test selection::select-tests.py failed; every test runs"; echo 'subset={}' >> "$GITHUB_OUTPUT"; }
+
       - id: set
         run: |
           OVERRIDE='${{ github.event.inputs.bc_version }}'
@@ -188,8 +253,8 @@ jobs:
             case "$MAJOR" in 27) RT=16.1;; 28) RT=17.1;; *) RT=18.0;; esac
             JSON=$(python3 -c "import json; print(json.dumps({'include':[{'bc_version':'$OVERRIDE','runtime':'$RT','preprocessor_symbols':'$SYMS'}]}))")
           else
-            # al-runtime-rs-staging only: the newest minor of each major (al-runtime-rs reads only these as its oracle).
-            # Master keeps every minor from 27.0 to 29.0 (the AL Runner project reads that matrix).
+            # The newest minor of each major: al-runtime-rs reads these legs as its oracle.
+            # Use the bc_version input to run another minor.
             JSON='{"include":[{"bc_version":"27.5","runtime":"16.1","preprocessor_symbols":"BC27PLUS"},{"bc_version":"28.5","runtime":"17.1","preprocessor_symbols":"BC27PLUS,BC28PLUS"},{"bc_version":"29.0","runtime":"18.0","preprocessor_symbols":"BC27PLUS,BC28PLUS,BC29PLUS"}]}'
           fi
           echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
@@ -200,13 +265,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Workflow and scripts pinned for corpus bump 42 to bc-linux bcc60c1c: HttpClient prompt answered (#165),
+    # test classifier respects #if (#166), fr-FR group separator and zz-ZZ dates (#167).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-bcc60c1c74c72098cfc368de89034051238f4592"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs:             "tests/al-language-internals-fixture"
       test_app_dirs:        "tests/al-language"
-      codeunit_range:       "50000..59999|60000..60999|61500..66999|67000..69999|70000..74999|75000..97999|99500..99999"
+      # The quoted range after || is this job's full range. Every job's full range is 50000..99999, every id a test app
+      # can use, so a new id block never needs an edit here (the runner reads the Subtype = Test codeunits of the test
+      # app's own .app and intersects them with this range; the other apps' ids in the span cost nothing). Left out:
+      # 75020..75024, Subtype = Test codeunits WITHOUT test methods (fixtures whose TestType and RequiredTestIsolation
+      # metadata codeunit/lt-x-object-props/XObjectProps.al reads); a codeunit in the range that reports no result at all
+      # fails the leg ("5 codeunit(s) produced NO result", run 39203765648). On a pull request the prepare job may pass
+      # only the selected codeunits instead (CONTRIBUTING.md, "Test selection in CI"); the same holds for the jobs below.
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language'] || '50000..75019|75025..99999' }}
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
@@ -222,7 +298,21 @@ jobs:
       # (MsDyn365Bc.On.Linux issue #20, KNOWN-LIMITATIONS.md). Opt-in there because it
       # adds ~550 MB to the SQL pull. Only this job runs Company-insert tests (67947);
       # test-onprem does not, so it keeps the default image.
-      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      sql_image:            "ghcr.io/aldevtools/msdyn365bc.on.linux/mssql:2022-fts"
+      # The default job timeout is 45 minutes. With about 2500 test codeunits the BC 27.5 "Run AL tests" step takes 37 to
+      # 40 minutes on a loaded runner, so the 27.5 job was cancelled at 45 minutes twice (run 39269527543, both attempts).
+      timeout_minutes:      70
+      # Each test phase (hub, websocket) has its own limit, the runner's --timeout (bc-linux input
+      # test_timeout_minutes, default 30). The BC 28.5 hub phase reached the 30-minute limit in run 39322214364
+      # (1802 s; codeunits 85841 onward were not run). 60 keeps room for growth and stays below timeout_minutes.
+      # The OnPrem jobs take about 7 minutes in all and keep the default.
+      test_timeout_minutes: 60
+      # RDLC rendering (MsDyn365Bc.On.Linux #126/#131): without these the Linux tier stubs the RDLC renderer.
+      # They pull bc-runner:rdlc and set BC_RDLC_RENDERER=mono. Report.SaveAs of an RDLC layout is pinned in
+      # report/lt-am-rdlc-output (cloud) and report/lt-am-rdlc-saveas (OnPrem). rdlc_trust_layouts is the
+      # acknowledgement that RDLC layout code runs unsandboxed; the corpus layouts carry only fixed functions.
+      rdlc_renderer:        true
+      rdlc_trust_layouts:   true
 
   # The Target = OnPrem test app, in a job of its own.
   #
@@ -250,16 +340,20 @@ jobs:
   # extra cost - that is the preferred end state, and this job is the way to have the
   # tests actually adjudicated until then.
   #
-  # This job's checks are named "BC OnPrem <ver> / test", so the eight required
-  # "BC <ver> / test" contexts are untouched.
+  # This job's checks are named "BC OnPrem <ver> / test". They are required checks of the
+  # master ruleset, like the "BC <ver> / test" checks of the job above.
   test-onprem:
     name: BC OnPrem ${{ matrix.bc_version }}
     needs: prepare
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Workflow and scripts pinned for corpus bump 42 to bc-linux bcc60c1c: HttpClient prompt answered (#165),
+    # test classifier respects #if (#166), fr-FR group separator and zz-ZZ dates (#167).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-bcc60c1c74c72098cfc368de89034051238f4592"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       # al-language is a production app HERE only in the sense that it has to be
@@ -269,7 +363,7 @@ jobs:
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem"
-      codeunit_range:       "61200..61299|98000..98999"
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-onprem'] || '50000..99999' }}
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
@@ -280,7 +374,10 @@ jobs:
       # debugger 9.0.
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
       # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
-      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      sql_image:            "ghcr.io/aldevtools/msdyn365bc.on.linux/mssql:2022-fts"
+      # RDLC rendering for the OnPrem SaveAs* file forms: see the test job above.
+      rdlc_renderer:        true
+      rdlc_trust_layouts:   true
 
   # The Target = OnPrem DotNet test app (tests/al-language-onprem-dotnet), in a job of its own for the same
   # one-test-app-per-invocation reason as test-onprem above. Its dotnet declarations need an AL compiler of 18.0 or
@@ -293,21 +390,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Workflow and scripts pinned for corpus bump 42 to bc-linux bcc60c1c: HttpClient prompt answered (#165),
+    # test classifier respects #if (#166), fr-FR group separator and zz-ZZ dates (#167).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:bcc60c1c74c72098cfc368de89034051238f4592"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs: |
         tests/al-language-internals-fixture
         tests/al-language
       test_app_dirs:        "tests/al-language-onprem-dotnet"
-      codeunit_range:       "61400..61499|99000..99499"
+      assembly_probing_paths: |
+        platform/Test Assemblies
+        platform/ServiceTier/PFiles64/Microsoft Dynamics NAV/*/Service
+      codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-onprem-dotnet'] || '50000..99999' }}
       preprocessor_symbols: ${{ matrix.preprocessor_symbols }}
       al_tool_version:      "30.0.42.60748-beta"
       runtime_version:      ${{ matrix.runtime }}
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
       # Full-text search: a table with OptimizeForTextSearch = true needs it to install (corpus #633).
-      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      sql_image:            "ghcr.io/aldevtools/msdyn365bc.on.linux/mssql:2022-fts"
 
     # Optional: supply a base64-encoded BC developer license.
     # Without this, BC boots with the public Cronus license (sufficient

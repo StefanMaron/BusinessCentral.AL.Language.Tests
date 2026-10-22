@@ -252,4 +252,159 @@ codeunit 72507 "LT SyT Round"
         Observer.Verify();
     end;
 
+    // Corpus issue 672 (odd AL behavior leads, part G), item 33: Round without a precision takes the default from the
+    // application (codeunit "Auto Format" OnReadRounding, General Ledger Setup "Amount Rounding Precision"). The test changes
+    // the setup and restores it.
+    [Test]
+    procedure LT_BU_Round_Default_FollowsGLSetup()
+    var
+        Observer: Codeunit "Probe Observer";
+        GLSetup: Record "General Ledger Setup";
+        Saved: Decimal;
+    begin
+        GLSetup.Get();
+        Saved := GLSetup."Amount Rounding Precision";
+        Observer.Observe('saved precision', Format(Saved, 0, 9));
+        ObserveDefaultRounds(Observer, 'start');
+        SetAmountRoundingPrecision(1);
+        ObserveDefaultRounds(Observer, 'p1');
+        SetAmountRoundingPrecision(0.1);
+        ObserveDefaultRounds(Observer, 'p0.1');
+        SetAmountRoundingPrecision(0.001);
+        ObserveDefaultRounds(Observer, 'p0.001');
+        SetAmountRoundingPrecision(0);
+        ObserveDefaultRounds(Observer, 'p0');
+        SetAmountRoundingPrecision(Saved);
+        ObserveDefaultRounds(Observer, 'restored');
+        Observer.Expect('saved precision', '0.01');
+        Observer.Expect('start 1.55', '1.55');
+        Observer.Expect('start 2.5', '2.5');
+        Observer.Expect('start -2.5', '-2.5');
+        Observer.Expect('start 1.23456', '1.23');
+        Observer.Expect('p1 1.55', '1.55');
+        Observer.Expect('p1 2.5', '2.5');
+        Observer.Expect('p1 -2.5', '-2.5');
+        Observer.Expect('p1 1.23456', '1.23');
+        Observer.Expect('p0.1 1.55', '1.55');
+        Observer.Expect('p0.1 2.5', '2.5');
+        Observer.Expect('p0.1 -2.5', '-2.5');
+        Observer.Expect('p0.1 1.23456', '1.23');
+        Observer.Expect('p0.001 1.55', '1.55');
+        Observer.Expect('p0.001 2.5', '2.5');
+        Observer.Expect('p0.001 -2.5', '-2.5');
+        Observer.Expect('p0.001 1.23456', '1.23');
+        Observer.Expect('p0 1.55', '1.55');
+        Observer.Expect('p0 2.5', '2.5');
+        Observer.Expect('p0 -2.5', '-2.5');
+        Observer.Expect('p0 1.23456', '1.23');
+        Observer.Expect('restored 1.55', '1.55');
+        Observer.Expect('restored 2.5', '2.5');
+        Observer.Expect('restored -2.5', '-2.5');
+        Observer.Expect('restored 1.23456', '1.23');
+        Observer.Verify();
+    end;
+
+    local procedure SetAmountRoundingPrecision(Precision: Decimal)
+    var
+        GLSetup: Record "General Ledger Setup";
+    begin
+        GLSetup.Get();
+        GLSetup."Amount Rounding Precision" := Precision;
+        GLSetup.Modify();
+    end;
+
+    local procedure ObserveDefaultRounds(var Observer: Codeunit "Probe Observer"; Prefix: Text)
+    begin
+        ObserveDefaultRound(Observer, Prefix + ' 1.55', 1.55);
+        ObserveDefaultRound(Observer, Prefix + ' 2.5', 2.5);
+        ObserveDefaultRound(Observer, Prefix + ' -2.5', -2.5);
+        ObserveDefaultRound(Observer, Prefix + ' 1.23456', 1.23456);
+    end;
+
+    local procedure ObserveDefaultRound(var Observer: Codeunit "Probe Observer"; Name: Text; Value: Decimal)
+    var
+        R: Decimal;
+    begin
+        ClearLastError();
+        if TryRoundDefault(Value, R) then
+            Observer.Observe(Name, Format(R, 0, 9))
+        else
+            Observer.Observe(Name, 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    [TryFunction]
+    local procedure TryRoundDefault(Value: Decimal; var R: Decimal)
+    begin
+        R := Round(Value);
+    end;
+
+    // Corpus issue 672, item 41: the Learn example table of Round (precision 1, 10 and 100 on +-1234.56789).
+    [Test]
+    procedure LT_BU_Round_LearnExampleTable()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('-1234.56789 p1', Format(Round(-1234.56789, 1), 0, 9));
+        Observer.Observe('-1234.56789 p10', Format(Round(-1234.56789, 10), 0, 9));
+        Observer.Observe('-1234.56789 p100', Format(Round(-1234.56789, 100), 0, 9));
+        Observer.Observe('-1234.56789 p0.01', Format(Round(-1234.56789, 0.01), 0, 9));
+        Observer.Observe('-1234.56789 p0.001', Format(Round(-1234.56789, 0.001), 0, 9));
+        Observer.Observe('1234.56789 p1', Format(Round(1234.56789, 1), 0, 9));
+        Observer.Observe('1234.56789 p10', Format(Round(1234.56789, 10), 0, 9));
+        Observer.Observe('1234.56789 p100', Format(Round(1234.56789, 100), 0, 9));
+        Observer.Observe('-1234.56789 p1 down', Format(Round(-1234.56789, 1, '<'), 0, 9));
+        Observer.Observe('-1234.56789 p1 up', Format(Round(-1234.56789, 1, '>'), 0, 9));
+        Observer.Expect('-1234.56789 p1', '-1235');
+        Observer.Expect('-1234.56789 p10', '-1230');
+        Observer.Expect('-1234.56789 p100', '-1200');
+        Observer.Expect('-1234.56789 p0.01', '-1234.57');
+        Observer.Expect('-1234.56789 p0.001', '-1234.568');
+        Observer.Expect('1234.56789 p1', '1235');
+        Observer.Expect('1234.56789 p10', '1230');
+        Observer.Expect('1234.56789 p100', '1200');
+        Observer.Expect('-1234.56789 p1 down', '-1234');
+        Observer.Expect('-1234.56789 p1 up', '-1235');
+        Observer.Verify();
+    end;
+
+    // Corpus issue 672, item 40: Power gives a Decimal; does it keep the last digits of large results (2^63 - 1 against 2^63 - 5)?
+    [Test]
+    procedure LT_BU_Power_LargeResultPrecision()
+    var
+        Observer: Codeunit "Probe Observer";
+        V1: Decimal;
+        V11: Decimal;
+        V22: Decimal;
+        B: BigInteger;
+    begin
+        V1 := Power(2, 63);
+        V11 := V1 - 1.0;
+        V22 := V1 - 5.0;
+        Observer.Observe('2^63-1 = 2^63-5', Format(V11 = V22));
+        Observer.Observe('2^63-1 <> 2^63-5', Format(V11 <> V22));
+        Observer.Observe('2^63 - (2^63-1)', Format(V1 - V11, 0, 9));
+        Observer.Observe('2^63 - (2^63-5)', Format(V1 - V22, 0, 9));
+        Observer.Observe('2^53+1 - 2^53', Format((Power(2, 53) + 1) - Power(2, 53), 0, 9));
+        Observer.Observe('2^60 = literal', Format(Power(2, 60) = 1152921504606846976L));
+        Observer.Observe('2^60 - (2^60 - 1)', Format(Power(2, 60) - (Power(2, 60) - 1), 0, 9));
+        Observer.Observe('3^40 - (3^40 - 1)', Format(Power(3, 40) - (Power(3, 40) - 1), 0, 9));
+        B := Power(2, 62);
+        Observer.Observe('2^62 to biginteger', Format(B));
+        B := Power(2, 62) - 1;
+        Observer.Observe('2^62-1 to biginteger', Format(B));
+        B := Power(2, 53) + 1;
+        Observer.Observe('2^53+1 to biginteger', Format(B));
+        Observer.Expect('2^63-1 = 2^63-5', 'Yes');
+        Observer.Expect('2^63-1 <> 2^63-5', 'No');
+        Observer.Expect('2^63 - (2^63-1)', '0');
+        Observer.Expect('2^63 - (2^63-5)', '0');
+        Observer.Expect('2^53+1 - 2^53', '1');
+        Observer.Expect('2^60 = literal', 'Yes');
+        Observer.Expect('2^60 - (2^60 - 1)', '0');
+        Observer.Expect('3^40 - (3^40 - 1)', '0');
+        Observer.Expect('2^62 to biginteger', '4611686018427387900');
+        Observer.Expect('2^62-1 to biginteger', '4611686018427387900');
+        Observer.Expect('2^53+1 to biginteger', '9007199254740993');
+        Observer.Verify();
+    end;
 }

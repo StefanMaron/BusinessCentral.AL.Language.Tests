@@ -145,4 +145,32 @@ codeunit 70476 "LT P116 Scope Access"
         Observer.Expect('thrice', '12');
         Observer.Verify();
     end;
+
+    // Writer QB (corpus issue #664 item 91): a Cloud app calls a public procedure of an OnPrem-target app (System Application) whose
+    // implementation is a [Scope('OnPrem')] procedure: User Settings.GetAllowedCompaniesForCurrentUser calls User Settings Impl.
+    // GetAllowedCompaniesForCurrentUser, which is Scope OnPrem and uses DotNet NavUserAccountHelper. Calling the Impl procedure directly
+    // from this app is AL0296 (compare must-not-compile 0981). Does the call through the public procedure run?
+    [Test]
+    procedure QB_CloudCallsPublicProcedureWithOnPremScopedImpl()
+    var
+        Observer: Codeunit "Probe Observer";
+        UserSettings: Codeunit "User Settings";
+        TempCompany: Record Company temporary;
+    begin
+        ClearLastError();
+        if TryAllowedCompanies(UserSettings, TempCompany) then
+            Observer.Observe('call', 'ok')
+        else
+            Observer.ObserveError('call');
+        Observer.Observe('contains current company', Format(TempCompany.Get(CompanyName())));
+        Observer.Expect('call', 'ok');
+        Observer.Expect('contains current company', 'Yes');
+        Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TryAllowedCompanies(var UserSettings: Codeunit "User Settings"; var TempCompany: Record Company temporary)
+    begin
+        UserSettings.GetAllowedCompaniesForCurrentUser(TempCompany);
+    end;
 }

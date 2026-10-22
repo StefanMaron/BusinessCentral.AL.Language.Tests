@@ -192,4 +192,362 @@ codeunit 60827 "Test TableExt Field Relation"
         Terr.Name := 'Relation control';
         Terr.Insert(false);
     end;
+
+    // ── Added by writer bs (corpus issue #668, item 97): objects in lt-bs-tableext-leads/BsObjects.al ──
+    // LT BS Base.Ref has TableRelation = "LT BS Target A"; tableextension LT BS Base Ext One adds modify(Ref) { TableRelation = "LT BS Target B"; }.
+    // LT BS Base.Cond has TableRelation = if (Kind = const(X)) "LT BS Target A"; the extension adds if (Kind = const(Y)) "LT BS Target B".
+    // Docs: "the first unconditional relation will prevail".
+
+    local procedure BsSeedTargets()
+    var
+        TA: Record "LT BS Target A";
+        TB: Record "LT BS Target B";
+    begin
+        TA.DeleteAll();
+        TB.DeleteAll();
+        TA.Code := 'ONLYA';
+        TA.Insert();
+        TA.Code := 'BOTH';
+        TA.Insert();
+        TB.Code := 'ONLYB';
+        TB.Insert();
+        TB.Code := 'BOTH';
+        TB.Insert();
+    end;
+
+    [TryFunction]
+    local procedure BsTryValidate(var Base: Record "LT BS Base"; FieldNo: Integer; Value: Code[20])
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.GetTable(Base);
+        RecRef.Field(FieldNo).Validate(Value);
+        RecRef.SetTable(Base);
+    end;
+
+    local procedure BsProbe(var Observer: Codeunit "Probe Observer"; Name: Text; Kind: Option; FieldNo: Integer; Value: Code[20])
+    var
+        Base: Record "LT BS Base";
+    begin
+        Base.Init();
+        Base.Id := 1;
+        Base.Kind := Kind;
+        ClearLastError();
+        Observer.Observe(Name, Format(BsTryValidate(Base, FieldNo, Value)));
+        Observer.ObserveError(Name);
+    end;
+
+    [Test]
+    procedure TableExt_ModifyTableRelation_Unconditional_ValidateUsesWhichTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+        FieldRec: Record Field;
+    begin
+        BsSeedTargets();
+        BsProbe(Observer, 'ref_only_a', Base.Kind::X, 5, 'ONLYA');
+        BsProbe(Observer, 'ref_only_b', Base.Kind::X, 5, 'ONLYB');
+        BsProbe(Observer, 'ref_both', Base.Kind::X, 5, 'BOTH');
+        BsProbe(Observer, 'ref_none', Base.Kind::X, 5, 'NONE');
+        FieldRec.Get(Database::"LT BS Base", 5);
+        Observer.Observe('ref_relation_table_no', Format(FieldRec.RelationTableNo));
+        Observer.Expect('ref_only_a', 'Yes');
+        Observer.Expect('ref_only_a|text', '');
+        Observer.Expect('ref_only_a|code', '');
+        Observer.Expect('ref_only_b', 'No');
+        Observer.Expect('ref_only_b|text', 'The field Ref of table LT BS Ext Caption contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ref_only_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ref_both', 'Yes');
+        Observer.Expect('ref_both|text', '');
+        Observer.Expect('ref_both|code', '');
+        Observer.Expect('ref_none', 'No');
+        Observer.Expect('ref_none|text', 'The field Ref of table LT BS Ext Caption contains a value (NONE) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ref_none|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ref_relation_table_no', '83151');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure TableExt_ModifyTableRelation_Conditional_ValidatePerCondition()
+    var
+        Observer: Codeunit "Probe Observer";
+        Base: Record "LT BS Base";
+    begin
+        BsSeedTargets();
+        BsProbe(Observer, 'x_only_a', Base.Kind::X, 7, 'ONLYA');
+        BsProbe(Observer, 'x_only_b', Base.Kind::X, 7, 'ONLYB');
+        BsProbe(Observer, 'y_only_a', Base.Kind::Y, 7, 'ONLYA');
+        BsProbe(Observer, 'y_only_b', Base.Kind::Y, 7, 'ONLYB');
+        BsProbe(Observer, 'z_none', Base.Kind::Z, 7, 'NONE');
+        Observer.Expect('x_only_a', 'Yes');
+        Observer.Expect('x_only_a|text', '');
+        Observer.Expect('x_only_a|code', '');
+        Observer.Expect('x_only_b', 'No');
+        Observer.Expect('x_only_b|text', 'The field Cond of table LT BS Ext Caption contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('x_only_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('y_only_a', 'No');
+        Observer.Expect('y_only_a|text', 'The field Cond of table LT BS Ext Caption contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('y_only_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('y_only_b', 'Yes');
+        Observer.Expect('y_only_b|text', '');
+        Observer.Expect('y_only_b|code', '');
+        Observer.Expect('z_none', 'Yes');
+        Observer.Expect('z_none|text', '');
+        Observer.Expect('z_none|code', '');
+        Observer.Verify();
+    end;
+
+    // ---- writer PY-D (2026-10-20): more modify(TableRelation) combinations (objects in lt-pyd-relation/PydRelationObjects.al) ----
+
+    [TryFunction]
+    local procedure PydTryValidate(var Base: Record "LT PYD Rel Base"; FieldNo: Integer; Value: Code[20])
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.GetTable(Base);
+        RecRef.Field(FieldNo).Validate(Value);
+        RecRef.SetTable(Base);
+    end;
+
+    local procedure PydProbe(var Observer: Codeunit "Probe Observer"; Name: Text; Kind: Option; FieldNo: Integer; Value: Code[20])
+    var
+        Base: Record "LT PYD Rel Base";
+    begin
+        Base.Init();
+        Base.Id := 1;
+        Base.Kind := Kind;
+        ClearLastError();
+        Observer.Observe(Name, Format(PydTryValidate(Base, FieldNo, Value)));
+        Observer.ObserveError(Name);
+    end;
+
+    local procedure PydAll(var Observer: Codeunit "Probe Observer"; Prefix: Text; FieldNo: Integer; Part: Integer)
+    var
+        Base: Record "LT PYD Rel Base";
+    begin
+        BsSeedTargets();
+        if Part = 2 then begin
+            PydProbe(Observer, Prefix + 'z_a', Base.Kind::Z, FieldNo, 'ONLYA');
+            PydProbe(Observer, Prefix + 'z_b', Base.Kind::Z, FieldNo, 'ONLYB');
+            PydProbe(Observer, Prefix + 'z_none', Base.Kind::Z, FieldNo, 'NONE');
+            exit;
+        end;
+        PydProbe(Observer, Prefix + 'x_a', Base.Kind::X, FieldNo, 'ONLYA');
+        PydProbe(Observer, Prefix + 'x_b', Base.Kind::X, FieldNo, 'ONLYB');
+        PydProbe(Observer, Prefix + 'y_a', Base.Kind::Y, FieldNo, 'ONLYA');
+        PydProbe(Observer, Prefix + 'y_b', Base.Kind::Y, FieldNo, 'ONLYB');
+    end;
+
+    local procedure PydRelNo(var Observer: Codeunit "Probe Observer"; FieldNo: Integer)
+    var
+        FieldRec: Record Field;
+    begin
+        FieldRec.Get(Database::"LT PYD Rel Base", FieldNo);
+        Observer.Observe('relation_table_no', Format(FieldRec.RelationTableNo));
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseConditional_ExtUnconditional_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'mix_', 3, 1);
+        PydRelNo(Observer, 3);
+        Observer.Expect('mix_x_a', 'Yes');
+        Observer.Expect('mix_x_a|text', '');
+        Observer.Expect('mix_x_a|code', '');
+        Observer.Expect('mix_x_b', 'No');
+        Observer.Expect('mix_x_b|text', 'The field MixCond of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('mix_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('mix_y_a', 'No');
+        Observer.Expect('mix_y_a|text', 'The field MixCond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('mix_y_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('mix_y_b', 'Yes');
+        Observer.Expect('mix_y_b|text', '');
+        Observer.Expect('mix_y_b|code', '');
+        Observer.Expect('relation_table_no', '0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseConditional_ExtUnconditional_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'mix_', 3, 2);
+        Observer.Expect('mix_z_a', 'No');
+        Observer.Expect('mix_z_a|text', 'The field MixCond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('mix_z_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('mix_z_b', 'Yes');
+        Observer.Expect('mix_z_b|text', '');
+        Observer.Expect('mix_z_b|code', '');
+        Observer.Expect('mix_z_none', 'No');
+        Observer.Expect('mix_z_none|text', 'The field MixCond of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('mix_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseElseArm_ExtConditional_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'else_', 4, 1);
+        PydRelNo(Observer, 4);
+        Observer.Expect('else_x_a', 'Yes');
+        Observer.Expect('else_x_a|text', '');
+        Observer.Expect('else_x_a|code', '');
+        Observer.Expect('else_x_b', 'No');
+        Observer.Expect('else_x_b|text', 'The field ElseArm of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('else_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('else_y_a', 'No');
+        Observer.Expect('else_y_a|text', 'The field ElseArm of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('else_y_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('else_y_b', 'Yes');
+        Observer.Expect('else_y_b|text', '');
+        Observer.Expect('else_y_b|code', '');
+        Observer.Expect('relation_table_no', '0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseElseArm_ExtConditional_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'else_', 4, 2);
+        Observer.Expect('else_z_a', 'No');
+        Observer.Expect('else_z_a|text', 'The field ElseArm of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('else_z_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('else_z_b', 'Yes');
+        Observer.Expect('else_z_b|text', '');
+        Observer.Expect('else_z_b|code', '');
+        Observer.Expect('else_z_none', 'No');
+        Observer.Expect('else_z_none|text', 'The field ElseArm of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('else_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_TwoExtensions_Conditional_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'two_', 5, 1);
+        PydRelNo(Observer, 5);
+        Observer.Expect('two_x_a', 'Yes');
+        Observer.Expect('two_x_a|text', '');
+        Observer.Expect('two_x_a|code', '');
+        Observer.Expect('two_x_b', 'No');
+        Observer.Expect('two_x_b|text', 'The field TwoExtCond of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('two_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('two_y_a', 'No');
+        Observer.Expect('two_y_a|text', 'The field TwoExtCond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('two_y_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('two_y_b', 'Yes');
+        Observer.Expect('two_y_b|text', '');
+        Observer.Expect('two_y_b|code', '');
+        Observer.Expect('relation_table_no', '0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_TwoExtensions_Conditional_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'two_', 5, 2);
+        Observer.Expect('two_z_a', 'Yes');
+        Observer.Expect('two_z_a|text', '');
+        Observer.Expect('two_z_a|code', '');
+        Observer.Expect('two_z_b', 'No');
+        Observer.Expect('two_z_b|text', 'The field TwoExtCond of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('two_z_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('two_z_none', 'No');
+        Observer.Expect('two_z_none|text', 'The field TwoExtCond of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('two_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_TwoExtensions_Unconditional_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'twou_', 6, 1);
+        PydRelNo(Observer, 6);
+        Observer.Expect('twou_x_a', 'Yes');
+        Observer.Expect('twou_x_a|text', '');
+        Observer.Expect('twou_x_a|code', '');
+        Observer.Expect('twou_x_b', 'No');
+        Observer.Expect('twou_x_b|text', 'The field TwoExtUncond of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('twou_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('twou_y_a', 'No');
+        Observer.Expect('twou_y_a|text', 'The field TwoExtUncond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('twou_y_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('twou_y_b', 'Yes');
+        Observer.Expect('twou_y_b|text', '');
+        Observer.Expect('twou_y_b|code', '');
+        Observer.Expect('relation_table_no', '0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_TwoExtensions_Unconditional_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'twou_', 6, 2);
+        Observer.Expect('twou_z_a', 'No');
+        Observer.Expect('twou_z_a|text', 'The field TwoExtUncond of table LT PYD Rel Base contains a value (ONLYA) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('twou_z_a|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('twou_z_b', 'Yes');
+        Observer.Expect('twou_z_b|text', '');
+        Observer.Expect('twou_z_b|code', '');
+        Observer.Expect('twou_z_none', 'No');
+        Observer.Expect('twou_z_none|text', 'The field TwoExtUncond of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target B).');
+        Observer.Expect('twou_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseUnconditional_ExtElseArm_XY()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'ue_', 7, 1);
+        PydRelNo(Observer, 7);
+        Observer.Expect('ue_x_a', 'Yes');
+        Observer.Expect('ue_x_a|text', '');
+        Observer.Expect('ue_x_a|code', '');
+        Observer.Expect('ue_x_b', 'No');
+        Observer.Expect('ue_x_b|text', 'The field UncondThenElse of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ue_x_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ue_y_a', 'Yes');
+        Observer.Expect('ue_y_a|text', '');
+        Observer.Expect('ue_y_a|code', '');
+        Observer.Expect('ue_y_b', 'No');
+        Observer.Expect('ue_y_b|text', 'The field UncondThenElse of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ue_y_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('relation_table_no', '83151');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure PYD_ModifyTableRelation_BaseUnconditional_ExtElseArm_Z()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        PydAll(Observer, 'ue_', 7, 2);
+        Observer.Expect('ue_z_a', 'Yes');
+        Observer.Expect('ue_z_a|text', '');
+        Observer.Expect('ue_z_a|code', '');
+        Observer.Expect('ue_z_b', 'No');
+        Observer.Expect('ue_z_b|text', 'The field UncondThenElse of table LT PYD Rel Base contains a value (ONLYB) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ue_z_b|code', 'DB:PrimRecordNotFound');
+        Observer.Expect('ue_z_none', 'No');
+        Observer.Expect('ue_z_none|text', 'The field UncondThenElse of table LT PYD Rel Base contains a value (NONE) that cannot be found in the related table (LT BS Target A).');
+        Observer.Expect('ue_z_none|code', 'DB:PrimRecordNotFound');
+        Observer.Verify();
+    end;
 }

@@ -212,5 +212,228 @@ codeunit 68042 "W4 CalcFields Tests"
         Observer.Expect('filter_then_field', 'ok:[12]');
         Observer.Verify();
     end;
+    // Corpus issue 668 items 57, 58, 59, 64 and 65 (writer br): a Lookup FlowField shorter than its source field (AL0685 is a warning),
+    // integer constants against an Option and an Enum field in a CalcFormula, a FlowField without CalcFormula (AL0717 is a warning) and
+    // a FlowField that uses it, a tableextension CalcFormula whose const is checked against a same-named Option field of the host, and a
+    // Date FlowFilter field with InitValue.
+    local procedure BrSeed()
+    var
+        Src: Record "LT BR CF Src";
+        Host: Record "LT BR CF Host";
+    begin
+        Src.DeleteAll();
+        Host.DeleteAll();
+        BrAddSrc(1, 'ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ', Src.Opt::B, "LT BR CF Enum"::One, 5, 1);
+        BrAddSrc(2, 'short', Src.Opt::A, "LT BR CF Enum"::Blank, 7, 2);
+        BrAddSrc(3, 'exactly twenty chars', Src.Opt::B, "LT BR CF Enum"::One, 11, 1);
+        Host.Init();
+        Host.Id := 1;
+        Host.Insert();
+        Host.Init();
+        Host.Id := 2;
+        Host.Insert();
+        Host.Init();
+        Host.Id := 3;
+        Host.Insert();
+    end;
 
+    local procedure BrAddSrc(Id: Integer; Long: Text[50]; Opt: Option; En: Enum "LT BR CF Enum"; Amt: Decimal; EntryType: Integer)
+    var
+        Src: Record "LT BR CF Src";
+    begin
+        Src.Id := Id;
+        Src.Long := Long;
+        Src.Opt := Opt;
+        Src.En := En;
+        Src.Amt := Amt;
+        Src."Entry Type" := EntryType;
+        Src.Insert();
+    end;
+
+    [TryFunction]
+    local procedure BrTryCalc(var Host: Record "LT BR CF Host"; Which: Integer; var Result: Text)
+    begin
+        case Which of
+            1:
+                begin
+                    Host.CalcFields(ShortLookup);
+                    Result := Host.ShortLookup + ' len=' + Format(StrLen(Host.ShortLookup));
+                end;
+            2:
+                begin
+                    Host.CalcFields(CntOptInt);
+                    Result := Format(Host.CntOptInt);
+                end;
+            3:
+                begin
+                    Host.CalcFields(CntEnumInt);
+                    Result := Format(Host.CntEnumInt);
+                end;
+            4:
+                begin
+                    Host.CalcFields(NoFormula);
+                    Result := Format(Host.NoFormula);
+                end;
+            5:
+                begin
+                    Host.CalcFields(UsesNoFormula);
+                    Result := Format(Host.UsesNoFormula);
+                end;
+            6:
+                begin
+                    Host.CalcFields(SumByType);
+                    Result := Format(Host.SumByType);
+                end;
+        end;
+    end;
+
+    local procedure BrCalc(var Host: Record "LT BR CF Host"; Which: Integer): Text
+    var
+        Result: Text;
+    begin
+        ClearLastError();
+        exit(Outcome(BrTryCalc(Host, Which, Result), Result));
+    end;
+
+    [Test]
+    procedure BR_LookupIntoShorterTextFlowField()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: Record "LT BR CF Host";
+    begin
+        BrSeed();
+        Host.Get(1);
+        Observer.Observe('40 chars into Text[20]', BrCalc(Host, 1));
+        Host.Get(2);
+        Observer.Observe('5 chars into Text[20]', BrCalc(Host, 1));
+        Host.Get(3);
+        Observer.Observe('20 chars into Text[20]', BrCalc(Host, 1));
+        Observer.Expect('40 chars into Text[20]', 'ok:[ABCDEFGHIJABCDEFGHIJABCDEFGHIJABCDEFGHIJ len=40]');
+        Observer.Expect('5 chars into Text[20]', 'ok:[short len=5]');
+        Observer.Expect('20 chars into Text[20]', 'ok:[exactly twenty chars len=20]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure BR_IntegerConstOnOptionAndEnumFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: Record "LT BR CF Host";
+        Src: Record "LT BR CF Src";
+    begin
+        BrSeed();
+        Host.Get(1);
+        Observer.Observe('count option const(1)', BrCalc(Host, 2));
+        Observer.Observe('count enum const(1)', BrCalc(Host, 3));
+        Src.SetRange(Opt, 1);
+        Observer.Observe('setrange option 1', Format(Src.Count()) + '|' + Src.GetFilter(Opt));
+        Src.Reset();
+        Src.SetRange(En, 1);
+        Observer.Observe('setrange enum 1', Format(Src.Count()) + '|' + Src.GetFilter(En));
+        Observer.Expect('count option const(1)', 'ok:[2]');
+        Observer.Expect('count enum const(1)', 'ok:[2]');
+        Observer.Expect('setrange option 1', '2|B');
+        Observer.Expect('setrange enum 1', '2|One');
+        Observer.Verify();
+    end;
+
+    // Not a [Test] (Linux suspect, queued for the Windows check): on the Linux BC container, 27.5, 28.5 and 29.0, CalcFields on a FlowField
+    // without CalcFormula ends the test with the uncatchable 'Unexpected CLR exception thrown.: System.NullReferenceException: Object
+    // reference not set to an instance of an object.' (the TryFunction in BrTryCalc does not catch it). Kept as the probe source.
+    procedure BR_FlowFieldWithoutCalcFormula()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: Record "LT BR CF Host";
+    begin
+        BrSeed();
+        Host.Get(1);
+        Observer.Observe('calcfields no formula', BrCalc(Host, 4));
+        Observer.Observe('calcfields field(no formula) in where', BrCalc(Host, 5));
+        Host.NoFormula := 7;
+        Observer.Observe('assigned then where', BrCalc(Host, 5));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure BR_TableExtensionConst_HostHasSameNamedOptionField()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: Record "LT BR CF Host";
+    begin
+        BrSeed();
+        Host.Get(1);
+        Observer.Observe('sum where entry type const(1)', BrCalc(Host, 6));
+        Observer.Expect('sum where entry type const(1)', 'ok:[16]');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure BR_DateFlowFilterWithInitValue()
+    var
+        Observer: Codeunit "Probe Observer";
+        Host: Record "LT BR CF Host";
+    begin
+        Observer.Observe('declared', Format(Host.FltDate, 0, 9));
+        Host.Init();
+        Observer.Observe('after init', Format(Host.FltDate, 0, 9));
+        Observer.Observe('after init format', Format(Host.FltDate));
+        Observer.Observe('getfilter after init', Host.GetFilter(FltDate));
+        Host.SetRange(FltDate, 20200101D);
+        Observer.Observe('value after setrange', Format(Host.FltDate, 0, 9));
+        Observer.Observe('getfilter after setrange', Host.GetFilter(FltDate));
+        Observer.Expect('declared', '2018-01-01');
+        Observer.Expect('after init', '2018-01-01');
+        Observer.Expect('after init format', '01/01/18');
+        Observer.Expect('getfilter after init', '');
+        Observer.Expect('value after setrange', '2018-01-01');
+        Observer.Expect('getfilter after setrange', '01/01/20');
+        Observer.Verify();
+    end;
+}
+
+enum 82962 "LT BR CF Enum"
+{
+    Extensible = true;
+    value(0; Blank) { }
+    value(1; One) { }
+}
+
+table 82960 "LT BR CF Src"
+{
+    DataClassification = SystemMetadata;
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Long; Text[50]) { }
+        field(3; Opt; Option) { OptionMembers = A,B,C; }
+        field(4; En; Enum "LT BR CF Enum") { }
+        field(5; Amt; Decimal) { }
+        field(6; "Entry Type"; Integer) { }
+    }
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
+table 82961 "LT BR CF Host"
+{
+    DataClassification = SystemMetadata;
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; ShortLookup; Text[20]) { FieldClass = FlowField; CalcFormula = lookup("LT BR CF Src".Long where(Id = field(Id))); Editable = false; }
+        field(3; CntOptInt; Integer) { FieldClass = FlowField; CalcFormula = count("LT BR CF Src" where(Opt = const(1))); Editable = false; }
+        field(4; CntEnumInt; Integer) { FieldClass = FlowField; CalcFormula = count("LT BR CF Src" where(En = const(1))); Editable = false; }
+        field(5; NoFormula; Decimal) { FieldClass = FlowField; }
+        field(6; UsesNoFormula; Integer) { FieldClass = FlowField; CalcFormula = count("LT BR CF Src" where(Amt = field(NoFormula))); Editable = false; }
+        field(7; FltDate; Date) { FieldClass = FlowFilter; InitValue = 20180101D; }
+        field(8; "Entry Type"; Option) { OptionMembers = X,Y,Z; }
+    }
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
+tableextension 82961 "LT BR CF Host Ext" extends "LT BR CF Host"
+{
+    fields
+    {
+        field(82961; SumByType; Decimal) { FieldClass = FlowField; CalcFormula = sum("LT BR CF Src".Amt where("Entry Type" = const(1))); Editable = false; }
+    }
 }

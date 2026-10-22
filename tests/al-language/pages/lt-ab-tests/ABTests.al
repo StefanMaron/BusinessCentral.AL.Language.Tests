@@ -1064,15 +1064,26 @@ codeunit 77099 "LT AB Tests"
     begin
         RenderSeed();
         TempBlob.CreateOutStream(OutStr);
-        asserterror Report.SaveAs(Report::"LT AB Render Plain Report", '', ReportFormat::Pdf, OutStr);
-        Observer.ObserveError('saveas-pdf');
+        // BC 29: Windows BC 29.0 check 2026-10-20 (bump 34 queue) gives the same values as 27/28 (no error, output written); so does the
+        // Linux image at dbee8022 (the bc-linux #143 fix).
+        // BC 27 and 28: the corpus CI containers run the RDLC renderer (ci.yml rdlc_renderer), so SaveAs Pdf renders. The stub
+        // error pinned before was a property of the container, not of BC.
+        ClearLastError();
+        Observer.Observe('saveas-pdf ok', Format(TrySaveAsPlainPdf(OutStr)));
+        Observer.Observe('saveas-pdf error', GetLastErrorText());
         Observer.Observe('log', Log.Dump());
         Observer.Observe('has-output', Format(TempBlob.Length() > 0));
-        Observer.Expect('saveas-pdf|text', 'RDLC report rendering is not implemented on Linux BC: the Windows Reporting Service is stubbed out (bc-linux StartupHook.cs Patch #19). IReportingServiceClient.RenderAsync() cannot produce report output on this platform.');
-        Observer.Expect('saveas-pdf|code', 'Report');
+        Observer.Expect('saveas-pdf ok', 'Yes');
+        Observer.Expect('saveas-pdf error', '');
         Observer.Expect('log', 'plain OnPreReport | plain ext OnPreRendering keys=0');
-        Observer.Expect('has-output', 'No');
+        Observer.Expect('has-output', 'Yes');
         Observer.Verify();
+    end;
+
+    [TryFunction]
+    local procedure TrySaveAsPlainPdf(var OutStr: OutStream)
+    begin
+        Report.SaveAs(Report::"LT AB Render Plain Report", '', ReportFormat::Pdf, OutStr);
     end;
 
     [Test]

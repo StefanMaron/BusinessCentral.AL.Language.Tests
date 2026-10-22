@@ -577,4 +577,61 @@ codeunit 73020 "LT RfT Open"
         Observer.Expect('findset_ff', 'D1;D2;D3;D4;D5;');
         Observer.Verify();
     end;
+
+    // Corpus issue 668 item 54 (writer br): what a RecordRef answers after Open(0), which raises no error.
+    [TryFunction]
+    local procedure BrTryOpenZeroMember(Which: Integer; var Result: Text)
+    var
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(0);
+        case Which of
+            1:
+                Result := Format(RecRef.Number());
+            2:
+                Result := RecRef.Name();
+            3:
+                Result := Format(RecRef.FieldCount());
+            4:
+                Result := Format(RecRef.KeyCount());
+            5:
+                Result := Format(RecRef.IsEmpty());
+            6:
+                Result := Format(RecRef.IsTemporary());
+            7:
+                Result := Format(RecRef.Count());
+        end;
+    end;
+
+    local procedure BrOpenZeroMember(Which: Integer): Text
+    var
+        Result: Text;
+    begin
+        ClearLastError();
+        if BrTryOpenZeroMember(Which, Result) then
+            exit('ok:' + Result);
+        exit('error:' + ScrubCaller(GetLastErrorText()) + '|' + GetLastErrorCode());
+    end;
+
+    [Test]
+    procedure Open_Zero_Members()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('number', BrOpenZeroMember(1));
+        Observer.Observe('name', BrOpenZeroMember(2));
+        Observer.Observe('fieldcount', BrOpenZeroMember(3));
+        Observer.Observe('keycount', BrOpenZeroMember(4));
+        Observer.Observe('isempty', BrOpenZeroMember(5));
+        Observer.Observe('istemporary', BrOpenZeroMember(6));
+        Observer.Observe('count', BrOpenZeroMember(7));
+        Observer.Expect('number', 'ok:0');
+        Observer.Expect('name', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('fieldcount', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('keycount', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('isempty', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('istemporary', 'error:The record is not open.|RecordNotOpened');
+        Observer.Expect('count', 'error:The record is not open.|RecordNotOpened');
+        Observer.Verify();
+    end;
 }
