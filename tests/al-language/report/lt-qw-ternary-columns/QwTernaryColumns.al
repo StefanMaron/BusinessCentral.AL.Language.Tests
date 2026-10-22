@@ -2,7 +2,7 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (69160); own table 87500, report 87501, report extension 87502, test codeunit 87503
 // Probe (corpus issue 685 section 1, from a user report): a ternary expression as the source of a report dataset column, with a Label,
-// a TextConst or a field as a branch, and ternary columns of Decimal, Integer, Date, Boolean, Option and Enum. Each test saves the
+// or a field as a branch, and ternary columns of Decimal, Integer, Date, Boolean, Option and Enum. Each test saves the
 // dataset as XML (Report.SaveAs, ReportFormat::Xml) for one row with Flag = true or Flag = false and reads every Column line.
 // IncludeCaption on a ternary column does not compile (AL0385, tests/must-not-compile/cases/0015).
 // BC versions: 27.5+
@@ -45,7 +45,11 @@ report 87501 "LT QW Tern Columns"
             column(LblOrLbl; Row.Flag ? LblA : LblB) { }
             column(LblOrField; Row.Flag ? LblA : Row.Name) { }
             column(FieldOrLbl; Row.Flag ? Row.Name : LblA) { }
+#if LTQW_TEXTCONST_PROBE
+            // A TextConst branch compiles, but BC 29.0 refuses to publish the app: "Failure while emitting object. Object:'Report "LT QW Tern
+            // Columns"' (Unexpected value 'TextConst' of type 'Microsoft.Dynamics.Nav.CodeAnalysis.NavTypeKind')" (corpus CI run 39741827358).
             column(TcOrLbl; Row.Flag ? TcA : LblA) { }
+#endif
             column(DecCol; Row.Flag ? Row.Amount : 0) { }
             column(IntOrDec; Row.Flag ? 7 : Row.Amount) { }
             column(IntCol; Row.Flag ? Row.Qty : 7) { }
@@ -59,7 +63,9 @@ report 87501 "LT QW Tern Columns"
     var
         LblA: Label 'Label A';
         LblB: Label 'Label B';
+#if LTQW_TEXTCONST_PROBE
         TcA: TextConst ENU = 'Text const A';
+#endif
 }
 
 reportextension 87502 "LT QW Tern Columns Ext" extends "LT QW Tern Columns"
