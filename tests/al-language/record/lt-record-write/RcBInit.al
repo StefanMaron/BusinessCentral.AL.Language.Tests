@@ -490,7 +490,10 @@ codeunit 72002 "LT RcB Init"
         Row.Num := 1;
         Row.CallRecInit();
         Observer.Observe('Rec.Init() in the table', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
-        Observer.Finish();
+        Observer.Expect('qualified Init()', '1|own Init()|1');
+        Observer.Expect('bare Init() in the table', '1|own Init()|1');
+        Observer.Expect('Rec.Init() in the table', '1|own Init()|1');
+        Observer.Verify();
     end;
 }
 

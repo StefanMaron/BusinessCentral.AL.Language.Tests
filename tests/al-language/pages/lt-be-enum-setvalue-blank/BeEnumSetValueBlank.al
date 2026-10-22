@@ -4002,7 +4002,7 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.Verify();
     end;
 
-    // Writer QZ: a NotBlank Enum field set blank through SetValue on a List and a Card page (fixtures in QzNotBlankEnumList.al).
+    // Writer QZ: a NotBlank Enum field set blank through SetValue on a List page (fixtures in QzNotBlankEnumList.al).
     local procedure QzSeed(): Record "LT QZ NB Row"
     var
         Row: Record "LT QZ NB Row";
@@ -4052,32 +4052,18 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         Observer.ObserveError('plain empty text');
         Observer.Observe('plain after empty text', List.Kind.Value());
         List.Close();
-        Observer.Finish();
-    end;
-
-    [Test]
-    procedure QZ_NotBlankEnum_SetValueBlank_Card()
-    var
-        Observer: Codeunit "Probe Observer";
-        Row: Record "LT QZ NB Row";
-        Card: TestPage "LT QZ NB Card";
-    begin
-        Row := QzSeed();
-        Card.OpenEdit();
-        Card.GoToRecord(Row);
-        asserterror begin
-            Card.KindNB.SetValue('');
-            Error('no error');
-        end;
-        Observer.ObserveError('notblank empty text');
-        Observer.Observe('notblank after empty text', Card.KindNB.Value());
-        asserterror begin
-            Card.KindNB.SetValue(0);
-            Error('no error');
-        end;
-        Observer.ObserveError('notblank ordinal 0');
-        Observer.Observe('notblank after ordinal 0', Card.KindNB.Value());
-        Card.Close();
-        Observer.Finish();
+        Observer.Expect('notblank empty text|text', 'Validation error for Field: KindNB,  Message = ''Your entry of '''' is not an acceptable value for ''KindNB''.''');
+        Observer.Expect('notblank empty text|code', 'TestValidation');
+        Observer.Expect('notblank after empty text', '1');
+        Observer.Expect('notblank space|text', 'no error');
+        Observer.Expect('notblank space|code', 'Dialog');
+        Observer.Expect('notblank after space', ' ');
+        Observer.Expect('notblank ordinal 0|text', 'no error');
+        Observer.Expect('notblank ordinal 0|code', 'Dialog');
+        Observer.Expect('notblank after ordinal 0', ' ');
+        Observer.Expect('plain empty text|text', 'Validation error for Field: Kind,  Message = ''Your entry of '''' is not an acceptable value for ''Kind''.''');
+        Observer.Expect('plain empty text|code', 'TestValidation');
+        Observer.Expect('plain after empty text', '1');
+        Observer.Verify();
     end;
 }

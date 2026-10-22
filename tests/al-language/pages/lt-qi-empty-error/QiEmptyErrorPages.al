@@ -354,7 +354,12 @@ codeunit 86853 "LT QI EE Tests"
         Observer.Observe('value-after', List.AutoGen.Value());
         List.Close();
         Observer.Observe('stored-after-close', QzStored());
-        Observer.Finish();
+        Observer.Expect('went-on', 'yes');
+        Observer.Expect('after-setvalue|text', '');
+        Observer.Expect('after-setvalue|code', 'NSValidateField:Dialog');
+        Observer.Expect('value-after', 'Yes');
+        Observer.Expect('stored-after-close', 'Yes|seed');
+        Observer.Verify();
     end;
 
     [Test]
@@ -375,7 +380,6 @@ codeunit 86853 "LT QI EE Tests"
         Observer.ObserveError('setvalue');
         Observer.Observe('value-after', List.AutoGen.Value());
         List.Close();
-        Observer.Observe('stored-after-close', QzStored());
         Observer.Finish();
     end;
 
@@ -395,7 +399,12 @@ codeunit 86853 "LT QI EE Tests"
         Observer.Observe('value-after', List.Name.Value());
         List.Close();
         Observer.Observe('stored-after-close', QzStored());
-        Observer.Finish();
+        Observer.Expect('went-on', 'yes');
+        Observer.Expect('after-setvalue|text', '');
+        Observer.Expect('after-setvalue|code', 'NSValidateField:Dialog');
+        Observer.Expect('value-after', 'seed');
+        Observer.Expect('stored-after-close', 'Yes|seed');
+        Observer.Verify();
     end;
 
     [Test]

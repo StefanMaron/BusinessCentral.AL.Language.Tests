@@ -952,6 +952,13 @@ Observer.Verify();
         Observer.ObserveError('list_picky_disallowed');
         Observer.Observe('list_picky_after_error', List.Picky.Value);
         List.Close();
-        Observer.Finish();
+        Observer.Expect('list_digits_allowed', '456');
+        Observer.Expect('list_digits_disallowed|text', 'Validation error for Field: Digits,  Message = ''The character X is not valid in this field. You can specify the following characters: 09.''');
+        Observer.Expect('list_digits_disallowed|code', 'TestValidation');
+        Observer.Expect('list_digits_after_error', '456');
+        Observer.Expect('list_picky_disallowed|text', 'Validation error for Field: Picky,  Message = ''The character q is not valid in this field. You can specify the following characters: ad,mp,zz.''');
+        Observer.Expect('list_picky_disallowed|code', 'TestValidation');
+        Observer.Expect('list_picky_after_error', '');
+        Observer.Verify();
     end;
 }

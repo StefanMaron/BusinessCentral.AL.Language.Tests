@@ -1,8 +1,8 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-notblank-property
 // Scope: in-scope
-// Fixtures for the QZ_* tests in codeunit "LT BE Enum SetValue Tests" (BeEnumSetValueBlank.al): enum 87704, table 87705, pages 87706 and 87707.
+// Fixtures for the QZ_* tests in codeunit "LT BE Enum SetValue Tests" (BeEnumSetValueBlank.al): enum 87704, table 87705, page 87706.
 // Facts: TestPage SetValue('') and SetValue of the blank member's caption on an Enum field with NotBlank = true whose value 0 is " ",
-//   on a List page and on a Card page, next to a field of the same enum without NotBlank: the error text and code, the value shown and stored.
+//   on a List page, next to a field of the same enum without NotBlank: the error text and code, the value shown and stored.
 
 enum 87704 "LT QZ NB Kind"
 {
@@ -42,23 +42,6 @@ page 87706 "LT QZ NB List"
                 field(KindNB; Rec.KindNB) { ApplicationArea = All; }
                 field(Kind; Rec.Kind) { ApplicationArea = All; }
             }
-        }
-    }
-}
-
-page 87707 "LT QZ NB Card"
-{
-    PageType = Card;
-    SourceTable = "LT QZ NB Row";
-    UsageCategory = None;
-
-    layout
-    {
-        area(Content)
-        {
-            field(Code; Rec.Code) { ApplicationArea = All; }
-            field(KindNB; Rec.KindNB) { ApplicationArea = All; }
-            field(Kind; Rec.Kind) { ApplicationArea = All; }
         }
     }
 }

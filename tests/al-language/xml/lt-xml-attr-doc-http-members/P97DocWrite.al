@@ -339,6 +339,17 @@ codeunit 74808 "LT P97 Doc WriteTo"
         QzWriteAndRead('<?xml version="1.0" encoding="utf-16"?><a>x</a>', Observer, 'utf-16 declaration');
         QzWriteAndRead('<?xml version="1.0"?><a>x</a>', Observer, 'declaration without encoding');
         QzWriteAndRead('<?xml version="1.0" encoding="UTF-8"?><a><b>y</b></a>', Observer, 'upper-case utf-8 declaration');
-        Observer.Finish();
+        Observer.Expect('no declaration length', '65');
+        Observer.Expect('no declaration first bytes', '239 187 191 ');
+        Observer.Expect('no declaration lines', 'Ù‹<?xml version="1.0" encoding="utf-8"?>|<a xmlns="urn:p">x</a>|');
+        Observer.Expect('utf-16 declaration length', '100');
+        Observer.Expect('utf-16 declaration first bytes', '255 254 60 ');
+        Observer.Expect('declaration without encoding length', '51');
+        Observer.Expect('declaration without encoding first bytes', '239 187 191 ');
+        Observer.Expect('declaration without encoding lines', 'Ù‹<?xml version="1.0" encoding="utf-8"?>|<a>x</a>|');
+        Observer.Expect('upper-case utf-8 declaration length', '64');
+        Observer.Expect('upper-case utf-8 declaration first bytes', '239 187 191 ');
+        Observer.Expect('upper-case utf-8 declaration lines', 'Ù‹<?xml version="1.0" encoding="UTF-8"?>|<a>|  <b>y</b>|</a>|');
+        Observer.Verify();
     end;
 }
