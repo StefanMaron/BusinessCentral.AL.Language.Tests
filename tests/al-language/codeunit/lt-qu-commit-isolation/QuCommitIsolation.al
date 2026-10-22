@@ -173,27 +173,42 @@ codeunit 87450 "LT QU Probe"
         Observer.Observe('in_block_after_commit', Has(P + '-E2'));
     end;
 
-    // Commit inside a TryFunction (the same shape as misc/lt-cu-odd-leads/CuCommitTests.al Commit_InTryFunction, asked per isolation).
+    // Commit inside a TryFunction (the same shape as misc/lt-cu-odd-leads/CuCommitTests.al Commit_InTryFunction, asked per isolation),
+    // with a committed row before it and an uncommitted row open when the try starts.
     procedure ObserveTryCommit(P: Text; var Observer: Codeunit "Probe Observer")
     var
         Ok: Boolean;
     begin
-        Commit();
         Put(P + '-T0');
+        Commit();
+        Put(P + '-T1');
         ClearLastError();
-        asserterror Ok := TryInsertCommit(P + '-T1');
+        asserterror Ok := TryCommit();
         Observer.ObserveError('try');
         Observer.Observe('ok', Format(Ok));
         Observer.Observe('tx_after', Tx());
-        Observer.Observe('before_try', Has(P + '-T0'));
-        Observer.Observe('in_try', Has(P + '-T1'));
+        Observer.Observe('committed_before_try', Has(P + '-T0'));
+        Observer.Observe('open_when_try_started', Has(P + '-T1'));
     end;
 
     [TryFunction]
-    local procedure TryInsertCommit(RowKey: Text)
+    local procedure TryCommit()
     begin
-        Put(RowKey);
         Commit();
+    end;
+
+    // What a later test of the same codeunit sees of the rows the tests above committed: by Commit() (W1, W2), before and by
+    // a Codeunit.Run (R2, R3), and inside an asserterror block (E0, E1).
+    procedure ObserveCommittedByEarlierTests(P: Text; var Observer: Codeunit "Probe Observer")
+    begin
+        Observer.Observe('tx_at_start', Tx());
+        Observer.Observe('w1', Has(P + '-W1'));
+        Observer.Observe('w2', Has(P + '-W2'));
+        Observer.Observe('r2', Has(P + '-R2'));
+        Observer.Observe('r3', Has(P + '-R3'));
+        Observer.Observe('e0', Has(P + '-E0'));
+        Observer.Observe('e1', Has(P + '-E1'));
+        Observer.Observe('t0', Has(P + '-T0'));
     end;
 
     // What the next test codeunit sees of everything codeunit A wrote.
@@ -213,6 +228,7 @@ codeunit 87450 "LT QU Probe"
         Observer.Observe('e1', Has(P + '-E1'));
         Observer.Observe('e2', Has(P + '-E2'));
         Observer.Observe('t0', Has(P + '-T0'));
+        Observer.Observe('t1', Has(P + '-T1'));
     end;
 }
 
@@ -249,7 +265,12 @@ codeunit 87442 "LT QU Codeunit A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveEarlierTests('C', Observer);
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('no_commit_row', 'Yes');
+        Observer.Expect('committed_row', 'Yes');
+        Observer.Expect('committed_before_tail', 'Yes');
+        Observer.Expect('tail_after_commit', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -258,7 +279,13 @@ codeunit 87442 "LT QU Codeunit A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveWriteTx('C', Observer);
-        Observer.Finish();
+        Observer.Expect('start', 'No');
+        Observer.Expect('after_insert', 'Yes');
+        Observer.Expect('after_commit', 'No');
+        Observer.Expect('row_after_commit', 'Yes');
+        Observer.Expect('after_second_insert', 'Yes');
+        Observer.Expect('after_second_commit', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,7 +294,20 @@ codeunit 87442 "LT QU Codeunit A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveCodeunitRun('C', Observer);
-        Observer.Finish();
+        Observer.Expect('open_write_run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('open_write_run|code', 'DB:Ok');
+        Observer.Expect('open_write_r0', 'No');
+        Observer.Expect('open_write_r1', 'No');
+        Observer.Expect('tx_before_run', 'No');
+        Observer.Expect('after_commit_run_ok', 'Yes');
+        Observer.Expect('after_commit_run_lasterror', '');
+        Observer.Expect('tx_after_run', 'No');
+        Observer.Expect('r2', 'Yes');
+        Observer.Expect('r3', 'Yes');
+        Observer.Expect('duplicate_run_ok', 'No');
+        Observer.Expect('duplicate_run_lasterror_code', 'DB:RecordExists');
+        Observer.Expect('tx_after_failed_run', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -276,7 +316,12 @@ codeunit 87442 "LT QU Codeunit A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveAssertErrorCommit('C', Observer);
-        Observer.Finish();
+        Observer.Expect('error', 'LT QU error after commit');
+        Observer.Expect('tx_after', 'No');
+        Observer.Expect('before_block', 'Yes');
+        Observer.Expect('in_block_before_commit', 'Yes');
+        Observer.Expect('in_block_after_commit', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -285,6 +330,15 @@ codeunit 87442 "LT QU Codeunit A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveTryCommit('C', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QU_C09_LaterTestSeesCommittedRows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Probe.ObserveCommittedByEarlierTests('C', Observer);
         Observer.Finish();
     end;
 }
@@ -339,7 +393,20 @@ codeunit 87444 "LT QU Function A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveEarlierTests('F', Observer);
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('no_commit_row', 'No');
+        Observer.Expect('committed_row', 'No');
+        Observer.Expect('committed_before_tail', 'No');
+        Observer.Expect('tail_after_commit', 'No');
+#else
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('no_commit_row', 'Yes');
+        Observer.Expect('committed_row', 'Yes');
+        Observer.Expect('committed_before_tail', 'Yes');
+        Observer.Expect('tail_after_commit', 'Yes');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -348,7 +415,13 @@ codeunit 87444 "LT QU Function A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveWriteTx('F', Observer);
-        Observer.Finish();
+        Observer.Expect('start', 'No');
+        Observer.Expect('after_insert', 'Yes');
+        Observer.Expect('after_commit', 'No');
+        Observer.Expect('row_after_commit', 'Yes');
+        Observer.Expect('after_second_insert', 'Yes');
+        Observer.Expect('after_second_commit', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -357,7 +430,20 @@ codeunit 87444 "LT QU Function A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveCodeunitRun('F', Observer);
-        Observer.Finish();
+        Observer.Expect('open_write_run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('open_write_run|code', 'DB:Ok');
+        Observer.Expect('open_write_r0', 'No');
+        Observer.Expect('open_write_r1', 'No');
+        Observer.Expect('tx_before_run', 'No');
+        Observer.Expect('after_commit_run_ok', 'Yes');
+        Observer.Expect('after_commit_run_lasterror', '');
+        Observer.Expect('tx_after_run', 'No');
+        Observer.Expect('r2', 'Yes');
+        Observer.Expect('r3', 'Yes');
+        Observer.Expect('duplicate_run_ok', 'No');
+        Observer.Expect('duplicate_run_lasterror_code', 'DB:RecordExists');
+        Observer.Expect('tx_after_failed_run', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -366,7 +452,12 @@ codeunit 87444 "LT QU Function A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveAssertErrorCommit('F', Observer);
-        Observer.Finish();
+        Observer.Expect('error', 'LT QU error after commit');
+        Observer.Expect('tx_after', 'No');
+        Observer.Expect('before_block', 'Yes');
+        Observer.Expect('in_block_before_commit', 'Yes');
+        Observer.Expect('in_block_after_commit', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -375,6 +466,15 @@ codeunit 87444 "LT QU Function A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveTryCommit('F', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QU_F09_LaterTestSeesCommittedRows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Probe.ObserveCommittedByEarlierTests('F', Observer);
         Observer.Finish();
     end;
 }
@@ -429,7 +529,12 @@ codeunit 87446 "LT QU Disabled A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveEarlierTests('D', Observer);
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('no_commit_row', 'Yes');
+        Observer.Expect('committed_row', 'Yes');
+        Observer.Expect('committed_before_tail', 'Yes');
+        Observer.Expect('tail_after_commit', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -438,7 +543,13 @@ codeunit 87446 "LT QU Disabled A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveWriteTx('D', Observer);
-        Observer.Finish();
+        Observer.Expect('start', 'No');
+        Observer.Expect('after_insert', 'Yes');
+        Observer.Expect('after_commit', 'No');
+        Observer.Expect('row_after_commit', 'Yes');
+        Observer.Expect('after_second_insert', 'Yes');
+        Observer.Expect('after_second_commit', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -447,7 +558,20 @@ codeunit 87446 "LT QU Disabled A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveCodeunitRun('D', Observer);
-        Observer.Finish();
+        Observer.Expect('open_write_run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('open_write_run|code', 'DB:Ok');
+        Observer.Expect('open_write_r0', 'No');
+        Observer.Expect('open_write_r1', 'No');
+        Observer.Expect('tx_before_run', 'No');
+        Observer.Expect('after_commit_run_ok', 'Yes');
+        Observer.Expect('after_commit_run_lasterror', '');
+        Observer.Expect('tx_after_run', 'No');
+        Observer.Expect('r2', 'Yes');
+        Observer.Expect('r3', 'Yes');
+        Observer.Expect('duplicate_run_ok', 'No');
+        Observer.Expect('duplicate_run_lasterror_code', 'DB:RecordExists');
+        Observer.Expect('tx_after_failed_run', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -456,7 +580,12 @@ codeunit 87446 "LT QU Disabled A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveAssertErrorCommit('D', Observer);
-        Observer.Finish();
+        Observer.Expect('error', 'LT QU error after commit');
+        Observer.Expect('tx_after', 'No');
+        Observer.Expect('before_block', 'Yes');
+        Observer.Expect('in_block_before_commit', 'Yes');
+        Observer.Expect('in_block_after_commit', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -465,6 +594,15 @@ codeunit 87446 "LT QU Disabled A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveTryCommit('D', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QU_D09_LaterTestSeesCommittedRows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Probe.ObserveCommittedByEarlierTests('D', Observer);
         Observer.Finish();
     end;
 }
@@ -518,7 +656,12 @@ codeunit 87448 "LT QU NoProperty A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveEarlierTests('N', Observer);
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('no_commit_row', 'Yes');
+        Observer.Expect('committed_row', 'Yes');
+        Observer.Expect('committed_before_tail', 'Yes');
+        Observer.Expect('tail_after_commit', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -527,7 +670,13 @@ codeunit 87448 "LT QU NoProperty A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveWriteTx('N', Observer);
-        Observer.Finish();
+        Observer.Expect('start', 'No');
+        Observer.Expect('after_insert', 'Yes');
+        Observer.Expect('after_commit', 'No');
+        Observer.Expect('row_after_commit', 'Yes');
+        Observer.Expect('after_second_insert', 'Yes');
+        Observer.Expect('after_second_commit', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -536,7 +685,20 @@ codeunit 87448 "LT QU NoProperty A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveCodeunitRun('N', Observer);
-        Observer.Finish();
+        Observer.Expect('open_write_run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('open_write_run|code', 'DB:Ok');
+        Observer.Expect('open_write_r0', 'No');
+        Observer.Expect('open_write_r1', 'No');
+        Observer.Expect('tx_before_run', 'No');
+        Observer.Expect('after_commit_run_ok', 'Yes');
+        Observer.Expect('after_commit_run_lasterror', '');
+        Observer.Expect('tx_after_run', 'No');
+        Observer.Expect('r2', 'Yes');
+        Observer.Expect('r3', 'Yes');
+        Observer.Expect('duplicate_run_ok', 'No');
+        Observer.Expect('duplicate_run_lasterror_code', 'DB:RecordExists');
+        Observer.Expect('tx_after_failed_run', 'No');
+        Observer.Verify();
     end;
 }
 
