@@ -209,7 +209,7 @@ codeunit 83951 "LT BW Cross App Tests"
     // Writer QY (al-runtime-rs backlog "PROBES from multiapp-runtime", item 3): table extension 61114 of cross-app fixture B is a third table
     // extension of "LT BW XA Base" (B's 61110 and 61113 are the others) and calls BwSame() and BwCaseName() bare and through Rec. Both table 61101
     // of app A and table extension 61113 of app B declare them. It compiles in app B; the same calls from a table extension of a third app are
-    // AL0196 (must-not-compile 2071). Which body runs?
+    // AL0196 (must-not-compile 2071). Which body runs? Observed: app B's extension 61113 (BwSame and bwcasename), bare and through Rec.
     [Test]
     procedure TableExt_ThirdExtensionInSameAppCallsSameName_WhichBodyRuns()
     var
@@ -219,12 +219,17 @@ codeunit 83951 "LT BW Cross App Tests"
         Observer.Observe('bare BwSame', Base.QyCallSameBare());
         Observer.Observe('Rec.BwSame', Base.QyCallSameRec());
         Observer.Observe('bare BwCaseName', Base.QyCallCaseNameBare());
-        Observer.Finish();
+        Observer.Expect('bare BwSame', 'extension of app B');
+        Observer.Expect('Rec.BwSame', 'extension of app B');
+        Observer.Expect('bare BwCaseName', 'extension of app B, bwcasename');
+        Observer.Verify();
     end;
 
     // Writer QY (backlog "PROBES from multiapp-runtime", item 4): Rename of a row of cross-app fixture A's table "LT QY XA Rename Blobs", which has
     // three Blob fields: "XA Blob" of the table itself (app A), "QY XB Blob" of app B's table extension, "QY M Blob" of this app's table
     // extension. Observed: each Blob in the record variable right after Rename, after CalcFields on the variable, and in the database.
+    // Result (BC 27.5, 28.5, 29.0): right after Rename every Blob of the variable has no value (own field and both extension fields alike); CalcFields reads the
+    // renamed row, which holds the variable's Blob content from before Rename, also when it was written after Insert and never saved.
     [Test]
     procedure Rename_UnsavedBlobWrites_OwnFieldAndTwoExtensionFields()
     var
@@ -238,7 +243,15 @@ codeunit 83951 "LT BW Cross App Tests"
         QySetBlobs(Row, 'unsaved');
         Row.Rename('NEW');
         QyObserveAfterRename(Row);
-        Observer.Finish();
+        Observer.Expect('No. in variable', 'NEW');
+        Observer.Expect('variable', '<none>;<none>;<none>;');
+        Observer.Expect('variable after CalcFields', 'XA unsaved;XB unsaved;M unsaved;');
+        Observer.Expect('get NEW', 'Yes');
+        Observer.Expect('database', 'XA unsaved;XB unsaved;M unsaved;');
+        Observer.Expect('database description', 'old row');
+        Observer.Expect('get OLD', 'No');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,7 +267,15 @@ codeunit 83951 "LT BW Cross App Tests"
         Row.Insert();
         Row.Rename('NEW');
         QyObserveAfterRename(Row);
-        Observer.Finish();
+        Observer.Expect('No. in variable', 'NEW');
+        Observer.Expect('variable', '<none>;<none>;<none>;');
+        Observer.Expect('variable after CalcFields', 'XA inserted;XB inserted;M inserted;');
+        Observer.Expect('get NEW', 'Yes');
+        Observer.Expect('database', 'XA inserted;XB inserted;M inserted;');
+        Observer.Expect('database description', 'old row');
+        Observer.Expect('get OLD', 'No');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -271,10 +292,19 @@ codeunit 83951 "LT BW Cross App Tests"
         QySetBlobs(Row, 'overwritten');
         Row.Rename('NEW');
         QyObserveAfterRename(Row);
-        Observer.Finish();
+        Observer.Expect('No. in variable', 'NEW');
+        Observer.Expect('variable', '<none>;<none>;<none>;');
+        Observer.Expect('variable after CalcFields', 'XA overwritten;XB overwritten;M overwritten;');
+        Observer.Expect('get NEW', 'Yes');
+        Observer.Expect('database', 'XA overwritten;XB overwritten;M overwritten;');
+        Observer.Expect('database description', 'old row');
+        Observer.Expect('get OLD', 'No');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
     end;
 
     // Item 4, second half: the record variable's Blob after Rename for a table of this app with its own Blob field (same app as the caller).
+    // Observed: same as above, the variable's Blob has no value right after Rename; CalcFields and the database have the content.
     [Test]
     procedure Rename_BlobOfTableOfThisApp_VariableAfterRename()
     var
@@ -306,7 +336,13 @@ codeunit 83951 "LT BW Cross App Tests"
         Fresh.Get('U-NEW');
         Fresh.CalcFields(Data);
         Observer.Observe('unsaved: database', QyOwnBlobText(Fresh));
-        Observer.Finish();
+        Observer.Expect('inserted: variable', '<none>');
+        Observer.Expect('inserted: variable after CalcFields', 'own inserted');
+        Observer.Expect('inserted: database', 'own inserted');
+        Observer.Expect('unsaved: variable', '<none>');
+        Observer.Expect('unsaved: variable after CalcFields', 'own unsaved');
+        Observer.Expect('unsaved: database', 'own unsaved');
+        Observer.Verify();
     end;
 
     local procedure QyInitialize()

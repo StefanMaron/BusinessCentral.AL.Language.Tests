@@ -144,6 +144,7 @@ codeunit 83950 "LT BW Subscriber Order Tests"
     // ("LT QY XA Order Publisher".OnQyOrder) whose subscriber apps are in another order by lowest subscriber codeunit id than by dependency:
     //   A 61138 (A) | B 61117 (B1), 61147 (B2) | C 61127 (C) | main app 87620 (M); B depends on A, C on A and B, the main app on all three.
     //   Predictions: dependency/publish order A;B1;B2;C;M; | apps by lowest subscriber id B1;B2;C;A;M; | codeunit id ignoring the app B1;C;A;B2;M;
+    // Observed (BC 27.5, 28.5, 29.0): A;B1;B2;C;M; = apps in dependency/publish order; the lower subscriber ids of B and C do not move them before A.
     // Fixtures: tests/al-language-xapp-a|b|c/Qy*Objects.al, QyOrderFixtures.al.
     [Test]
     procedure SubscriberOrder_DependentAppsWithLowerSubscriberIds_AcrossFourApps()
@@ -153,7 +154,9 @@ codeunit 83950 "LT BW Subscriber Order Tests"
         Initialize();
         Observer.Observe('order', Publisher.RaiseOrder());
         Observer.Observe('order again', Publisher.RaiseOrder());
-        Observer.Finish();
+        Observer.Expect('order', 'A;B1;B2;C;M;');
+        Observer.Expect('order again', 'A;B1;B2;C;M;');
+        Observer.Verify();
     end;
 
     local procedure Initialize()
