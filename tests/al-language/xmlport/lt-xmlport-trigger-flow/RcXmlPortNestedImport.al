@@ -7,6 +7,14 @@
 //   element with MinOccurs = Zero; three levels of nested linked table elements; a nested element with UseTemporary = true and
 //   AutoReplace = true. The tables log their OnInsert / OnModify triggers and the xmlports log OnAfterInitRecord, OnBefore/AfterInsertRecord,
 //   OnBefore/AfterModifyRecord and OnAfterGetRecord, so the tests read the order BC runs them in.
+//   BC (CI 29.0): without AutoReplace a parent row that got at least one child row is modified again after its children
+//   (OnBeforeModifyRecord, table OnModify, OnAfterModifyRecord), as with AutoReplace; a parent without child rows is not. A parent row that
+//   already exists is still inserted (OnBeforeInsertRecord, table OnInsert, OnAfterInsertRecord run), its child rows are inserted, and the
+//   import then fails with "already exists" before the parent's second OnBeforeModifyRecord; nothing is stored. With three levels each
+//   row with child rows is modified after its own children (grandchildren, then the child, then the next child, then the parent). The
+//   second and later child rows of one parent get ParentId 0 (LinkFields fill only the first). A temporary child with AutoReplace runs no
+//   table triggers; a row whose key is already in the temporary table is modified (OnBefore/AfterModifyRecord), also under another parent;
+//   the real child table stays empty. OnAfterGetRecord does not run during an import, on any level.
 // BC versions: 27, 28, 29 (corpus CI)
 
 table 87860 "LT RC Par"

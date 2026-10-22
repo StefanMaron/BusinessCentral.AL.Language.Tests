@@ -458,7 +458,10 @@ codeunit 74961 "LT XmlPort Trigger Flow"
         Observer.Observe('result', RcRun(Xmlport::"LT RC Imp NoAR", '<Root><Par><Id>1</Id><Name>one</Name><Chi><CId>10</CId><Note>a</Note></Chi><Chi><CId>11</CId><Note>b</Note></Chi></Par><Par><Id>2</Id><Name>two</Name></Par></Root>'));
         Observer.Observe('trace', Log.Take());
         Observer.Observe('rows', RcRows());
-        Observer.Finish();
+        Observer.Expect('result', 'ok');
+        Observer.Expect('trace', 'P.init;P.bi=1/one;tP+1/one;P.ai=1;C.init;C.bi=10/1;tC+10/1/a;C.ai=10;C.init;C.bi=11/0;tC+11/0/b;C.ai=11;P.bm=1/one;tP~1/one;P.am=1;P.init;P.bi=2/two;tP+2/two;P.ai=2;');
+        Observer.Expect('rows', 'P1/one;P2/two;C10/1/a;C11/0/b;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -477,7 +480,10 @@ codeunit 74961 "LT XmlPort Trigger Flow"
         Observer.Observe('result', RcRun(Xmlport::"LT RC Imp NoAR", '<Root><Par><Id>1</Id><Name>new</Name><Chi><CId>10</CId><Note>a</Note></Chi></Par></Root>'));
         Observer.Observe('trace', Log.Take());
         Observer.Observe('rows', RcRows());
-        Observer.Finish();
+        Observer.Expect('result', 'error:The record in table LT RC Par already exists. Identification fields and values: Id=''1''|DB:RecordExists');
+        Observer.Expect('trace', 'P.init;P.bi=1/new;tP+1/new;P.ai=1;C.init;C.bi=10/1;tC+10/1/a;C.ai=10;');
+        Observer.Expect('rows', 'P1/old;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -496,7 +502,10 @@ codeunit 74961 "LT XmlPort Trigger Flow"
         Observer.Observe('result', RcRun(Xmlport::"LT RC Imp NoAR", '<Root><Par><Id>1</Id><Name>new</Name></Par></Root>'));
         Observer.Observe('trace', Log.Take());
         Observer.Observe('rows', RcRows());
-        Observer.Finish();
+        Observer.Expect('result', 'error:The record in table LT RC Par already exists. Identification fields and values: Id=''1''|DB:RecordExists');
+        Observer.Expect('trace', 'P.init;P.bi=1/new;tP+1/new;P.ai=1;');
+        Observer.Expect('rows', 'P1/old;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -516,7 +525,10 @@ codeunit 74961 "LT XmlPort Trigger Flow"
         Observer.Observe('result', RcRun(Xmlport::"LT RC Imp NoAR", '<Root><Par><Id>1</Id><Name>one</Name><Chi><CId>10</CId><Note>a</Note></Chi></Par></Root>'));
         Observer.Observe('trace', Log.Take());
         Observer.Observe('rows', RcRows());
-        Observer.Finish();
+        Observer.Expect('result', 'error:The record in table LT RC Chi already exists. Identification fields and values: Id=''10''|DB:RecordExists');
+        Observer.Expect('trace', 'P.init;P.bi=1/one;tP+1/one;P.ai=1;C.init;C.bi=10/1;tC+10/1/a;C.ai=10;P.bm=1/one;tP~1/one;P.am=1;');
+        Observer.Expect('rows', 'C10/9/old;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -529,7 +541,10 @@ codeunit 74961 "LT XmlPort Trigger Flow"
         Observer.Observe('result', RcRun(Xmlport::"LT RC Imp Three", '<Root><Par><Id>1</Id><Name>one</Name><Chi><CId>10</CId><Note>a</Note><G><GId>100</GId><GNote>x</GNote></G><G><GId>101</GId><GNote>y</GNote></G></Chi><Chi><CId>11</CId><Note>b</Note></Chi></Par><Par><Id>2</Id><Name>two</Name><Chi><CId>20</CId><Note>c</Note><G><GId>200</GId><GNote>z</GNote></G></Chi></Par></Root>'));
         Observer.Observe('trace', Log.Take());
         Observer.Observe('rows', RcRows());
-        Observer.Finish();
+        Observer.Expect('result', 'ok');
+        Observer.Expect('trace', 'P.bi=1/one;tP+1/one;P.ai=1;C.bi=10/1;tC+10/1/a;C.ai=10;G.bi=100/10;tG+100/10/x;G.ai=100;G.bi=101/0;tG+101/0/y;G.ai=101;C.bm=10;tC~10/1/a;C.am=10;C.bi=11/0;tC+11/0/b;C.ai=11;P.bm=1/one;tP~1/one;P.am=1;P.bi=2/two;tP+2/two;P.ai=2;C.bi=20/2;tC+20/2/c;C.ai=20;G.bi=200/20;tG+200/20/z;G.ai=200;C.bm=20;tC~20/2/c;C.am=20;P.bm=2/two;tP~2/two;P.am=2;');
+        Observer.Expect('rows', 'P1/one;P2/two;C10/1/a;C11/0/b;C20/2/c;G100/10/x;G101/0/y;G200/20/z;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -542,6 +557,9 @@ codeunit 74961 "LT XmlPort Trigger Flow"
         Observer.Observe('result', RcRun(Xmlport::"LT RC Imp TempChi", '<Root><Par><Id>1</Id><Name>one</Name><Chi><CId>10</CId><Note>a</Note></Chi><Chi><CId>10</CId><Note>b</Note></Chi><Chi><CId>11</CId><Note>c</Note></Chi></Par><Par><Id>2</Id><Name>two</Name><Chi><CId>11</CId><Note>d</Note></Chi></Par></Root>'));
         Observer.Observe('trace', Log.Take());
         Observer.Observe('rows', RcRows());
-        Observer.Finish();
+        Observer.Expect('result', 'ok');
+        Observer.Expect('trace', 'P.bi=1/one;tP+1/one;P.ai=1;C.bi=10/1/a;C.ai=10/1/a;C.bm=10/b;C.am=10/b;C.bi=11/0/c;C.ai=11/0/c;P.bm=1/one;tP~1/one;P.am=1;P.bi=2/two;tP+2/two;P.ai=2;C.bm=11/d;C.am=11/d;P.bm=2/two;tP~2/two;P.am=2;post filter=;tmp=10/0/b;tmp=11/2/d;');
+        Observer.Expect('rows', 'P1/one;P2/two;');
+        Observer.Verify();
     end;
 }
