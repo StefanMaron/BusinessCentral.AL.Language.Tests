@@ -249,6 +249,8 @@ codeunit 78603 "LT AH Dataset Header"
     // (own rows RBPC, RBCP, RBCCP (the format of the GB demo row), RBBL, RBCU), for a blank country per General Ledger Setup
     // "Local Address Format", and for a code with no Country/Region row; each with and without Name 2, Address 2, County and
     // Contact Person. The Company Information row is the one of codeunit 86940; it, the countries and General Ledger Setup are restored.
+    // BC 29.0: Contact Person is never written; Blank Line+Post Code+City writes no blank line; County gets its own line except in
+    // City+County+Post Code; the Country/Region Name follows; a code with no Country/Region row writes the code as the country line.
     local procedure RbCountry(CountryCode: Code[10]; AddrFormat: Enum "Country/Region Address Format")
     var
         Country: Record "Country/Region";
@@ -314,7 +316,11 @@ codeunit 78603 "LT AH Dataset Header"
         RbRunFour(Observer, 'RBPC');
         QkRows.RestoreCompanyInformation();
         RbDropCountry('RBPC');
-        Observer.Finish();
+        Observer.Expect('full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB-12 RB Town] 6=[RB County] 7=[Land RBPC] 8=[] ');
+        Observer.Expect('no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB-12 RB Town] 6=[Land RBPC] 7=[] 8=[] ');
+        Observer.Expect('no address 2', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB-12 RB Town] 5=[RB County] 6=[Land RBPC] 7=[] 8=[] ');
+        Observer.Expect('no name 2 no contact', '1=[RB Name] 2=[RB Street 1] 3=[RB Floor 2] 4=[RB-12 RB Town] 5=[RB County] 6=[Land RBPC] 7=[] 8=[] ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -328,7 +334,11 @@ codeunit 78603 "LT AH Dataset Header"
         RbRunFour(Observer, 'RBCP');
         QkRows.RestoreCompanyInformation();
         RbDropCountry('RBCP');
-        Observer.Finish();
+        Observer.Expect('full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB-12] 6=[RB County] 7=[Land RBCP] 8=[] ');
+        Observer.Expect('no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB-12] 6=[Land RBCP] 7=[] 8=[] ');
+        Observer.Expect('no address 2', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Town, RB-12] 5=[RB County] 6=[Land RBCP] 7=[] 8=[] ');
+        Observer.Expect('no name 2 no contact', '1=[RB Name] 2=[RB Street 1] 3=[RB Floor 2] 4=[RB Town, RB-12] 5=[RB County] 6=[Land RBCP] 7=[] 8=[] ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -342,7 +352,11 @@ codeunit 78603 "LT AH Dataset Header"
         RbRunFour(Observer, 'RBCCP');
         QkRows.RestoreCompanyInformation();
         RbDropCountry('RBCCP');
-        Observer.Finish();
+        Observer.Expect('full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB County RB-12] 6=[Land RBCCP] 7=[] 8=[] ');
+        Observer.Expect('no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB-12] 6=[Land RBCCP] 7=[] 8=[] ');
+        Observer.Expect('no address 2', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Town, RB County RB-12] 5=[Land RBCCP] 6=[] 7=[] 8=[] ');
+        Observer.Expect('no name 2 no contact', '1=[RB Name] 2=[RB Street 1] 3=[RB Floor 2] 4=[RB Town, RB County RB-12] 5=[Land RBCCP] 6=[] 7=[] 8=[] ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -356,7 +370,11 @@ codeunit 78603 "LT AH Dataset Header"
         RbRunFour(Observer, 'RBBL');
         QkRows.RestoreCompanyInformation();
         RbDropCountry('RBBL');
-        Observer.Finish();
+        Observer.Expect('full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB-12 RB Town] 6=[RB County] 7=[Land RBBL] 8=[] ');
+        Observer.Expect('no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB-12 RB Town] 6=[Land RBBL] 7=[] 8=[] ');
+        Observer.Expect('no address 2', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB-12 RB Town] 5=[RB County] 6=[Land RBBL] 7=[] 8=[] ');
+        Observer.Expect('no name 2 no contact', '1=[RB Name] 2=[RB Street 1] 3=[RB Floor 2] 4=[RB-12 RB Town] 5=[RB County] 6=[Land RBBL] 7=[] 8=[] ');
+        Observer.Verify();
     end;
 
     // Custom: Validate from City+Post Code creates the default Custom Address Format rows of the Base Application.
@@ -378,7 +396,13 @@ codeunit 78603 "LT AH Dataset Header"
         RbRun(Observer, 'unknown code no county', 'RB Name 2', 'RB Floor 2', '', 'RB Contact', 'RBNONE');
         QkRows.RestoreCompanyInformation();
         RbDropCountry('RBCU');
-        Observer.Finish();
+        Observer.Expect('full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town RB-12] 6=[Land RBCU] 7=[] 8=[] ');
+        Observer.Expect('no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town RB-12] 6=[Land RBCU] 7=[] 8=[] ');
+        Observer.Expect('no address 2', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Town RB-12] 5=[Land RBCU] 6=[] 7=[] 8=[] ');
+        Observer.Expect('no name 2 no contact', '1=[RB Name] 2=[RB Street 1] 3=[RB Floor 2] 4=[RB Town RB-12] 5=[Land RBCU] 6=[] 7=[] 8=[] ');
+        Observer.Expect('unknown code full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB-12] 6=[RB County] 7=[RBNONE] 8=[] ');
+        Observer.Expect('unknown code no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB-12] 6=[RBNONE] 7=[] 8=[] ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -404,7 +428,15 @@ codeunit 78603 "LT AH Dataset Header"
         GLSetup."Local Address Format" := SavedFormat;
         GLSetup.Modify();
         QkRows.RestoreCompanyInformation();
-        Observer.Finish();
+        Observer.Expect('local 0 full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB-12 RB Town] 6=[RB County] 7=[] 8=[] ');
+        Observer.Expect('local 0 no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB-12 RB Town] 6=[] 7=[] 8=[] ');
+        Observer.Expect('local 1 full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB-12] 6=[RB County] 7=[] 8=[] ');
+        Observer.Expect('local 1 no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB-12] 6=[] 7=[] 8=[] ');
+        Observer.Expect('local 2 full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB County RB-12] 6=[] 7=[] 8=[] ');
+        Observer.Expect('local 2 no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB Town, RB-12] 6=[] 7=[] 8=[] ');
+        Observer.Expect('local 3 full', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB-12 RB Town] 6=[RB County] 7=[] 8=[] ');
+        Observer.Expect('local 3 no county', '1=[RB Name] 2=[RB Name 2] 3=[RB Street 1] 4=[RB Floor 2] 5=[RB-12 RB Town] 6=[] 7=[] 8=[] ');
+        Observer.Verify();
     end;
 }
 #endif

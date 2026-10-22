@@ -833,6 +833,8 @@ codeunit 67761 "W3 ObjId Probe"
 
     // Writer RB: SaveAs Xml of report 87800 with nothing set, after GlobalLanguage(1031), and with Language / FormatRegion set on the
     // report variable before SaveAs. GlobalLanguage is put back.
+    // BC 29.0: a language (global or on the variable) changes only Format() texts (Yes/Ja) and the item language; FormatRegion changes
+    // the column values and Format() texts of decimals, dates and times.
     local procedure RbRun(var Rpt: Report "LT RB Fmt Rpt"; var Observer: Codeunit "Probe Observer")
     var
         TempBlob: Codeunit "Temp Blob";
@@ -856,7 +858,12 @@ codeunit 67761 "W3 ObjId Probe"
     begin
         Seed();
         RbRun(Rpt, Observer);
-        Observer.Finish();
+        Observer.Expect('saved', 'true');
+        Observer.Expect('log', 'pre language=1033 region=[] global=1033;');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="NegDecC" decimalformatter="#,##0.00">-1234567.891</Column>|<Column name="IntC">1234567</Column>|<Column name="DateC">3/5/2024</Column>|<Column name="TimeC">9:30:05 AM</Column>|<Column name="DtC">3/5/2024 9:30:05 AM</Column>|<Column name="BoolC">True</Column>|<Column name="FmtC">1,234.5|-1,234,567.891|1234567|03/05/24| 9:30:05 AM|Yes</Column>|');
+        Observer.Expect('item language', 'en-US');
+        Observer.Expect('item formatRegion', 'en-US');
+        Observer.Verify();
     end;
 
     [Test]
@@ -872,7 +879,14 @@ codeunit 67761 "W3 ObjId Probe"
         RbRun(Rpt, Observer);
         TrySetGlobalLanguage(OldLanguage);
         Observer.Observe('language restored', Format(GlobalLanguage() = OldLanguage, 0, 9));
-        Observer.Finish();
+        Observer.Expect('set 1031 ok', 'true');
+        Observer.Expect('saved', 'true');
+        Observer.Expect('log', 'pre language=1031 region=[] global=1031;');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="NegDecC" decimalformatter="#,##0.00">-1234567.891</Column>|<Column name="IntC">1234567</Column>|<Column name="DateC">3/5/2024</Column>|<Column name="TimeC">9:30:05 AM</Column>|<Column name="DtC">3/5/2024 9:30:05 AM</Column>|<Column name="BoolC">True</Column>|<Column name="FmtC">1,234.5|-1,234,567.891|1234567|03/05/24| 9:30:05 AM|Ja</Column>|');
+        Observer.Expect('item language', 'de-DE');
+        Observer.Expect('item formatRegion', 'en-US');
+        Observer.Expect('language restored', 'true');
+        Observer.Verify();
     end;
 
     [Test]
@@ -885,7 +899,13 @@ codeunit 67761 "W3 ObjId Probe"
         Rpt.Language := 1031;
         Observer.Observe('read before run', Format(Rpt.Language));
         RbRun(Rpt, Observer);
-        Observer.Finish();
+        Observer.Expect('read before run', '1031');
+        Observer.Expect('saved', 'true');
+        Observer.Expect('log', 'pre language=1031 region=[] global=1033;');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234.5</Column>|<Column name="NegDecC" decimalformatter="#,##0.00">-1234567.891</Column>|<Column name="IntC">1234567</Column>|<Column name="DateC">3/5/2024</Column>|<Column name="TimeC">9:30:05 AM</Column>|<Column name="DtC">3/5/2024 9:30:05 AM</Column>|<Column name="BoolC">True</Column>|<Column name="FmtC">1,234.5|-1,234,567.891|1234567|03/05/24| 9:30:05 AM|Ja</Column>|');
+        Observer.Expect('item language', 'de-DE');
+        Observer.Expect('item formatRegion', 'en-US');
+        Observer.Verify();
     end;
 
     [Test]
@@ -898,6 +918,12 @@ codeunit 67761 "W3 ObjId Probe"
         Rpt.FormatRegion := 'de-DE';
         Observer.Observe('read before run', Rpt.FormatRegion);
         RbRun(Rpt, Observer);
-        Observer.Finish();
+        Observer.Expect('read before run', 'de-DE');
+        Observer.Expect('saved', 'true');
+        Observer.Expect('log', 'pre language=1033 region=[de-DE] global=1033;');
+        Observer.Expect('columns', '<Column name="Id">1</Column>|<Column name="DecC" decimalformatter="#,##0.00">1234,5</Column>|<Column name="NegDecC" decimalformatter="#,##0.00">-1234567,891</Column>|<Column name="IntC">1234567</Column>|<Column name="DateC">05.03.2024</Column>|<Column name="TimeC">09:30:05</Column>|<Column name="DtC">05.03.2024 09:30:05</Column>|<Column name="BoolC">True</Column>|<Column name="FmtC">1.234,5|-1.234.567,891|1234567|05.03.24|09:30:05|Yes</Column>|');
+        Observer.Expect('item language', 'en-US');
+        Observer.Expect('item formatRegion', 'de-DE');
+        Observer.Verify();
     end;
 }
