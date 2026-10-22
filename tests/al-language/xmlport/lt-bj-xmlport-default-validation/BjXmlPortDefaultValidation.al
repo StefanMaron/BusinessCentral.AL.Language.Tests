@@ -8,6 +8,8 @@
 //   validated (OnValidate runs, xRec already holds the new value, a TableRelation is checked: DB:PrimRecordNotFound and no row), FieldValidate = No
 //   is not validated, FieldValidate = Yes is. With false only FieldValidate = Yes is validated and an unrelated value is stored. Validation runs
 //   per field in document order, before OnInsert. Elements out of schema order fail the import after the rows before them were inserted.
+//   Writer RG: table 87927, xmlports 87928 to 87931, test procedures RG_* (TableRelation on a fieldattribute and a fieldelement, FieldValidate
+//   left out / No / Yes, DefaultFieldsValidation true / false, AutoSave on / off; existing, missing and blank related value).
 // BC versions: 27, 28, 29
 
 table 81670 "LT BJ Xv Rel"
@@ -176,6 +178,231 @@ xmlport 81675 "LT BJ Xv Unset"
     }
 }
 
+// Writer RG (Microsoft's DemoTool imports into fields with a TableRelation): a fieldattribute and a fieldelement whose field relates to
+// table 81670, with FieldValidate left out, = No and = Yes, under DefaultFieldsValidation true and false and with the table element's
+// AutoSave on and off; each import carries one node with a value that exists in the related table, one that does not, or a blank value.
+table 87927 "LT RG Xv Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; AttrDef; Code[10])
+        {
+            TableRelation = "LT BJ Xv Rel".Code;
+
+            trigger OnValidate()
+            var
+                XvLog: Codeunit "LT BJ Xv Log";
+            begin
+                XvLog.Add('val AttrDef=' + AttrDef);
+            end;
+        }
+        field(3; AttrNo; Code[10])
+        {
+            TableRelation = "LT BJ Xv Rel".Code;
+
+            trigger OnValidate()
+            var
+                XvLog: Codeunit "LT BJ Xv Log";
+            begin
+                XvLog.Add('val AttrNo=' + AttrNo);
+            end;
+        }
+        field(4; AttrYes; Code[10])
+        {
+            TableRelation = "LT BJ Xv Rel".Code;
+
+            trigger OnValidate()
+            var
+                XvLog: Codeunit "LT BJ Xv Log";
+            begin
+                XvLog.Add('val AttrYes=' + AttrYes);
+            end;
+        }
+        field(5; ElDef; Code[10])
+        {
+            TableRelation = "LT BJ Xv Rel".Code;
+
+            trigger OnValidate()
+            var
+                XvLog: Codeunit "LT BJ Xv Log";
+            begin
+                XvLog.Add('val ElDef=' + ElDef);
+            end;
+        }
+        field(6; ElNo; Code[10])
+        {
+            TableRelation = "LT BJ Xv Rel".Code;
+
+            trigger OnValidate()
+            var
+                XvLog: Codeunit "LT BJ Xv Log";
+            begin
+                XvLog.Add('val ElNo=' + ElNo);
+            end;
+        }
+        field(7; ElYes; Code[10])
+        {
+            TableRelation = "LT BJ Xv Rel".Code;
+
+            trigger OnValidate()
+            var
+                XvLog: Codeunit "LT BJ Xv Log";
+            begin
+                XvLog.Add('val ElYes=' + ElYes);
+            end;
+        }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+
+    trigger OnInsert()
+    var
+        XvLog: Codeunit "LT BJ Xv Log";
+    begin
+        XvLog.Add('insert ' + Format(Id));
+    end;
+}
+
+xmlport 87928 "LT RG Xv True Save"
+{
+    Direction = Import;
+    Format = Xml;
+    DefaultFieldsValidation = true;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Row; "LT RG Xv Row")
+            {
+                fieldattribute(Id; Row.Id) { }
+                fieldattribute(AttrDef; Row.AttrDef) { Occurrence = Optional; }
+                fieldattribute(AttrNo; Row.AttrNo) { Occurrence = Optional; FieldValidate = No; }
+                fieldattribute(AttrYes; Row.AttrYes) { Occurrence = Optional; FieldValidate = Yes; }
+                fieldelement(ElDef; Row.ElDef) { MinOccurs = Zero; }
+                fieldelement(ElNo; Row.ElNo) { MinOccurs = Zero; FieldValidate = No; }
+                fieldelement(ElYes; Row.ElYes) { MinOccurs = Zero; FieldValidate = Yes; }
+
+                trigger OnBeforeInsertRecord()
+                begin
+                    XvLog.Add('before insert ' + Format(Row.Id) + ':' + Row.AttrDef + ':' + Row.AttrNo + ':' + Row.AttrYes + ':' + Row.ElDef + ':' + Row.ElNo + ':' + Row.ElYes);
+                end;
+            }
+        }
+    }
+
+    var
+        XvLog: Codeunit "LT BJ Xv Log";
+}
+
+xmlport 87929 "LT RG Xv False Save"
+{
+    Direction = Import;
+    Format = Xml;
+    DefaultFieldsValidation = false;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Row; "LT RG Xv Row")
+            {
+                fieldattribute(Id; Row.Id) { }
+                fieldattribute(AttrDef; Row.AttrDef) { Occurrence = Optional; }
+                fieldattribute(AttrNo; Row.AttrNo) { Occurrence = Optional; FieldValidate = No; }
+                fieldattribute(AttrYes; Row.AttrYes) { Occurrence = Optional; FieldValidate = Yes; }
+                fieldelement(ElDef; Row.ElDef) { MinOccurs = Zero; }
+                fieldelement(ElNo; Row.ElNo) { MinOccurs = Zero; FieldValidate = No; }
+                fieldelement(ElYes; Row.ElYes) { MinOccurs = Zero; FieldValidate = Yes; }
+
+                trigger OnBeforeInsertRecord()
+                begin
+                    XvLog.Add('before insert ' + Format(Row.Id) + ':' + Row.AttrDef + ':' + Row.AttrNo + ':' + Row.AttrYes + ':' + Row.ElDef + ':' + Row.ElNo + ':' + Row.ElYes);
+                end;
+            }
+        }
+    }
+
+    var
+        XvLog: Codeunit "LT BJ Xv Log";
+}
+
+xmlport 87930 "LT RG Xv True NoSave"
+{
+    Direction = Import;
+    Format = Xml;
+    DefaultFieldsValidation = true;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Row; "LT RG Xv Row")
+            {
+                AutoSave = false;
+                fieldattribute(Id; Row.Id) { }
+                fieldattribute(AttrDef; Row.AttrDef) { Occurrence = Optional; }
+                fieldattribute(AttrNo; Row.AttrNo) { Occurrence = Optional; FieldValidate = No; }
+                fieldattribute(AttrYes; Row.AttrYes) { Occurrence = Optional; FieldValidate = Yes; }
+                fieldelement(ElDef; Row.ElDef) { MinOccurs = Zero; }
+                fieldelement(ElNo; Row.ElNo) { MinOccurs = Zero; FieldValidate = No; }
+                fieldelement(ElYes; Row.ElYes) { MinOccurs = Zero; FieldValidate = Yes; }
+
+                trigger OnBeforeInsertRecord()
+                begin
+                    XvLog.Add('before insert ' + Format(Row.Id) + ':' + Row.AttrDef + ':' + Row.AttrNo + ':' + Row.AttrYes + ':' + Row.ElDef + ':' + Row.ElNo + ':' + Row.ElYes);
+                end;
+            }
+        }
+    }
+
+    var
+        XvLog: Codeunit "LT BJ Xv Log";
+}
+
+xmlport 87931 "LT RG Xv False NoSave"
+{
+    Direction = Import;
+    Format = Xml;
+    DefaultFieldsValidation = false;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Row; "LT RG Xv Row")
+            {
+                AutoSave = false;
+                fieldattribute(Id; Row.Id) { }
+                fieldattribute(AttrDef; Row.AttrDef) { Occurrence = Optional; }
+                fieldattribute(AttrNo; Row.AttrNo) { Occurrence = Optional; FieldValidate = No; }
+                fieldattribute(AttrYes; Row.AttrYes) { Occurrence = Optional; FieldValidate = Yes; }
+                fieldelement(ElDef; Row.ElDef) { MinOccurs = Zero; }
+                fieldelement(ElNo; Row.ElNo) { MinOccurs = Zero; FieldValidate = No; }
+                fieldelement(ElYes; Row.ElYes) { MinOccurs = Zero; FieldValidate = Yes; }
+
+                trigger OnBeforeInsertRecord()
+                begin
+                    XvLog.Add('before insert ' + Format(Row.Id) + ':' + Row.AttrDef + ':' + Row.AttrNo + ':' + Row.AttrYes + ':' + Row.ElDef + ':' + Row.ElNo + ':' + Row.ElYes);
+                end;
+            }
+        }
+    }
+
+    var
+        XvLog: Codeunit "LT BJ Xv Log";
+}
+
 codeunit 81676 "LT BJ Xv Tests"
 {
     Subtype = Test;
@@ -328,5 +555,121 @@ codeunit 81676 "LT BJ Xv Tests"
         Observer.Expect('unset good log', 'val Plain=p1 xRec=p1;val Forced=f1;val Rel=R1;insert 1;val Plain=p2 xRec=p2;insert 2;');
         Observer.Expect('unset good rows', '1:p1:f1:s1:R1,2:p2::s2:,');
         Observer.Verify();
+    end;
+
+    // Writer RG: one import per node and value (R1 exists in table 81670, NOPE does not, blank); each observation is
+    // import ok | last error text | last error code | log (OnValidate, OnBeforeInsertRecord, OnInsert) | rows of table 87927.
+    local procedure RgSeed()
+    var
+        Row: Record "LT RG Xv Row";
+        Rel: Record "LT BJ Xv Rel";
+    begin
+        Row.DeleteAll();
+        Rel.DeleteAll();
+        Rel.Code := 'R1';
+        Rel.Insert();
+        XvLog.Take();
+    end;
+
+    local procedure RgRows(): Text
+    var
+        Row: Record "LT RG Xv Row";
+        Result: Text;
+    begin
+        if Row.FindSet() then
+            repeat
+                Result += Format(Row.Id) + ':' + Row.AttrDef + ':' + Row.AttrNo + ':' + Row.AttrYes + ':' + Row.ElDef + ':' + Row.ElNo + ':' + Row.ElYes + ',';
+            until Row.Next() = 0;
+        exit(Result);
+    end;
+
+    local procedure RgCase(XmlPortId: Integer; Node: Text; Value: Text; IsAttribute: Boolean)
+    var
+        Xml: Text;
+        Ok: Boolean;
+    begin
+        if IsAttribute then
+            Xml := '<?xml version="1.0" encoding="utf-8"?><Root><Row Id="1" ' + Node + '="' + Value + '"/></Root>'
+        else
+            Xml := '<?xml version="1.0" encoding="utf-8"?><Root><Row Id="1"><' + Node + '>' + Value + '</' + Node + '></Row></Root>';
+        RgSeed();
+        ClearLastError();
+        Ok := TryImport(XmlPortId, Xml);
+        if Value = '' then
+            Value := 'blank';
+        Observer.Observe(Node + ' ' + Value, Format(Ok) + ' | ' + GetLastErrorText() + ' | ' + GetLastErrorCode() + ' | ' + XvLog.Take() + ' | ' + RgRows());
+        ClearLastError();
+    end;
+
+    local procedure RgProbe(XmlPortId: Integer; IsAttribute: Boolean)
+    var
+        Nodes: List of [Text];
+        Node: Text;
+    begin
+        if IsAttribute then
+            Nodes.AddRange('AttrDef', 'AttrNo', 'AttrYes')
+        else
+            Nodes.AddRange('ElDef', 'ElNo', 'ElYes');
+        foreach Node in Nodes do begin
+            RgCase(XmlPortId, Node, 'R1', IsAttribute);
+            RgCase(XmlPortId, Node, 'NOPE', IsAttribute);
+            RgCase(XmlPortId, Node, '', IsAttribute);
+        end;
+    end;
+
+    [Test]
+    procedure RG_FieldAttribute_Relation_DfvTrue_AutoSaveOn()
+    begin
+        RgProbe(Xmlport::"LT RG Xv True Save", true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RG_FieldElement_Relation_DfvTrue_AutoSaveOn()
+    begin
+        RgProbe(Xmlport::"LT RG Xv True Save", false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RG_FieldAttribute_Relation_DfvFalse_AutoSaveOn()
+    begin
+        RgProbe(Xmlport::"LT RG Xv False Save", true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RG_FieldElement_Relation_DfvFalse_AutoSaveOn()
+    begin
+        RgProbe(Xmlport::"LT RG Xv False Save", false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RG_FieldAttribute_Relation_DfvTrue_AutoSaveOff()
+    begin
+        RgProbe(Xmlport::"LT RG Xv True NoSave", true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RG_FieldElement_Relation_DfvTrue_AutoSaveOff()
+    begin
+        RgProbe(Xmlport::"LT RG Xv True NoSave", false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RG_FieldAttribute_Relation_DfvFalse_AutoSaveOff()
+    begin
+        RgProbe(Xmlport::"LT RG Xv False NoSave", true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RG_FieldElement_Relation_DfvFalse_AutoSaveOff()
+    begin
+        RgProbe(Xmlport::"LT RG Xv False NoSave", false);
+        Observer.Finish();
     end;
 }
