@@ -922,4 +922,38 @@ Observer.Verify();
         Observer.Verify();
     end;
 
+
+    // Writer QZ: CharAllowed through SetValue on a List page (fixture page 87708 in QzCharAllowedList.al).
+    [Test]
+    procedure QZ_CharAllowed_TestPage_List()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT X Props";
+        List: TestPage "LT QZ X Props List";
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.Id := 2;
+        Row.Insert();
+        List.OpenEdit();
+        List.GoToRecord(Row);
+        List.Digits.SetValue('456');
+        Observer.Observe('list_digits_allowed', List.Digits.Value);
+        asserterror begin
+            List.Digits.SetValue('4x6');
+            Error('no error');
+        end;
+        Observer.ObserveError('list_digits_disallowed');
+        Observer.Observe('list_digits_after_error', List.Digits.Value);
+        asserterror begin
+            List.Picky.SetValue('abq');
+            Error('no error');
+        end;
+        Observer.ObserveError('list_picky_disallowed');
+        Observer.Observe('list_picky_after_error', List.Picky.Value);
+        List.Close();
+        Row.Get(2);
+        Observer.Observe('stored', Row.Digits + '|' + Row.Picky);
+        Observer.Finish();
+    end;
 }

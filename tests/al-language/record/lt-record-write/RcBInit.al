@@ -439,6 +439,33 @@ codeunit 72002 "LT RcB Init"
         Observer.Expect('modify', 'Yes');
         Observer.Verify();
     end;
+
+    // Writer QZ: a table procedure Init(A; B) next to the built-in Init() (fixture in QzInitOverload.al).
+    [Test]
+    procedure QZ_TableInitOverload_NextToBuiltin()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ Init Row";
+    begin
+        Row.Id := 1;
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.Init();
+        Observer.Observe('qualified Init()', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.Init(3, 'x');
+        Observer.Observe('qualified Init(3, x)', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.CallBareInit();
+        Observer.Observe('bare Init() in the table', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.CallBareInitWithArguments();
+        Observer.Observe('bare Init(5, inner) in the table', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Observer.Finish();
+    end;
 }
 
 table 82965 "LT BR NotBlank Enum"

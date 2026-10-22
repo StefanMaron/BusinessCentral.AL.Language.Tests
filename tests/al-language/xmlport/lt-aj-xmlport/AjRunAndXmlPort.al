@@ -164,6 +164,64 @@ codeunit 79002 "LT AJ This Run"
         Observer.Expect('second', 'Yes|201|ran 2|2');
         Observer.Verify();
     end;
+
+    // Writer QZ: the bare forms Run() and Run(Rec) inside a codeunit (fixtures in QzBareRun.al).
+    [Test]
+    procedure QZ_BareRun_WithOnRunCode()
+    var
+        Observer: Codeunit "Probe Observer";
+        Bare: Codeunit "LT QZ Bare Run";
+        Ok: Boolean;
+    begin
+        Ok := Bare.CallBareRun();
+        Observer.Observe('first call', Format(Ok) + '|' + Format(Bare.GetCount()));
+        Ok := Bare.CallBareRun();
+        Observer.Observe('second call', Format(Ok) + '|' + Format(Bare.GetCount()));
+        Bare.CallBareRunAsStatement();
+        Observer.Observe('statement', Format(Bare.GetCount()));
+        Observer.Observe('in if', Bare.CallBareRunInIf() + '|' + Format(Bare.GetCount()));
+        Ok := Bare.Run();
+        Observer.Observe('outside Run', Format(Ok) + '|' + Format(Bare.GetCount()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QZ_BareRun_OnRunRaisesError()
+    var
+        Observer: Codeunit "Probe Observer";
+        Failing: Codeunit "LT QZ Bare Run Error";
+        Ok: Boolean;
+    begin
+        ClearLastError();
+        Ok := Failing.CallBareRun();
+        Observer.Observe('error returned', Format(Ok));
+        Observer.ObserveError('error returned');
+        asserterror Failing.CallBareRunAsStatement();
+        Observer.ObserveError('error statement');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QZ_BareRunRec_IfNotRun()
+    var
+        Observer: Codeunit "Probe Observer";
+        WithRec: Codeunit "LT QZ Bare Run Rec";
+        Item: Record "LT AJ Item";
+        Ok: Boolean;
+    begin
+        Item.Id := 1;
+        Item.Txt := 'before';
+        Ok := WithRec.CallBareRunRec(Item);
+        Observer.Observe('first', Format(Ok) + '|' + Format(Item.Id) + '|' + Item.Txt + '|' + Format(WithRec.GetCount()));
+        WithRec.CallBareRunRecAsStatement(Item);
+        Observer.Observe('statement', Format(Item.Id) + '|' + Item.Txt + '|' + Format(WithRec.GetCount()));
+        Item.Txt := 'fail';
+        ClearLastError();
+        Ok := WithRec.CallBareRunRec(Item);
+        Observer.Observe('failing', Format(Ok) + '|' + Format(Item.Id) + '|' + Item.Txt + '|' + Format(WithRec.GetCount()));
+        Observer.ObserveError('failing');
+        Observer.Finish();
+    end;
 }
 
 xmlport 79008 "LT AJ Xp Temp No Save"

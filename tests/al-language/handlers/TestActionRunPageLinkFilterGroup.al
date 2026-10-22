@@ -250,4 +250,138 @@ codeunit 60941 "ARLG Tests"
         // runs. Closing is all this handler needs to do.
         TargetPage.Close();
     end;
+
+    // Writer QZ: Rec of the target page during OnOpenPage after an action's RunPageLink (fixtures in QzRunPageLinkOnOpen.al).
+    // P1/7 has child lines 1 and 2; P2/1 has no child line; a line of P1/8 exists to show the second link field filters.
+    local procedure QzSeed(var Card: TestPage "LT QZ RL Parent Card"; ParentCode: Code[20]; ParentNumber: Integer)
+    var
+        Parent: Record "LT QZ RL Parent";
+        Child: Record "LT QZ RL Child";
+        Log: Codeunit "LT QZ RL Log";
+    begin
+        Parent.DeleteAll();
+        Child.DeleteAll();
+        Parent.Code := 'P1';
+        Parent.Number := 7;
+        Parent.Insert();
+        Parent.Code := 'P2';
+        Parent.Number := 1;
+        Parent.Insert();
+        QzChild('P1', 7, 1, 'one');
+        QzChild('P1', 7, 2, 'two');
+        QzChild('P1', 8, 1, 'other number');
+        Card.OpenEdit();
+        Parent.Get(ParentCode, ParentNumber);
+        Card.GoToRecord(Parent);
+        Log.Clear();
+    end;
+
+    local procedure QzChild(ParentCode: Code[20]; ParentNumber: Integer; LineNo: Integer; Note: Text[30])
+    var
+        Child: Record "LT QZ RL Child";
+    begin
+        Child.ParentCode := ParentCode;
+        Child.ParentNumber := ParentNumber;
+        Child.LineNo := LineNo;
+        Child.Note := Note;
+        Child.Insert();
+    end;
+
+    [Test]
+    [HandlerFunctions('QzChildListHandler')]
+    procedure QZ_RunPageLink_RecInOnOpenPage_List_Handler()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT QZ RL Log";
+        Card: TestPage "LT QZ RL Parent Card";
+    begin
+        QzSeed(Card, 'P1', 7);
+        Card.ChildList.Invoke();
+        Observer.Observe('rows', Log.Get());
+        Log.Clear();
+        Card.Close();
+        QzSeed(Card, 'P2', 1);
+        Card.ChildList.Invoke();
+        Observer.Observe('no rows', Log.Get());
+        Card.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QZ_RunPageLink_RecInOnOpenPage_List_Trap()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT QZ RL Log";
+        Card: TestPage "LT QZ RL Parent Card";
+        List: TestPage "LT QZ RL Child List";
+    begin
+        QzSeed(Card, 'P1', 7);
+        List.Trap();
+        Card.ChildList.Invoke();
+        Observer.Observe('log', Log.Get());
+        Observer.Observe('trapped line', List.LineNo.Value() + '|' + List.Note.Value());
+        List.Close();
+        Card.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QZ_RunPageLink_RecInOnOpenPage_Card_Trap()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT QZ RL Log";
+        Card: TestPage "LT QZ RL Parent Card";
+        ChildCard: TestPage "LT QZ RL Child Card";
+    begin
+        QzSeed(Card, 'P1', 7);
+        ChildCard.Trap();
+        Card.ChildCard.Invoke();
+        Observer.Observe('log', Log.Get());
+        Observer.Observe('trapped line', ChildCard.LineNo.Value() + '|' + ChildCard.Note.Value());
+        ChildCard.Close();
+        Card.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QzChildListHandler')]
+    procedure QZ_RunPageLink_RecInOnOpenPage_Const()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT QZ RL Log";
+        Card: TestPage "LT QZ RL Parent Card";
+    begin
+        QzSeed(Card, 'P2', 1);
+        Card.ChildListConst.Invoke();
+        Observer.Observe('log', Log.Get());
+        Card.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QZ_RunPageLink_RecInOnOpenPage_NoHandler()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT QZ RL Log";
+        Card: TestPage "LT QZ RL Parent Card";
+    begin
+        QzSeed(Card, 'P1', 7);
+        ClearLastError();
+        asserterror begin
+            Card.ChildList.Invoke();
+            Error('no error');
+        end;
+        Observer.ObserveError('invoke');
+        Observer.Observe('log', Log.Get());
+        Observer.Finish();
+    end;
+
+    [PageHandler]
+    procedure QzChildListHandler(var ChildList: TestPage "LT QZ RL Child List")
+    var
+        Log: Codeunit "LT QZ RL Log";
+    begin
+        Log.Add('handler line=' + ChildList.LineNo.Value() + ' note=' + ChildList.Note.Value());
+        ChildList.Close();
+    end;
 }

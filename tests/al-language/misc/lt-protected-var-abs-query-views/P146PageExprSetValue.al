@@ -499,6 +499,42 @@ codeunit 70011 "LT P146 Page Expr SetValue"
         Observer.Expect('log after close', 'qg close;');
         Observer.Verify();
     end;
+
+    // Writer QZ: SetValue on controls bound to a procedure call, an arithmetic expression and a text function on a page without a source table
+    // (fixture page 87695 in QzExprControlNoSource.al).
+    [Test]
+    procedure QZ_NoSourceTable_SetValue_OnExpressionControls()
+    var
+        Observer: Codeunit "Probe Observer";
+        P: TestPage "LT QZ Expr NoSource";
+    begin
+        P.OpenEdit();
+        Observer.Observe('values', P.Total.Value() + '|' + P.SumCtl.Value() + '|' + P.UpperCtl.Value() + '|' + P.Plain.Value());
+        Observer.Observe('editable', Format(P.Total.Editable()) + '|' + Format(P.SumCtl.Editable()) + '|' + Format(P.UpperCtl.Editable()) + '|' + Format(P.Plain.Editable()));
+        ClearLastError();
+        asserterror begin
+            P.Total.SetValue('5');
+            Error('no error');
+        end;
+        Observer.ObserveError('total');
+        Observer.Observe('total after', P.Total.Value());
+        asserterror begin
+            P.SumCtl.SetValue('9');
+            Error('no error');
+        end;
+        Observer.ObserveError('sum');
+        Observer.Observe('sum after', P.SumCtl.Value());
+        asserterror begin
+            P.UpperCtl.SetValue('xyz');
+            Error('no error');
+        end;
+        Observer.ObserveError('upper');
+        Observer.Observe('upper after', P.UpperCtl.Value());
+        P.Plain.SetValue('def');
+        Observer.Observe('after plain', P.UpperCtl.Value() + '|' + P.Plain.Value());
+        P.Close();
+        Observer.Finish();
+    end;
 }
 
 page 86704 "LT QG NoSource Card"

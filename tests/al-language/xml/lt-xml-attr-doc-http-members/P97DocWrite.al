@@ -293,4 +293,48 @@ codeunit 74808 "LT P97 Doc WriteTo"
         Observer.Expect('same4', 'No');
         Observer.Verify();
     end;
+
+    // Writer QZ: WriteTo(OutStream) of a document read with XmlDocument.ReadFrom from text that has no declaration (the form of System
+    // Application's Xml Validation), and of documents with a utf-16 and a utf-8 declaration and a root, read back line by line from a Temp Blob.
+    local procedure QzWriteAndRead(Source: Text; var Observer: Codeunit "Probe Observer"; Name: Text)
+    var
+        TempBlob: Codeunit "Temp Blob";
+        Doc: XmlDocument;
+        OutS: OutStream;
+        InS: InStream;
+        Line: Text;
+        Lines: Text;
+        Bytes: Text;
+        B: Byte;
+        Index: Integer;
+    begin
+        XmlDocument.ReadFrom(Source, Doc);
+        TempBlob.CreateOutStream(OutS);
+        Doc.WriteTo(OutS);
+        Observer.Observe(Name + ' length', Format(TempBlob.Length()));
+        TempBlob.CreateInStream(InS);
+        for Index := 1 to 3 do begin
+            InS.Read(B);
+            Bytes += Format(B) + ' ';
+        end;
+        Observer.Observe(Name + ' first bytes', Bytes);
+        TempBlob.CreateInStream(InS);
+        while not InS.EOS() do begin
+            InS.ReadText(Line);
+            Lines += Line + '|';
+        end;
+        Observer.Observe(Name + ' lines', Lines);
+    end;
+
+    [Test]
+    procedure QZ_WriteTo_OutStream_ReadFromText()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QzWriteAndRead('<a xmlns="urn:p">x</a>', Observer, 'no declaration');
+        QzWriteAndRead('<?xml version="1.0" encoding="utf-16"?><a>x</a>', Observer, 'utf-16 declaration');
+        QzWriteAndRead('<?xml version="1.0"?><a>x</a>', Observer, 'declaration without encoding');
+        QzWriteAndRead('<?xml version="1.0" encoding="UTF-8"?><a><b>y</b></a>', Observer, 'upper-case utf-8 declaration');
+        Observer.Finish();
+    end;
 }

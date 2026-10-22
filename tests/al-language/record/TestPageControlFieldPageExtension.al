@@ -98,4 +98,61 @@ codeunit 60524 "Test Page Control Fld PageExt"
         // pass if they only checked the base page for its presence.
         Assert.AreEqual(0, PageControlField.Count(), 'Page Control Field must report no rows under a pageextension''s own object id; its controls belong to the page it extends.');
     end;
+
+    // Writer QZ: movefirst / movelast / moveafter / movebefore in a page extension (fixtures in QzPageExtMoves.al).
+    [Test]
+    procedure QZ_PageExtMoves_PageOpensAndControlsWork()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ Move Row";
+        Card: TestPage "LT QZ Move Card";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.A := 'a';
+        Row.B := 'b';
+        Row.C := 'c';
+        Row.D := 'd';
+        Row.E := 'e';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToRecord(Row);
+        Observer.Observe('values', Card.IdCtl.Value() + '|' + Card.ACtl.Value() + '|' + Card.BCtl.Value() + '|' + Card.CCtl.Value() + '|' + Card.DCtl.Value() + '|' + Card.ECtl.Value());
+        Card.ACtl.SetValue('a2');
+        Card.CCtl.SetValue('c2');
+        Card.BCtl.SetValue('b2');
+        Card.ECtl.SetValue('e2');
+        Card.Close();
+        Row.Get(1);
+        Observer.Observe('stored', Row.A + '|' + Row.B + '|' + Row.C + '|' + Row.D + '|' + Row.E);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QZ_PageExtMoves_PageControlFieldRows()
+    var
+        Observer: Codeunit "Probe Observer";
+        PageControlField: Record "Page Control Field";
+        RecRef: RecordRef;
+        Columns: Text;
+        Rows: Text;
+        Index: Integer;
+    begin
+        RecRef.Open(Database::"Page Control Field");
+        for Index := 1 to RecRef.FieldCount() do
+            Columns += Format(RecRef.FieldIndex(Index).Number()) + '=' + RecRef.FieldIndex(Index).Name() + ',';
+        Observer.Observe('columns', Columns);
+        PageControlField.SetRange(PageNo, Page::"LT QZ Move Card");
+        RecRef.Close();
+        RecRef.GetTable(PageControlField);
+        if RecRef.FindSet() then
+            repeat
+                Rows += '[';
+                for Index := 2 to RecRef.FieldCount() do
+                    Rows += Format(RecRef.FieldIndex(Index).Value()) + '|';
+                Rows += ']';
+            until RecRef.Next() = 0;
+        Observer.Observe('rows', Rows);
+        Observer.Finish();
+    end;
 }
