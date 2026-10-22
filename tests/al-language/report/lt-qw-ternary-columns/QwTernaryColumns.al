@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own table 87500, reports 87501 and 87510-87519, 87521, 87523, report extensions 87520, 87522, 87524,
+// Fixtures used: Probe Observer (69160); own table 87500, reports 87501, 87510-87519, 87521, 87523, 87525, report extensions 87520, 87522, 87524,
 // test codeunit 87503
 // Probe (corpus issue 685 section 1, from a user report): a ternary expression as the source of a report dataset column, with a Label, an
 // empty literal or a field as a branch, and ternary columns of Decimal, Integer, Date, Boolean, Option and Enum, also in a report extension.
@@ -52,6 +52,13 @@ report 87501 "LT QW Tern EmptyOrLbl"
         LblA: Label 'Label A';
         LblB: Label 'Label B';
 }
+#if LTQW_LABEL_EMPTY_COLUMN_PROBE
+// `column(LblOrEmpty; Row.Flag ? LblA : '')` (a Label true branch and an empty literal false branch) compiles and publishes, but the first
+// run of the report fails in the service tier's C# compile with an uncatchable exception (corpus CI run 39748741686, BC 29.0):
+// "C# compilation has failed for the application object Report_87510 ... error CS0029: Cannot implicitly convert type 'string' to
+// 'Microsoft.Dynamics.Nav.Runtime.NavValue'". `Row.Flag ? '' : LblA` (report 87501) and the same ternary in code
+// (QW_Ternary_LabelBranches in tests/al-language/types/TestTernaryContracts.al) work. Queued for a Windows check; compiled only with
+// LTQW_LABEL_EMPTY_COLUMN_PROBE.
 
 report 87510 "LT QW Tern LblOrEmpty"
 {
@@ -72,6 +79,7 @@ report 87510 "LT QW Tern LblOrEmpty"
         LblA: Label 'Label A';
         LblB: Label 'Label B';
 }
+#endif
 
 report 87511 "LT QW Tern LblOrLbl"
 {
@@ -205,9 +213,28 @@ report 87517 "LT QW Tern Numbers"
         {
             column(Id; Row.Id) { }
             column(DecCol; Row.Flag ? Row.Amount : 0) { }
-            column(IntOrDec; Row.Flag ? 7 : Row.Amount) { }
             column(IntCol; Row.Flag ? Row.Qty : 7) { }
             column(DateCol; Row.Flag ? Row.D : 0D) { }
+        }
+    }
+
+    var
+        LblA: Label 'Label A';
+        LblB: Label 'Label B';
+}
+
+report 87525 "LT QW Tern IntOrDec"
+{
+    ProcessingOnly = false;
+    DefaultLayout = RDLC;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(Row; "LT QW Tern Row")
+        {
+            column(Id; Row.Id) { }
+            column(IntOrDec; Row.Flag ? 7 : Row.Amount) { }
         }
     }
 
@@ -392,6 +419,7 @@ codeunit 87503 "LT QW Tern Column Tests"
         Run(Observer, Report::"LT QW Tern EmptyOrLbl");
         Observer.Finish();
     end;
+#if LTQW_LABEL_EMPTY_COLUMN_PROBE
 
     [Test]
     procedure QW_TernaryColumn_LabelOrEmpty()
@@ -401,6 +429,7 @@ codeunit 87503 "LT QW Tern Column Tests"
         Run(Observer, Report::"LT QW Tern LblOrEmpty");
         Observer.Finish();
     end;
+#endif
 
     [Test]
     procedure QW_TernaryColumn_LabelOrLabel()
@@ -462,6 +491,15 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern Numbers");
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QW_TernaryColumn_IntegerOrDecimal()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Run(Observer, Report::"LT QW Tern IntOrDec");
         Observer.Finish();
     end;
 
