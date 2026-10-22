@@ -4,7 +4,7 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/mediaset/mediaset-insert-method
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/mediaset/mediaset-mediaid-method
 // Scope: in-scope (Cloud-compatible)
-// Fixtures used: ALT Media (60980)
+// Fixtures used: ALT Media (60980), LT BR MediaSet Copy (82969); writer QV: MediaSet.Insert tests (QV_*)
 // BC versions: 27.5+
 //
 // Companion of StefanMaron/BusinessCentral.AL.Runner#1773, which reports that AL Runner's
@@ -449,7 +449,15 @@ codeunit 60951 "Test MediaSet Persistence"
         Observer.Observe('target stored', Format(Target.Images.Count()) + '|' + Format(Target.Images.Item(1) = Item1));
         Observer.Observe('set ids differ', Format(Target.Images.MediaId() <> Source.Images.MediaId()));
         Observer.Observe('source stored', Format(Source.Images.Count()) + '|' + Format(Source.Images.Item(1) = Item1));
-        Observer.Finish();
+        Observer.Expect('target set id empty before', 'Yes');
+        Observer.Expect('insert', 'Yes');
+        Observer.Expect('target count before modify', '1');
+        Observer.Expect('target item1 before modify', 'Yes');
+        Observer.Expect('target set id empty after insert', 'No');
+        Observer.Expect('target stored', '1|Yes');
+        Observer.Expect('set ids differ', 'Yes');
+        Observer.Expect('source stored', '1|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -479,7 +487,15 @@ codeunit 60951 "Test MediaSet Persistence"
         // The id that the source set already holds, inserted into the source set itself.
         Observer.Observe('insert into own set', Format(Source.Images.Insert(Item1)));
         Observer.Observe('own set count', Format(Source.Images.Count()));
-        Observer.Finish();
+        Observer.Expect('first insert', 'Yes');
+        Observer.Expect('second insert', 'No');
+        Observer.Expect('second insert error|text', '');
+        Observer.Expect('second insert error|code', '');
+        Observer.Expect('count', '1');
+        Observer.Expect('stored count', '1');
+        Observer.Expect('insert into own set', 'No');
+        Observer.Expect('own set count', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -507,7 +523,13 @@ codeunit 60951 "Test MediaSet Persistence"
         Observer.Observe('stored', Format(Target.Images.Count()) + '|' + Format(Target.Images.Count() = 1));
         if Target.Images.Count() = 1 then
             Observer.Observe('stored item', Format(Target.Images.Item(1) = Item1));
-        Observer.Finish();
+        Observer.Expect('insert', 'Yes');
+        Observer.Expect('insert error|text', '');
+        Observer.Expect('insert error|code', '');
+        Observer.Expect('count', '1');
+        Observer.Expect('stored', '1|Yes');
+        Observer.Expect('stored item', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -528,7 +550,15 @@ codeunit 60951 "Test MediaSet Persistence"
         Observer.Observe('null id', Format(Target.Images.Insert(NullId)));
         Observer.ObserveError('null id error');
         Observer.Observe('count after null', Format(Target.Images.Count()));
-        Observer.Finish();
+        Observer.Expect('unknown id', 'No');
+        Observer.Expect('unknown id error|text', '');
+        Observer.Expect('unknown id error|code', '');
+        Observer.Expect('count after unknown', '0');
+        Observer.Expect('null id', 'No');
+        Observer.Expect('null id error|text', '');
+        Observer.Expect('null id error|code', '');
+        Observer.Expect('count after null', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -560,7 +590,14 @@ codeunit 60951 "Test MediaSet Persistence"
         Observer.Observe('target other', Format(Target.Other.Count()));
         if Target.Images.Count() = 1 then
             Observer.Observe('target item', Format(Target.Images.Item(1) = Item1));
-        Observer.Finish();
+        Observer.Expect('insert other table', 'Yes');
+        Observer.Expect('insert other field', 'Yes');
+        Observer.Expect('source remove', 'Yes');
+        Observer.Expect('source count', '0');
+        Observer.Expect('target images', '1|Yes');
+        Observer.Expect('target other', '1');
+        Observer.Expect('target item', 'Yes');
+        Observer.Verify();
     end;
 
     local procedure Initialize()

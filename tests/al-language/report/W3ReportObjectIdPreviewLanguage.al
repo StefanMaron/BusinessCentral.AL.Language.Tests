@@ -1,5 +1,6 @@
 //sub:report
 // CurrReport.ObjectId (md:666), CurrReport.Preview (md:671), CurrReport.Language and FormatRegion (md:471).
+// Writer QV: report 87470 "LT QV Preview Rpt" (AL Runner issue 5666), CurrReport.Preview per start mode, layout ./QvPreviewLayout.rdl (generated).
 // The report ids in observed texts are replaced by <id>.
 
 codeunit 67756 "W3 ObjId Log"
@@ -643,7 +644,12 @@ codeunit 67761 "W3 ObjId Probe"
         end;
         Observer.Observe('columns', QvColumns(Xml));
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('save error|text', '');
+        Observer.Expect('save error|code', '');
+        Observer.Expect('columns', '<Column name="PreviewValue">False</Column>|<Column name="PreviewLogged">False</Column>|');
+        Observer.Expect('log', 'init preview=No;pre preview=No;get preview=No;column preview=No;post preview=No;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -660,7 +666,12 @@ codeunit 67761 "W3 ObjId Probe"
         Observer.ObserveError('save error');
         Observer.Observe('has output', Format(TempBlob.Length() > 0));
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('saved', 'Yes');
+        Observer.Expect('save error|text', '');
+        Observer.Expect('save error|code', '');
+        Observer.Expect('has output', 'Yes');
+        Observer.Expect('log', 'init preview=No;pre preview=No;get preview=No;column preview=No;post preview=No;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -673,7 +684,11 @@ codeunit 67761 "W3 ObjId Probe"
         Observer.Observe('ok', Format(Runner.Exec(Report::"LT QV Preview Rpt", 5, '', Result)));
         Observer.ObserveError('error');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Expect('log', 'init preview=No;pre preview=Yes;get preview=Yes;column preview=Yes;post preview=Yes;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -689,7 +704,12 @@ codeunit 67761 "W3 ObjId Probe"
         Observer.ObserveError('error');
         Observer.Observe('has parameters', Format(Result <> ''));
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Expect('has parameters', 'Yes');
+        Observer.Expect('log', 'init preview=No;rp open preview=No;rp close OK preview=No;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -704,7 +724,11 @@ codeunit 67761 "W3 ObjId Probe"
         Observer.Observe('ok', Format(Runner.Exec(Report::"LT QV Preview Rpt", 0, '', Result)));
         Observer.ObserveError('error');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Expect('log', 'init preview=No;rp open preview=No;rp close Preview preview=No;pre preview=Yes;get preview=Yes;column preview=Yes;post preview=Yes;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -719,7 +743,11 @@ codeunit 67761 "W3 ObjId Probe"
         Observer.Observe('ok', Format(Runner.Exec(Report::"LT QV Preview Rpt", 0, '', Result)));
         Observer.ObserveError('error');
         Observer.Observe('log', L.Take());
-        Observer.Finish();
+        Observer.Expect('ok', 'Yes');
+        Observer.Expect('error|text', '');
+        Observer.Expect('error|code', '');
+        Observer.Expect('log', 'init preview=No;rp open preview=No;rp close Print preview=No;pre preview=No;get preview=No;column preview=No;post preview=No;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]

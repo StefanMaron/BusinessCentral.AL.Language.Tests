@@ -419,6 +419,15 @@ codeunit 72500 "LT JsT Object Basics"
         O.Remove('a');
         O.WriteTo(Txt);
         Observer.Observe('existing statement', Txt);
-        Observer.Finish();
+        Observer.Expect('direct', 'no error|');
+        Observer.Expect('after direct', '{"a":1}');
+        Observer.Expect('after var procedure', '{"a":1}');
+        Observer.Expect('try statement', 'Yes');
+        Observer.Expect('try statement error|text', '');
+        Observer.Expect('try statement error|code', '');
+        Observer.Expect('value form', 'No');
+        Observer.Expect('empty object', '{}');
+        Observer.Expect('existing statement', '{}');
+        Observer.Verify();
     end;
 }

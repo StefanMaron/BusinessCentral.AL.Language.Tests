@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-auto/page/devenv-onfindrecord-page-trigger
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73869 (log), table 73870, pages 73871, 73872 and 73873, codeunit 73874; writer QD: pages 86530 to 86533
+// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73869 (log), table 73870, pages 73871, 73872 and 73873, codeunit 73874; writer QD: pages 86530 to 86533; writer QV: enum 87462, table 87461, pages 87460 and 87463 to 87465
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Settles probes-needed row: "Find list" (Page reads after an action, and a list that ends inside its window, corpus bump 7)
 // Facts: log of OnFindRecord (F), OnNextRecord (N), OnAfterGetRecord (R) and OnAfterGetCurrRecord (C) when a TestPage opens a list and moves First, Next, Last and Previous,
@@ -850,7 +850,21 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe('12_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
         P.Close();
         Observer.Observe('close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('01_first', 'Yes|5|');
+        Observer.Expect('02_next', 'Yes|3|');
+        Observer.Expect('03_next', 'Yes|1|');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_previous', 'Yes|3|');
+        Observer.Expect('06_last', 'Yes|1|');
+        Observer.Expect('07_first', 'Yes|5|');
+        Observer.Expect('08_gotorecord3', 'Yes|3|');
+        Observer.Expect('09_gotorecord1', 'Yes|1|');
+        Observer.Expect('10_gotorecord2_out', 'No|1|');
+        Observer.Expect('11_gotokey5', 'Yes|5|');
+        Observer.Expect('12_previous_top', 'No|5|');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -882,7 +896,21 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe('12_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
         P.Close();
         Observer.Observe('close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=0:5;');
+        Observer.Expect('01_first', 'Yes|5|');
+        Observer.Expect('02_next', 'Yes|3|');
+        Observer.Expect('03_next', 'Yes|1|');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_previous', 'Yes|3|');
+        Observer.Expect('06_last', 'Yes|1|');
+        Observer.Expect('07_first', 'Yes|5|');
+        Observer.Expect('08_gotorecord3', 'Yes|3|');
+        Observer.Expect('09_gotorecord1', 'Yes|1|');
+        Observer.Expect('10_gotorecord2_out', 'No|1|');
+        Observer.Expect('11_gotokey5', 'Yes|5|');
+        Observer.Expect('12_previous_top', 'No|5|');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -914,7 +942,21 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe('12_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
         P.Close();
         Observer.Observe('close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;F(=)=Yes:1;C1;');
+        Observer.Expect('01_first', 'Yes|5|F(=)=Yes:5;C5;');
+        Observer.Expect('02_next', 'Yes|3|F(=)=Yes:3;C3;');
+        Observer.Expect('03_next', 'Yes|1|F(=)=Yes:1;C1;');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_previous', 'Yes|3|F(=)=Yes:3;C3;');
+        Observer.Expect('06_last', 'Yes|1|F(=)=Yes:1;C1;');
+        Observer.Expect('07_first', 'Yes|5|F(=)=Yes:5;C5;');
+        Observer.Expect('08_gotorecord3', 'Yes|3|F(=)=Yes:3;C3;');
+        Observer.Expect('09_gotorecord1', 'Yes|1|F(=)=Yes:5;C5;F(=)=Yes:3;C3;F(=)=Yes:1;C1;');
+        Observer.Expect('10_gotorecord2_out', 'No|1|F(=)=Yes:5;C5;F(=)=Yes:3;C3;F(=)=Yes:1;C1;');
+        Observer.Expect('11_gotokey5', 'Yes|5|F(=)=Yes:5;C5;');
+        Observer.Expect('12_previous_top', 'No|5|');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -946,7 +988,21 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe('12_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
         P.Close();
         Observer.Observe('close', Log.Take());
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;R1;R3;R5;');
+        Observer.Expect('01_first', 'Yes|5|');
+        Observer.Expect('02_next', 'Yes|3|');
+        Observer.Expect('03_next', 'Yes|1|');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_previous', 'Yes|3|');
+        Observer.Expect('06_last', 'Yes|1|');
+        Observer.Expect('07_first', 'Yes|5|');
+        Observer.Expect('08_gotorecord3', 'Yes|3|');
+        Observer.Expect('09_gotorecord1', 'Yes|1|');
+        Observer.Expect('10_gotorecord2_out', 'No|1|');
+        Observer.Expect('11_gotokey5', 'Yes|5|');
+        Observer.Expect('12_previous_top', 'No|5|');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 }
 

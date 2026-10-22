@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveas-method
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own report 78602, codeunit 78603; LT QK Setup Rows (86940)
+// Fixtures used: Probe Observer (69160); own report 78602, codeunit 78603; LT QK Setup Rows (86940); writer QV: CompanyLogo tests (QV_*)
 // Probe: the CompanyAddressLine1..8 elements of the report dataset header (SaveAs Xml, BC 29 and later) for several fillings of the
 // Company Information address fields (Address, Address 2, City, Post Code, County, Country/Region Code). Only line 1 (= Name) was pinned before
 // (corpus issue 636, item 3). The test restores the Company Information row it changed. Header_AddressLines_AsInCorpusDatabase writes its
@@ -236,7 +236,13 @@ codeunit 78603 "LT AH Dataset Header"
         Observer.Observe('text bytes node', QvLogoNode());
         Observer.Observe('text bytes base64', Base64.ToBase64('not an image'));
         QkRows.RestoreCompanyInformation();
-        Observer.Finish();
+        Observer.Expect('no picture line', '<CompanyLogo></CompanyLogo>|');
+        Observer.Expect('no picture node', '[]');
+        Observer.Expect('png line', '<CompanyLogo>iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==</CompanyLogo>|');
+        Observer.Expect('png node equals input', 'Yes');
+        Observer.Expect('text bytes node', '[bm90IGFuIGltYWdl]');
+        Observer.Expect('text bytes base64', 'bm90IGFuIGltYWdl');
+        Observer.Verify();
     end;
 }
 #endif

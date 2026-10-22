@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/report/report-saveaspdf-method
 // Scope: in-scope, but ONLY for a Target = OnPrem app (File, TemporaryPath, Report.SaveAs* are Scope = OnPrem)
-// Fixtures used: Probe Observer (codeunit 69160); layout ./report/lt-t-saveas/LtTSave1.rdl of the app root; self-contained table 98100, report 98101, test codeunit 98102
+// Fixtures used: Probe Observer (codeunit 69160); layout ./report/lt-t-saveas/LtTSave1.rdl of the app root; self-contained table 98100, report 98101, test codeunit 98102; writer QV: log codeunit 98970, report 98971 (CurrReport.Preview under SaveAsXml)
 // Facts: Report.SaveAsExcel, SaveAsHtml, SaveAsPdf, SaveAsWord and SaveAsXml, static (report id, file name, record) and on a Report variable: the return value, whether the file exists, and the Record filter the data comes from.
 // BC versions: 27.0 and later
 
@@ -468,6 +468,16 @@ codeunit 98102 "LT T Save As Tests"
             Erase(Name);
         end;
         Observer.Observe('instance column', ColumnValues(Full, 'PreviewValue'));
-        Observer.Finish();
+        Observer.Expect('static ok', 'Yes');
+        Observer.Expect('static error|text', '');
+        Observer.Expect('static error|code', '');
+        Observer.Expect('static log', 'pre preview=No;get preview=No;');
+        Observer.Expect('static column', 'False,');
+        Observer.Expect('instance ok', 'Yes');
+        Observer.Expect('instance error|text', '');
+        Observer.Expect('instance error|code', '');
+        Observer.Expect('instance log', 'pre preview=No;get preview=No;');
+        Observer.Expect('instance column', 'False,');
+        Observer.Verify();
     end;
 }

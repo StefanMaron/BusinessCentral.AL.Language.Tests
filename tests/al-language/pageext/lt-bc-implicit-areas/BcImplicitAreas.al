@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-page-ext-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); objects in BcImplicitAreaObjects.al
+// Fixtures used: Probe Observer (69160); objects in BcImplicitAreaObjects.al; writer QV: List page 87466, page extensions 87467 to 87469 (AL Runner issue 5674)
 // Corpus issue 659 item 3 (from al-runtime-rs #252): a page extension may add to area(FactBoxes) when the base card declares only
 // area(Content), and the test page opens. These tests read what the added parts show. An area name that does not exist is
 // must-not-compile case 1270.
@@ -115,7 +115,14 @@ codeunit 80972 "BC Implicit Areas"
         Observer.Observe('gotokey 5', Format(List.GoToKey(5)) + '|' + List.Number.Value() + '|' + List.QVPart.PartNumber.Value());
         Observer.Observe('next', Format(List.Next()) + '|' + List.Number.Value() + '|' + List.QVPart.PartNumber.Value());
         List.Close();
-        Observer.Finish();
+        Observer.Expect('open number', '3');
+        Observer.Expect('open part number', '3');
+        Observer.Expect('part visible', 'Yes');
+        Observer.Expect('part editable', 'No');
+        Observer.Expect('part next', 'No');
+        Observer.Expect('gotokey 5', 'Yes|5|5');
+        Observer.Expect('next', 'Yes|7|7');
+        Observer.Verify();
     end;
 
     // The reporter's case: Base Application's List page 7500 "Item Attributes" with a system part added by addfirst(FactBoxes).
