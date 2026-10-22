@@ -525,6 +525,8 @@ codeunit 73549 "LT P130 Date Filters"
     var
         Observer: Codeunit "Probe Observer";
         K: Record "LT RH Time Key Row";
+        Stage: Text;
+        Cnt: Integer;
     begin
         K.DeleteAll();
         K.Init();
@@ -549,13 +551,22 @@ codeunit 73549 "LT P130 Date Filters"
         K."Entry Time" := 100000T;
         K.Note := 'second';
         Observer.Observe('insert .000 return', Format(K.Insert()));
+        // Insert without a return value: where the duplicate key error is raised (Stage names the last step that ran).
         ClearLastError();
-        K.Init();
-        K."Entry Code" := 'A';
-        K."Entry Time" := 100000T;
-        K.Note := 'third';
-        K.Insert();
-        Observer.Observe('insert .000 plain', 'returned');
+        asserterror begin
+            Stage := 'insert';
+            K.Init();
+            K."Entry Code" := 'A';
+            K."Entry Time" := 100000T;
+            K.Note := 'third';
+            K.Insert();
+            Stage := 'count';
+            K.Reset();
+            Cnt := K.Count();
+            Stage := 'done';
+        end;
+        Observer.Observe('plain insert .000 stage', Stage);
+        Observer.ObserveError('plain insert .000 error');
         K.Reset();
         Observer.Observe('count after duplicate', Format(K.Count()));
         if K.FindSet() then
@@ -629,6 +640,8 @@ codeunit 73549 "LT P130 Date Filters"
         Observer: Codeunit "Probe Observer";
         K: Record "LT RH DateTime Key Row";
         Base: DateTime;
+        Stage: Text;
+        Cnt: Integer;
     begin
         Base := CreateDateTime(20240325D, 100000T);
         K.DeleteAll();
@@ -647,9 +660,21 @@ codeunit 73549 "LT P130 Date Filters"
         K.Init();
         K."At" := Base;
         K.Note := 'second';
+        Observer.Observe('insert .000 return', Format(K.Insert()));
         ClearLastError();
-        K.Insert();
-        Observer.Observe('insert .000 plain', 'returned');
+        asserterror begin
+            Stage := 'insert';
+            K.Init();
+            K."At" := Base;
+            K.Note := 'third';
+            K.Insert();
+            Stage := 'count';
+            K.Reset();
+            Cnt := K.Count();
+            Stage := 'done';
+        end;
+        Observer.Observe('plain insert .000 stage', Stage);
+        Observer.ObserveError('plain insert .000 error');
         K.Reset();
         Observer.Observe('count after duplicate', Format(K.Count()));
         K.Init();
