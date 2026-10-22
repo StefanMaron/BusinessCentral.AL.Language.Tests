@@ -501,4 +501,179 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Expect('999 from row get', '00:00:01|2024-03-25T00:00:01Z');
         Observer.Verify();
     end;
+
+    local procedure KeyTime(var K: Record "LT RH Time Key Row"): Text
+    begin
+        exit(K."Entry Code" + '|' + Format(K."Entry Time", 0, 9) + '|' + Format(K."Entry Time" - 000000T) + '|' + K.Note);
+    end;
+
+    local procedure GetTime(var Observer: Codeunit "Probe Observer"; Name: Text; Code: Code[20]; T: Time)
+    var
+        K: Record "LT RH Time Key Row";
+    begin
+        if K.Get(Code, T) then
+            Observer.Observe(Name, 'found|' + KeyTime(K))
+        else
+            Observer.Observe(Name, 'not found');
+    end;
+
+    // al-runner issue 5689: a Time primary key field written with milliseconds the SQL column rounds (.001 -> .000, .002 -> .003, 23:59:59.999 -> midnight):
+    // what Insert answers, what the record variable holds after Insert, which values Get finds the row by, what FindFirst reads back, a second Insert whose value
+    // rounds to the same key, Modify, Rename and Delete through the unrounded value.
+    [Test]
+    procedure RH_TimeKey_Milliseconds_InsertGet()
+    var
+        Observer: Codeunit "Probe Observer";
+        K: Record "LT RH Time Key Row";
+    begin
+        K.DeleteAll();
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 100000T + 1;
+        K.Note := 'first';
+        Observer.Observe('insert', Format(K.Insert(true)));
+        Observer.Observe('var after insert', KeyTime(K));
+        GetTime(Observer, 'get .001', 'A', 100000T + 1);
+        GetTime(Observer, 'get .000', 'A', 100000T);
+        GetTime(Observer, 'get .002', 'A', 100000T + 2);
+        K.Reset();
+        K.FindFirst();
+        Observer.Observe('findfirst', KeyTime(K));
+        Observer.Observe('count', Format(K.Count()));
+        K.SetRange("Entry Time", 100000T + 1);
+        Observer.Observe('setrange .001 count', Format(K.Count()));
+        K.Reset();
+
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 100000T;
+        K.Note := 'second';
+        Observer.Observe('insert .000 return', Format(K.Insert()));
+        ClearLastError();
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 100000T;
+        K.Note := 'third';
+        asserterror K.Insert();
+        Observer.ObserveError('insert .000 error');
+        K.Reset();
+        Observer.Observe('count after duplicate', Format(K.Count()));
+
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 100000T + 2;
+        K.Note := 'two';
+        Observer.Observe('insert .002', Format(K.Insert()));
+        GetTime(Observer, 'get .003', 'A', 100000T + 3);
+        GetTime(Observer, 'get .002 after', 'A', 100000T + 2);
+        K.Reset();
+        Observer.Observe('count after .002', Format(K.Count()));
+
+        K.Init();
+        K."Entry Code" := 'B';
+        K."Entry Time" := 235959.999T;
+        K.Note := 'late';
+        Observer.Observe('insert .999', Format(K.Insert()));
+        GetTime(Observer, 'get .999', 'B', 235959.999T);
+        GetTime(Observer, 'get midnight', 'B', 000000T);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RH_TimeKey_Milliseconds_ModifyRenameDelete()
+    var
+        Observer: Codeunit "Probe Observer";
+        K: Record "LT RH Time Key Row";
+    begin
+        K.DeleteAll();
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 100000T + 1;
+        K.Note := 'first';
+        K.Insert();
+        K.Note := 'modified';
+        Observer.Observe('modify var', Format(K.Modify()));
+        GetTime(Observer, 'after modify', 'A', 100000T);
+
+        K.Get('A', 100000T + 1);
+        Observer.Observe('rename', Format(K.Rename('A', 120000T + 1)));
+        Observer.Observe('var after rename', KeyTime(K));
+        GetTime(Observer, 'get renamed .000', 'A', 120000T);
+        GetTime(Observer, 'get old .000', 'A', 100000T);
+
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 120000T + 1;
+        Observer.Observe('delete unrounded', Format(K.Delete()));
+        K.Reset();
+        Observer.Observe('count after delete', Format(K.Count()));
+        Observer.Finish();
+    end;
+
+    // The same for a DateTime primary key field.
+    [Test]
+    procedure RH_DateTimeKey_Milliseconds_InsertGet()
+    var
+        Observer: Codeunit "Probe Observer";
+        K: Record "LT RH DateTime Key Row";
+        Base: DateTime;
+    begin
+        Base := CreateDateTime(20240325D, 100000T);
+        K.DeleteAll();
+        K.Init();
+        K."At" := Base + 1;
+        K.Note := 'first';
+        Observer.Observe('insert', Format(K.Insert()));
+        Observer.Observe('var after insert', Format(K."At", 0, 9));
+        Clear(K);
+        Observer.Observe('get .001', Format(K.Get(Base + 1)) + '|' + Format(K."At", 0, 9));
+        Clear(K);
+        Observer.Observe('get .000', Format(K.Get(Base)) + '|' + Format(K."At", 0, 9));
+        K.Reset();
+        K.FindFirst();
+        Observer.Observe('findfirst', Format(K."At", 0, 9) + '|' + Format(K."At" - Base));
+        K.Init();
+        K."At" := Base;
+        K.Note := 'second';
+        ClearLastError();
+        asserterror K.Insert();
+        Observer.ObserveError('insert .000 error');
+        K.Init();
+        K."At" := CreateDateTime(20240325D, 235959.999T);
+        K.Note := 'late';
+        Observer.Observe('insert .999', Format(K.Insert()));
+        Clear(K);
+        Observer.Observe('get next day', Format(K.Get(CreateDateTime(20240326D, 000000T))) + '|' + Format(K."At", 0, 9));
+        K.Reset();
+        Observer.Observe('count', Format(K.Count()));
+        Observer.Finish();
+    end;
+}
+
+// al-runner issue 5689: tables with a Time and a DateTime field in the primary key (object ids 88000 and 88001).
+table 88000 "LT RH Time Key Row"
+{
+    fields
+    {
+        field(1; "Entry Code"; Code[20]) { }
+        field(2; "Entry Time"; Time) { }
+        field(3; Note; Text[30]) { }
+    }
+    keys
+    {
+        key(PK; "Entry Code", "Entry Time") { Clustered = true; }
+    }
+}
+
+table 88001 "LT RH DateTime Key Row"
+{
+    fields
+    {
+        field(1; "At"; DateTime) { }
+        field(2; Note; Text[30]) { }
+    }
+    keys
+    {
+        key(PK; "At") { Clustered = true; }
+    }
 }

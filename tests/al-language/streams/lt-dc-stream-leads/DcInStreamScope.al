@@ -129,4 +129,57 @@ codeunit 85782 "LT DC InStream Scope"
         Observer.Expect('media_text', '');
         Observer.Verify();
     end;
+
+    // al-runner issue 5688: a var InStream filled by a procedure of another codeunit (named CreateInstream, as Http Web Request Mgt. has) that creates it on its
+    // own local Temp Blob, reached through a local codeunit variable of a procedure of this codeunit (two levels) and directly; empty and with text.
+    local procedure ViaLocalSource(Content: Text; var InS: InStream)
+    var
+        Source: Codeunit "LT RH Stream Source";
+    begin
+        if Content = '' then
+            Source.CreateInstream(InS)
+        else
+            Source.FilledInstream(Content, InS);
+    end;
+
+    [Test]
+    procedure RH_VarInStreamFromOtherCodeunitLocalTempBlob()
+    var
+        Source: Codeunit "LT RH Stream Source";
+        InS: InStream;
+        InS2: InStream;
+        InS3: InStream;
+        InS4: InStream;
+    begin
+        ViaLocalSource('', InS);
+        Observer.Observe('two levels empty', Format(InS.Length()) + '|' + Format(InS.EOS()) + '|' + ReadAll(InS) + '|' + Format(InS.EOS()));
+        ViaLocalSource('hello two levels', InS2);
+        Observer.Observe('two levels text', Format(InS2.Length()) + '|' + Format(InS2.EOS()) + '|' + ReadAll(InS2) + '|' + Format(InS2.EOS()));
+        Source.CreateInstream(InS3);
+        Observer.Observe('direct empty', Format(InS3.Length()) + '|' + Format(InS3.EOS()) + '|' + ReadAll(InS3) + '|' + Format(InS3.EOS()));
+        Source.FilledInstream('hello direct', InS4);
+        Observer.Observe('direct text', Format(InS4.Length()) + '|' + Format(InS4.EOS()) + '|' + ReadAll(InS4) + '|' + Format(InS4.EOS()));
+        Observer.Finish();
+    end;
+}
+
+// al-runner issue 5688: the stream source of RH_VarInStreamFromOtherCodeunitLocalTempBlob (object id 88002). Not a test codeunit.
+codeunit 88002 "LT RH Stream Source"
+{
+    procedure CreateInstream(var InStr: InStream)
+    var
+        TempBlob: Codeunit "Temp Blob";
+    begin
+        TempBlob.CreateInStream(InStr);
+    end;
+
+    procedure FilledInstream(Content: Text; var InStr: InStream)
+    var
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        OutS.WriteText(Content);
+        TempBlob.CreateInStream(InStr);
+    end;
 }
