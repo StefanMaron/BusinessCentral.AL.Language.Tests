@@ -142,7 +142,18 @@ codeunit 87573 "LT QX Tern Sized"
         Run('T80 := false ? T80 : T100(90)', TryT80FromT100Second(false, 90, R), R);
         Run('T80 := true ? T80 : T100(90)', TryT80FromT100Second(true, 90, R), R);
         Run('T80 := false ? T80 : T100(50)', TryT80FromT100Second(false, 50, R), R);
-        Observer.Finish();
+        Observer.Expect('T80 := true ? T100(79) : T80', 'ok|79|xxxxxxxxxx');
+        Observer.Expect('T80 := true ? T100(80) : T80', 'ok|80|xxxxxxxxxx');
+        Observer.Expect('T80 := true ? T100(81) : T80|text', 'The length of the string is 81, but it must be less than or equal to 80 characters. Value: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+        Observer.Expect('T80 := true ? T100(81) : T80|code', 'StringLengthExceeded');
+        Observer.Expect('T80 := true ? T100(100) : T80|text', 'The length of the string is 100, but it must be less than or equal to 80 characters. Value: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+        Observer.Expect('T80 := true ? T100(100) : T80|code', 'StringLengthExceeded');
+        Observer.Expect('T80 := false ? T100(100) : T80', 'ok|7|short80');
+        Observer.Expect('T80 := false ? T80 : T100(90)|text', 'The length of the string is 90, but it must be less than or equal to 80 characters. Value: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+        Observer.Expect('T80 := false ? T80 : T100(90)|code', 'StringLengthExceeded');
+        Observer.Expect('T80 := true ? T80 : T100(90)', 'ok|7|short80');
+        Observer.Expect('T80 := false ? T80 : T100(50)', 'ok|50|xxxxxxxxxx');
+        Observer.Verify();
     end;
 
     [Test]
@@ -155,7 +166,14 @@ codeunit 87573 "LT QX Tern Sized"
         Run('field false Name(90)', TryFieldFromField(false, 90, R), R);
         Run('demo shape Name(30)', TryFieldDemoShape(30, R), R);
         Run('demo shape Name(95)', TryFieldDemoShape(95, R), R);
-        Observer.Finish();
+        Observer.Expect('field true Name(90)|text', 'The length of the string is 90, but it must be less than or equal to 80 characters. Value: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+        Observer.Expect('field true Name(90)|code', 'StringLengthExceeded');
+        Observer.Expect('field true Name(80)', 'ok|80');
+        Observer.Expect('field false Name(90)', 'ok|0');
+        Observer.Expect('demo shape Name(30)', 'ok|30');
+        Observer.Expect('demo shape Name(95)|text', 'The length of the string is 95, but it must be less than or equal to 80 characters. Value: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+        Observer.Expect('demo shape Name(95)|code', 'StringLengthExceeded');
+        Observer.Verify();
     end;
 
     [Test]
@@ -170,6 +188,16 @@ codeunit 87573 "LT QX Tern Sized"
         Run('Text10 := true ? Code20(15 chars) : Text10', TryText10FromCode20(true, 'ABCDEFGHIJKLMNO', R), R);
         Run('Code20 := false ? Code20 : Code30(25)', TryCode20FromCode30(false, 25, R), R);
         Run('Code20 := true ? Code20 : Code30(25)', TryCode20FromCode30(true, 25, R), R);
-        Observer.Finish();
+        Observer.Expect('Code10 := true ? Text30(abc) : Code10', 'ok|ABC');
+        Observer.Expect('Code10 := true ? Text30( lower case 15) : Code10|text', 'The length of the string is 14, but it must be less than or equal to 10 characters. Value: lower case 15x');
+        Observer.Expect('Code10 := true ? Text30( lower case 15) : Code10|code', 'StringLengthExceeded');
+        Observer.Expect('Code10 := false ? Text30(long) : Code10', 'ok|KEEP');
+        Observer.Expect('Text10 := true ? Code20(ABC) : Text10', 'ok|ABC');
+        Observer.Expect('Text10 := true ? Code20(15 chars) : Text10|text', 'The length of the string is 15, but it must be less than or equal to 10 characters. Value: ABCDEFGHIJKLMNO');
+        Observer.Expect('Text10 := true ? Code20(15 chars) : Text10|code', 'StringLengthExceeded');
+        Observer.Expect('Code20 := false ? Code20 : Code30(25)|text', 'The length of the string is 25, but it must be less than or equal to 20 characters. Value: XXXXXXXXXXXXXXXXXXXXXXXXX');
+        Observer.Expect('Code20 := false ? Code20 : Code30(25)|code', 'StringLengthExceeded');
+        Observer.Expect('Code20 := true ? Code20 : Code30(25)', 'ok|4');
+        Observer.Verify();
     end;
 }

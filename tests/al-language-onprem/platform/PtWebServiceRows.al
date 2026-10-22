@@ -130,6 +130,15 @@ codeunit 61281 "LT PT Web Service Rows"
         TenantWebService.SetFilter("Service Name", 'LTQX*');
         TenantWebService.DeleteAll();
         Observer.Observe('counts cleaned', QxCounts());
-        Observer.Finish();
+        Observer.Expect('counts before', '17|64');
+        Observer.Expect('page 42 before', 'ws[SalesOrder|Yes]');
+        Observer.Expect('counts after', '17|64');
+        Observer.Expect('page 42 after', 'ws[SalesOrder|Yes]');
+        Observer.Expect('page 42 after unpublished call', 'ws[SalesOrder|No]');
+        Observer.Expect('page 42 after named call', 'ws[LTQXSalesOrder|Yes]ws[SalesOrder|Yes]');
+        Observer.Expect('page 42 after tenant call', 'ws[LTQXSalesOrder|Yes]ws[SalesOrder|Yes]tws[LTQXTenantSalesOrder|Yes]');
+        Observer.Expect('counts end', '18|65');
+        Observer.Expect('counts cleaned', '17|64');
+        Observer.Verify();
     end;
 }

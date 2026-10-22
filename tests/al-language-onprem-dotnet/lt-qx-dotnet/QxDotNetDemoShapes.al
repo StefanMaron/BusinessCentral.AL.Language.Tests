@@ -123,7 +123,13 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
             Visited += Name + ',';
         Observer.Observe('enumeration order', Visited);
         Directory.Delete(Path, true);
-        Observer.Finish();
+        Observer.Expect('missing exists', 'No');
+        Observer.Expect('created exists', 'Yes');
+        Observer.Ignore('count');
+        Observer.Ignore('fullname is path + / + name');
+        Observer.Ignore('names (fixed order)');
+        Observer.Ignore('enumeration order');
+        Observer.Verify();
     end;
 
     [Test]
@@ -154,6 +160,9 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Observer.Observe('columns', Result);
         Columns.DeleteAll();
         TenantWebService.Delete(true);
-        Observer.Finish();
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('metadata is null', 'No');
+        Observer.Expect('columns', '[99400|1|Id|Yes][99400|2|RowName|Yes][99400|3|Amount|Yes][99400|9||Yes]');
+        Observer.Verify();
     end;
 }

@@ -329,6 +329,15 @@ codeunit 61286 "LT S Media Files"
         Row.DeleteAll();
         Cleanup(Src);
         Cleanup(SrcUpper);
-        Observer.Finish();
+        Observer.Expect('file length', '632');
+        Observer.Expect('media hasvalue', 'Yes');
+        Observer.Expect('media tenant', 'description=[Cronus picture] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
+        Observer.Expect('media file name', '<tmp><name>');
+        Observer.Expect('media upper tenant', 'description=[Upper case extension] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
+        Observer.Expect('mediaset count', '1');
+        Observer.Expect('mediaset item 1 tenant', 'description=[Item picture] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
+        Observer.Ignore('mediaset file name');
+        Observer.Expect('mediaset count after get', '1');
+        Observer.Verify();
     end;
 }

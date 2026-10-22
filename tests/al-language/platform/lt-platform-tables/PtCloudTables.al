@@ -291,7 +291,12 @@ codeunit 67107 "LT PT Cloud Tables"
         Observer.Observe('with mediaset', Format(WithMediaSet));
         Observer.Observe('with blob', Format(WithBlob));
         Observer.Observe('codes', Codes);
-        Observer.Finish();
+        Observer.Expect('count', '46');
+        Observer.Expect('with media', '20');
+        Observer.Expect('with mediaset', '6');
+        Observer.Expect('with blob', '20');
+        Observer.Expect('codes', '1305-1-DEFAULT.PNG,1306-1-DEFAULT.PNG,1307-1-DEFAULT.PNG,1307-1-PHONE.PNG,1309-1-DEFAULT.PNG,APPLICATIONCOUNTRY,ASSISTEDSETUPDONE-NOTEXT-400PX.PNG,ASSISTEDSETUPINFO-NOTEXT.PNG,ASSISTEDSETUP-NOTEXT-400PX.PNG,CANCELED INVOICE,COPILOTNOTAVAILABLE.PNG,DRAFT INVOICE,EXCELTEMPLATEAGEDACCOUNTSPAYABLE.XLTM,EXCELTEMPLATEAGEDACCOUNTSRECEIVABLE.XLTM,EXCELTEMPLATEBALANCESHEET.XLTM,EXCELTEMPLATECASHFLOWSTATEMENT.XLTM,EXCELTEMPLATEINCOMESTATEMENT.XLTM,EXCELTEMPLATERETAINEDEARNINGS.XLTM,EXCELTEMPLATETRIALBALANCE.XLTM,EXTERNALSYNC-NOTEXT.PNG,FIRSTINVOICE1.PNG,FIRSTINVOICE2.PNG,FIRSTINVOICE3.PNG,FIRSTINVOICESPLASH.PNG,IMAGEANALYSIS-SETUP-NOTEXT.PNG,INVOICING - SALESMAIL.HTML,LATEPAYMENTSTANDARDMODEL.TXT,OUTLOOKADDINILLUSTRATION.PNG,OVERDUE INVOICE,PAID INVOICE,PAYMENT SERVICE - MICROSOFT-LOGO.PNG,PAYMENT SERVICE - PAYPAL-LOGO.PNG,PAYMENT SERVICE - WORLDPAY-LOGO.PNG,POWERBI-OPTIN-480PX.PNG,QUOTE,SOCIAL - FACEBOOK.PNG,SOCIAL - INSTAGRAM.PNG,SOCIAL - LINKEDIN.PNG,SOCIAL - PINTEREST.PNG,SOCIAL - TWITTER.PNG,SOCIAL - YELP.PNG,SOCIAL - YOUTUBE.PNG,TEAMSAPPILLUSTRATION.PNG,UNPAID INVOICE,WHATSNEWWIZARD-BANNER-FIRST.PNG,WHATSNEWWIZARD-BANNER-SECOND.PNG,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,7 +344,21 @@ codeunit 67107 "LT PT Cloud Tables"
         Observer.Observe('count mine', Format(MediaResources.Count()));
         MediaResources.DeleteAll(true);
         Observer.Observe('count mine after deleteall', Format(MediaResources.Count()));
-        Observer.Finish();
+        Observer.Expect('get missing', 'No');
+        Observer.Expect('media hasvalue before insert', 'Yes');
+        Observer.Expect('insert(true)', 'Yes');
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('media hasvalue', 'Yes');
+        Observer.Expect('tenant media', 'no tenant media row');
+        Observer.Expect('get lower case', 'Yes');
+        Observer.Expect('blob insert(true)', 'Yes');
+        Observer.Expect('blob hasvalue without calcfields', 'Yes');
+        Observer.Expect('blob text', '{"blob":"text"}');
+        Observer.Expect('blob media hasvalue', 'No');
+        Observer.Expect('insert duplicate', 'No');
+        Observer.Expect('count mine', '2');
+        Observer.Expect('count mine after deleteall', '0');
+        Observer.Verify();
     end;
 
     local procedure QxSelectionRows(): Text
@@ -401,7 +420,15 @@ codeunit 67107 "LT PT Cloud Tables"
                 if Selection.Get(1306, '', BlankGuid) then
                     Selection.Delete();
         end;
-        Observer.Finish();
+        Observer.Expect('rows', '[1302||Yes|StandardSalesProFormaInv.docx|No][1303||Yes|StandardDraftSalesInvoiceBlue.docx|No][1304||Yes|StandardSalesQuoteBlue.docx|No][1306||Yes|StandardSalesInvoiceBlueSimple.docx|No]');
+        Observer.Expect('get 1302 blank company', 'Yes');
+        Observer.Expect('get 1302 this company', 'No');
+        Observer.Expect('report layout list 1306', 'StandardSalesInvoice.docx|Word,StandardSalesInvoice.rdlc|RDLC,StandardSalesInvoiceBlueSimple.docx|Word,StandardSalesInvoiceBlueSimpleThemable.docx|Word,StandardSalesInvoiceDefEmail.docx|Word,StandardSalesInvoiceVatSpec.docx|Word,');
+        Observer.Expect('had 1306 row', 'Yes');
+        Observer.Expect('insert(true) 1306', 'No');
+        Observer.Expect('modify(true) 1306', 'Yes');
+        Observer.Expect('rows after', '[1302||Yes|StandardSalesProFormaInv.docx|No][1303||Yes|StandardDraftSalesInvoiceBlue.docx|No][1304||Yes|StandardSalesQuoteBlue.docx|No][1306||Yes|StandardSalesInvoice.docx|No]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -451,6 +478,17 @@ codeunit 67107 "LT PT Cloud Tables"
         InS.ReadText(Txt);
         Observer.Observe('after modify', EdmType.Description + '|' + Txt);
         Observer.Observe('delete', Format(EdmType.Delete()));
-        Observer.Finish();
+        Observer.Expect('fresh count', '6');
+        Observer.Expect('fresh keys', 'BOOKINGSDATE,DIMENSION,DOCUMENTLINEOBJECTDETAILS,ITEM-UOM,ITEM-UOM-CONVERSION,POSTALADDRESS,');
+        Observer.Expect('write permission', 'Yes');
+        Observer.Expect('get missing', 'No');
+        Observer.Expect('insert(true)', 'Yes');
+        Observer.Expect('get', 'Yes');
+        Observer.Expect('edm xml hasvalue', 'Yes');
+        Observer.Expect('edm xml text', '<ComplexType Name="ltqx"><Property Name="a" Type="Edm.String" /></ComplexType>');
+        Observer.Expect('modify(true)', 'Yes');
+        Observer.Ignore('after modify');
+        Observer.Expect('delete', 'Yes');
+        Observer.Verify();
     end;
 }

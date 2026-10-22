@@ -346,7 +346,24 @@ codeunit 69185 "PX Enum Probe"
         asserterror PxRow.Get('A', Int);
         Observer.ObserveError('px row integer second key field');
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('integer found', 'Yes');
+        Observer.Expect('integer declared ordinal, no row|text', 'The LT QX Enum First Row does not exist. Identification fields and values: Status=''Dos'',No.=''P9''');
+        Observer.Expect('integer declared ordinal, no row|code', 'DB:RecordNotFound');
+        Observer.Expect('integer ordinal the enum lacks|text', 'The LT QX Enum First Row does not exist. Identification fields and values: Status=''7'',No.=''P1''');
+        Observer.Expect('integer ordinal the enum lacks|code', 'DB:RecordNotFound');
+        Observer.Expect('integer literal|text', 'The LT QX Enum First Row does not exist. Identification fields and values: Status=''Uno'',No.=''P1''');
+        Observer.Expect('integer literal|code', 'DB:RecordNotFound');
+        Observer.Expect('option|text', 'The LT QX Enum First Row does not exist. Identification fields and values: Status=''Uno'',No.=''P1''');
+        Observer.Expect('option|code', 'DB:RecordNotFound');
+        Observer.Expect('other enum ordinal the key enum lacks|text', 'The LT QX Enum First Row does not exist. Identification fields and values: Status=''Seven'',No.=''P1''');
+        Observer.Expect('other enum ordinal the key enum lacks|code', 'DB:RecordNotFound');
+        Observer.Expect('other enum declared ordinal|text', 'The LT QX Enum First Row does not exist. Identification fields and values: Status=''One'',No.=''P1''');
+        Observer.Expect('other enum declared ordinal|code', 'DB:RecordNotFound');
+        Observer.Expect('own enum|text', 'The LT QX Enum First Row does not exist. Identification fields and values: Status=''Nueve'',No.=''P1''');
+        Observer.Expect('own enum|code', 'DB:RecordNotFound');
+        Observer.Expect('px row integer second key field|text', 'The PX Row does not exist. Identification fields and values: Code=''A'',Kind=''Nueve''');
+        Observer.Expect('px row integer second key field|code', 'DB:RecordNotFound');
+        Observer.Verify();
     end;
 }
 

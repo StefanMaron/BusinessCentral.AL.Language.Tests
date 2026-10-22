@@ -624,7 +624,23 @@ codeunit 72515 "LT SyT Control Flow"
         for D := 19011201D to 19011203D do
             Count += 1;
         QxObserver.Observe('date literal bounds', Format(Count) + '|' + Format(D, 0, 9));
-        QxObserver.Finish();
+        QxObserver.Expect('month and year boundary', 'count=4 first=1902-12-30,1902-12-31,1903-01-01,1903-01-02, after=1903-01-02');
+        QxObserver.Expect('downto', 'count=5 first=2024-01-03,2024-01-02,2024-01-01,2023-12-31,2023-12-30, after=2023-12-30');
+        QxObserver.Expect('leap day', 'count=4 first=2024-02-27,2024-02-28,2024-02-29,2024-03-01, after=2024-03-01');
+        QxObserver.Expect('empty range to', 'count=0 first= after=2024-01-05');
+        QxObserver.Expect('empty range downto', 'count=0 first= after=2024-01-01');
+        QxObserver.Expect('one day', 'count=1 first=2024-01-01, after=2024-01-01');
+        QxObserver.Expect('0D to 0D', 'count=1 first=, after=');
+        QxObserver.Expect('0D to a date|text', 'The date is not valid.');
+        QxObserver.Expect('0D to a date|code', 'DateInvalid');
+        QxObserver.Expect('date downto 0D|text', 'The date is not valid.');
+        QxObserver.Expect('date downto 0D|code', 'DateInvalid');
+        QxObserver.Expect('to a closing date', 'count=2 first=2023-12-30,2023-12-31, after=2024-01-01');
+        QxObserver.Expect('from a closing date|text', 'The operation cannot be performed on a closing date value.');
+        QxObserver.Expect('from a closing date|code', 'ClosingDateOperation');
+        QxObserver.Expect('date literals through a procedure', 'count=423 first=2023-12-01,2023-12-02,2023-12-03,2023-12-04,2023-12-05,2023-12-06, after=2025-01-26');
+        QxObserver.Expect('date literal bounds', '3|1901-12-03');
+        QxObserver.Verify();
     end;
 
 }

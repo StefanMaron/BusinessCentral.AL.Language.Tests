@@ -486,7 +486,26 @@ codeunit 78402 "LT AG XP Import"
         QxObserveExport('layout+actions export instance', Xmlport::"LT QX XP RP Layout Actions");
         QxObserveExport('layout export instance', Xmlport::"LT QX XP RP Layout Only");
         QxObserveExport('actions export instance', Xmlport::"LT QX XP RP Actions Only");
-        Observer.Finish();
+        Observer.Expect('layout+actions static ok', 'Yes');
+        Observer.Expect('layout+actions static rows', '1:seed-one:Yes,2:seed-two:No,10:ten:No,');
+        Observer.Expect('layout+actions instance ok', 'Yes');
+        Observer.Expect('layout+actions instance rows', '1:seed-one:Yes,2:seed-two:No,11:eleven:No,');
+        Observer.Expect('layout static ok', 'Yes');
+        Observer.Expect('layout static rows', '1:seed-one:Yes,2:seed-two:No,12:twelve:No,');
+        Observer.Expect('layout instance ok', 'Yes');
+        Observer.Expect('layout instance rows', '1:seed-one:Yes,2:seed-two:No,13:thirteen:No,');
+        Observer.Expect('actions static ok', 'Yes');
+        Observer.Expect('actions static rows', '1:seed-one:Yes,2:seed-two:No,14:fourteen:No,');
+        Observer.Expect('actions instance ok', 'Yes');
+        Observer.Expect('actions instance rows', '1:seed-one:Yes,2:seed-two:No,15:fifteen:No,');
+        Observer.Expect('layout+actions export static', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row>|    <Id>1</Id>|    <Name>seed-one</Name>|  </Row>|  <Row>|    <Id>2</Id>|    <Name>seed-two</Name>|  </Row>|</Root>|');
+        Observer.Expect('layout+actions export instance ok', 'Yes');
+        Observer.Expect('layout+actions export instance text', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row>|    <Id>1</Id>|    <Name>seed-one</Name>|  </Row>|  <Row>|    <Id>2</Id>|    <Name>seed-two</Name>|  </Row>|</Root>|');
+        Observer.Expect('layout export instance ok', 'Yes');
+        Observer.Expect('layout export instance text', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row>|    <Id>1</Id>|    <Name>seed-one</Name>|  </Row>|  <Row>|    <Id>2</Id>|    <Name>seed-two</Name>|  </Row>|</Root>|');
+        Observer.Expect('actions export instance ok', 'Yes');
+        Observer.Expect('actions export instance text', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row>|    <Id>1</Id>|    <Name>seed-one</Name>|  </Row>|  <Row>|    <Id>2</Id>|    <Name>seed-two</Name>|  </Row>|</Root>|');
+        Observer.Verify();
     end;
 
     // Item 2: Format = Xml with a table element as the schema root (XmlName differs from the table name), on import: one element, the same
@@ -508,7 +527,29 @@ codeunit 78402 "LT AG XP Import"
         QxClearSetup();
         QxObserveSetupImport('plain one element', Xmlport::"LT QX XP Root Table Plain", QxSetupXml('QxSetup', '2014'), false);
         QxClearSetup();
-        Observer.Finish();
+        Observer.Expect('one element instance ok', 'Yes');
+        Observer.Expect('one element instance rows', '[|2008|2008-01-01|VAT|No|GBP||Extended]');
+        Observer.Expect('again with the row there ok', 'No');
+        Observer.Expect('again with the row there error', 'The record in table LT QX XP Setup already exists. Identification fields and values: Primary Key=''''');
+        Observer.Expect('again with the row there code', 'DB:RecordExists');
+        Observer.Expect('again with the row there rows', '[|2008|2008-01-01|VAT|No|GBP||Extended]');
+        Observer.Expect('one element static ok', 'Yes');
+        Observer.Expect('one element static rows', '[|2010|2010-01-01|VAT|No|GBP||Extended]');
+        Observer.Expect('other root name ok', 'No');
+        Observer.Expect('other root name error', 'Imported XML cannot validate with the schema: The ''Other'' element is not declared.');
+        Observer.Expect('other root name code', 'XmlPortInvalidXml');
+        Observer.Expect('other root name rows', '');
+        Observer.Expect('two root elements ok', 'No');
+        Observer.Expect('two root elements error', 'There are multiple root elements. Line 1, position 202.');
+        Observer.Expect('two root elements code', 'XmlPortImport:Xml');
+        Observer.Expect('two root elements rows', '');
+        Observer.Expect('empty root element ok', 'No');
+        Observer.Expect('empty root element error', 'Imported XML cannot validate with the schema: The element ''QxSetup'' has incomplete content. List of possible elements expected: ''StartingYear''.');
+        Observer.Expect('empty root element code', 'XmlPortInvalidXml');
+        Observer.Expect('empty root element rows', '');
+        Observer.Expect('plain one element ok', 'Yes');
+        Observer.Expect('plain one element rows', '[|2014|2014-01-01|VAT|No|GBP||Extended]');
+        Observer.Verify();
     end;
 
     // Item 2, export: the same ports with no row, one row and two rows.
@@ -528,12 +569,39 @@ codeunit 78402 "LT AG XP Import"
         Setup.Insert();
         QxObserveExport('one row', Xmlport::"LT QX XP Root Table");
         QxObserveExport('one row plain', Xmlport::"LT QX XP Root Table Plain");
+        QxClearSetup();
+        Observer.Expect('no row ok', 'Yes');
+        Observer.Expect('no row text', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<QxSetup>|  <StartingYear>0</StartingYear>|  <CompanyType>VAT</CompanyType>|  <AdvancedSetup>No</AdvancedSetup>|  <CurrencyCode />|  <AdditionalCurrency />|  <DataType>Standard</DataType>|</QxSetup>|');
+        Observer.Expect('one row ok', 'Yes');
+        Observer.Expect('one row text', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<QxSetup>|  <StartingYear>2008</StartingYear>|  <CompanyType>VAT</CompanyType>|  <AdvancedSetup>No</AdvancedSetup>|  <CurrencyCode>GBP</CurrencyCode>|  <AdditionalCurrency />|  <DataType>Extended</DataType>|</QxSetup>|');
+        Observer.Expect('one row plain ok', 'Yes');
+        Observer.Expect('one row plain text', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<QxSetup>|  <StartingYear>2008</StartingYear>|  <CompanyType>VAT</CompanyType>|  <AdvancedSetup>No</AdvancedSetup>|  <CurrencyCode>GBP</CurrencyCode>|  <AdditionalCurrency />|  <DataType>Extended</DataType>|</QxSetup>|');
+        Observer.Verify();
+    end;
+
+    // Item 2, export of two rows: the port writes one root element per row (the document has two roots).
+    [Test]
+    procedure QX_RootTableElement_Export_TwoRows()
+    var
+        Setup: Record "LT QX XP Setup";
+    begin
+        QxClearSetup();
+        Setup."Starting Year" := 2008;
+        Setup."Working Date" := DMY2Date(1, 1, 2008);
+        Setup."Company Type" := Setup."Company Type"::VAT;
+        Setup."Currency Code" := 'GBP';
+        Setup."Data Type" := Setup."Data Type"::Extended;
+        Setup.Insert();
         Setup."Primary Key" := 'B';
         Setup.Insert();
         QxObserveExport('two rows', Xmlport::"LT QX XP Root Table");
         QxObserveExport('two rows plain', Xmlport::"LT QX XP Root Table Plain");
         QxClearSetup();
-        Observer.Finish();
+        Observer.Expect('two rows ok', 'Yes');
+        Observer.Expect('two rows text', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<QxSetup>|  <StartingYear>2008</StartingYear>|  <CompanyType>VAT</CompanyType>|  <AdvancedSetup>No</AdvancedSetup>|  <CurrencyCode>GBP</CurrencyCode>|  <AdditionalCurrency />|  <DataType>Extended</DataType>|</QxSetup>|<QxSetup>|  <StartingYear>2008</StartingYear>|  <CompanyType>VAT</CompanyType>|  <AdvancedSetup>No</AdvancedSetup>|  <CurrencyCode>GBP</CurrencyCode>|  <AdditionalCurrency />|  <DataType>Extended</DataType>|</QxSetup>|');
+        Observer.Expect('two rows plain ok', 'Yes');
+        Observer.Expect('two rows plain text', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<QxSetup>|  <StartingYear>2008</StartingYear>|  <CompanyType>VAT</CompanyType>|  <AdvancedSetup>No</AdvancedSetup>|  <CurrencyCode>GBP</CurrencyCode>|  <AdditionalCurrency />|  <DataType>Extended</DataType>|</QxSetup>|<QxSetup>|  <StartingYear>2008</StartingYear>|  <CompanyType>VAT</CompanyType>|  <AdvancedSetup>No</AdvancedSetup>|  <CurrencyCode>GBP</CurrencyCode>|  <AdditionalCurrency />|  <DataType>Extended</DataType>|</QxSetup>|');
+        Observer.Verify();
     end;
 
     // Item 3, in an import: a field element whose field has TableRelation = "Windows Language" where("Globally Enabled" = const(true),
@@ -557,7 +625,15 @@ codeunit 78402 "LT AG XP Import"
         Observer.Observe('999999 rows', QxLangRows());
         LangSetup.DeleteAll();
         Commit();
-        Observer.Finish();
+        Observer.Expect('1033 ok', 'Yes');
+        Observer.Expect('1033 rows', '[|1033|English (United States)]');
+        Observer.Expect('1031 ok', 'Yes');
+        Observer.Expect('1031 rows', '[|1031|German (Germany)]');
+        Observer.Expect('999999 ok', 'No');
+        Observer.Expect('999999 error', 'The field Data Language ID of table LT QX XP Lang Setup contains a value (999999) that cannot be found in the related table (Windows Language).');
+        Observer.Expect('999999 code', 'DB:NothingInsideFilter');
+        Observer.Expect('999999 rows', '');
+        Observer.Verify();
     end;
 
     local procedure QxLangRows(): Text
@@ -618,7 +694,31 @@ codeunit 78402 "LT AG XP Import"
         QxObserveCurrencyImport('option by name', 'AED;784;0.25;0.01;Up;100;No;02:02' + Lf);
         QxObserveCurrencyImport('too many columns', 'AED;784;0.25;0.01;0;100;0;02:02;extra' + Lf);
         QxObserveCurrencyImport('empty line between', 'AED;784;0.25;0.01;0;100;0;02:02' + Lf + Lf + 'AUD;036;1;0.01' + Lf);
-        Observer.Finish();
+        Observer.Ignore('full and short ok');
+        Observer.Ignore('full and short error');
+        Observer.Ignore('full and short code');
+        Observer.Ignore('full and short rows');
+        Observer.Expect('no last line end ok', 'Yes');
+        Observer.Expect('no last line end rows', '[AED|784|0.25|0.01|Down|100|Yes|02:05|No]');
+        Observer.Expect('crlf ok', 'Yes');
+        Observer.Expect('crlf rows', '[AED|784|0.25|0.01|Nearest|100|No|02:02|No][AUD|036|1|0.01|Nearest|0|No||No]');
+        Observer.Expect('empty text column ok', 'No');
+        Observer.Expect('empty text column error', 'The value "" can''t be evaluated into type Decimal.');
+        Observer.Expect('empty text column code', 'Evaluate');
+        Observer.Expect('empty text column rows', '');
+        Observer.Expect('comma decimal ok', 'No');
+        Observer.Expect('comma decimal error', 'The value "0,25" can''t be evaluated into type Decimal.');
+        Observer.Expect('comma decimal code', 'Evaluate');
+        Observer.Expect('comma decimal rows', '');
+        Observer.Expect('option by name ok', 'Yes');
+        Observer.Expect('option by name rows', '[AED|784|0.25|0.01|Up|100|No|02:02|No]');
+        Observer.Expect('too many columns ok', 'Yes');
+        Observer.Expect('too many columns rows', '[AED|784|0.25|0.01|Nearest|100|No|02:02|No]');
+        Observer.Ignore('empty line between ok');
+        Observer.Ignore('empty line between error');
+        Observer.Ignore('empty line between code');
+        Observer.Ignore('empty line between rows');
+        Observer.Verify();
     end;
 }
 

@@ -228,7 +228,20 @@ codeunit 98024 "LT QX Pdf Tests"
         Rpt.UseRequestPage(false);
         Rpt.Run();
         Observer.Observe('run log', TakeLog());
-        Observer.Finish();
+        Observer.Expect('variable saved', 'No');
+        Observer.Expect('variable last error', 'Report 98022 is a processing-only report. Output cannot be rendered and saved to a file.');
+        Observer.Expect('variable file', 'no file');
+        Observer.Expect('variable log', '');
+        Observer.Expect('variable with view saved', 'No');
+        Observer.Expect('variable with view last error', 'Report 98022 is a processing-only report. Output cannot be rendered and saved to a file.');
+        Observer.Expect('variable with view file', 'no file');
+        Observer.Expect('variable with view log', '');
+        Observer.Expect('static saved', 'No');
+        Observer.Expect('static last error', 'Report 98022 is a processing-only report. Output cannot be rendered and saved to a file.');
+        Observer.Expect('static file', 'no file');
+        Observer.Expect('static log', '');
+        Observer.Expect('run log', 'c pre,c row 1,c row 2,c post,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -254,10 +267,19 @@ codeunit 98024 "LT QX Pdf Tests"
         Name := TemporaryPath() + Format(CreateGuid()) + '.pdf';
         Saved := Rpt.SaveAsPdf(Name);
         Outcome('variable with view', Saved, Name);
-        Observer.Finish();
+        Observer.Expect('variable saved', 'Yes');
+        Observer.Expect('variable last error', '');
+        Observer.Expect('variable file', 'exists, length > 0: Yes');
+        Observer.Expect('variable log', 'a pre,a row 1,a row 2,a post,');
+        Observer.Expect('variable with view saved', 'Yes');
+        Observer.Expect('variable with view last error', '');
+        Observer.Expect('variable with view file', 'exists, length > 0: Yes');
+        Observer.Expect('variable with view log', 'b pre,b row 2,b post,');
+        Observer.Verify();
     end;
 
-    // The DemoTool form: the result of SaveAsPdf unused (an error would fail the test with its text).
+    // The DemoTool form: the result of SaveAsPdf unused. For the ProcessingOnly report it raises the error (asserterror; the code is not
+    // asserted, it was not observed), and no trigger ran.
     [Test]
     procedure QX_SaveAsPdf_ProcessingOnly_ResultUnused()
     var
@@ -269,9 +291,15 @@ codeunit 98024 "LT QX Pdf Tests"
         Rpt.InitializeRequest('u');
         Rpt.UseRequestPage(false);
         Name := TemporaryPath() + Format(CreateGuid()) + '.pdf';
-        Rpt.SaveAsPdf(Name);
-        Outcome('result unused', true, Name);
-        Observer.Finish();
+        asserterror Rpt.SaveAsPdf(Name);
+        Observer.ObserveError('result unused');
+        Observer.Observe('result unused file', FileState(Name));
+        Observer.Observe('result unused log', TakeLog());
+        Observer.Expect('result unused|text', 'Report 98022 is a processing-only report. Output cannot be rendered and saved to a file.');
+        Observer.Ignore('result unused|code');
+        Observer.Expect('result unused file', 'no file');
+        Observer.Expect('result unused log', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -287,6 +315,10 @@ codeunit 98024 "LT QX Pdf Tests"
         Name := TemporaryPath() + Format(CreateGuid()) + '.pdf';
         Rpt.SaveAsPdf(Name);
         Outcome('result unused', true, Name);
-        Observer.Finish();
+        Observer.Expect('result unused saved', 'Yes');
+        Observer.Expect('result unused last error', '');
+        Observer.Expect('result unused file', 'exists, length > 0: Yes');
+        Observer.Expect('result unused log', 'u pre,u row 1,u row 2,u post,');
+        Observer.Verify();
     end;
 }

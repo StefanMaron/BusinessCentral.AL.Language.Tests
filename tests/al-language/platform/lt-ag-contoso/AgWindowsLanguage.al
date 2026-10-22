@@ -107,7 +107,29 @@ codeunit 78400 "LT AG Win Lang"
         Observer.Observe('1033 with both findfirst', Format(WindowsLanguage.FindFirst()));
         WindowsLanguage.SetRange("Language ID", 1031);
         Observer.Observe('1031 with both findfirst', Format(WindowsLanguage.FindFirst()));
-        Observer.Finish();
+        Observer.Expect('1033', 'globally_enabled=Yes stx_file_exist=Yes');
+        Observer.Expect('1031', 'globally_enabled=Yes stx_file_exist=Yes');
+        Observer.Expect('2057', 'globally_enabled=Yes stx_file_exist=Yes');
+        Observer.Expect('1030', 'globally_enabled=Yes stx_file_exist=Yes');
+        Observer.Expect('1036', 'globally_enabled=Yes stx_file_exist=Yes');
+#if BC29PLUS
+        Observer.Expect('globally enabled count', '212');
+#else
+        Observer.Expect('globally enabled count', '208');
+#endif
+#if BC29PLUS
+        Observer.Expect('stx file exist count', '49');
+#else
+        Observer.Expect('stx file exist count', '48');
+#endif
+#if BC29PLUS
+        Observer.Expect('both count', '49');
+#else
+        Observer.Expect('both count', '48');
+#endif
+        Observer.Expect('1033 with both findfirst', 'Yes');
+        Observer.Expect('1031 with both findfirst', 'Yes');
+        Observer.Verify();
     end;
 
     local procedure QxByAbbreviation(Code: Text): Text
@@ -142,7 +164,25 @@ codeunit 78400 "LT AG Win Lang"
         Observer.Observe('ESP', QxByAbbreviation('ESP'));
         Observer.Observe('ESN', QxByAbbreviation('ESN'));
         Observer.Observe('ESO', QxByAbbreviation('ESO'));
-        Observer.Finish();
+        Observer.Expect('BGR', 'count=1 1026|Bulgarian (Bulgaria)|BGR|866|bg-BG');
+        Observer.Expect('CHS', 'count=1 2052|Chinese (China)|CHS|936|zh-CN');
+        Observer.Expect('CSY', 'count=1 1029|Czech (Czechia)|CSY|852|cs-CZ');
+        Observer.Expect('DAN', 'count=1 1030|Danish (Denmark)|DAN|850|da-DK');
+        Observer.Expect('DEA', 'count=1 3079|German (Austria)|DEA|850|de-AT');
+        Observer.Expect('DES', 'count=1 2055|German (Switzerland)|DES|850|de-CH');
+        Observer.Expect('DEU', 'count=1 1031|German (Germany)|DEU|850|de-DE');
+        Observer.Expect('ENA', 'count=1 3081|English (Australia)|ENA|850|en-AU');
+        Observer.Expect('ENC', 'count=1 4105|English (Canada)|ENC|850|en-CA');
+        Observer.Expect('ENG', 'count=1 2057|English (United Kingdom)|ENG|850|en-GB');
+        Observer.Expect('ENI', 'count=1 6153|English (Ireland)|ENI|850|en-IE');
+        Observer.Expect('ENU', 'count=1 1033|English (United States)|ENU|437|en-US');
+        Observer.Expect('ENZ', 'count=1 5129|English (New Zealand)|ENZ|850|en-NZ');
+        Observer.Expect('ESM', 'count=1 2058|Spanish (Mexico)|ESM|850|es-MX');
+        Observer.Expect('ENP', 'count=1 13321|English (Philippines)|ENP|437|en-PH');
+        Observer.Expect('ESP', 'count=1 1034|Spanish (Spain, Sort Order=tradnl)|ESP|850|es-ES');
+        Observer.Expect('ESN', 'count=1 3082|Spanish (Spain)|ESN|850|es-ES');
+        Observer.Expect('ESO', 'count=1 9226|Spanish (Colombia)|ESO|850|es-CO');
+        Observer.Verify();
     end;
 
     [Test]
@@ -166,7 +206,25 @@ codeunit 78400 "LT AG Win Lang"
         Observer.Observe('JPN', QxByAbbreviation('JPN'));
         Observer.Observe('KOR', QxByAbbreviation('KOR'));
         Observer.Observe('LTH', QxByAbbreviation('LTH'));
-        Observer.Finish();
+        Observer.Expect('ESR', 'count=1 10250|Spanish (Peru)|ESR|850|es-PE');
+        Observer.Expect('ESS', 'count=1 11274|Spanish (Argentina)|ESS|850|es-AR');
+        Observer.Expect('ELL', 'count=1 1032|Greek (Greece)|ELL|737|el-GR');
+        Observer.Expect('ETI', 'count=1 1061|Estonian (Estonia)|ETI|775|et-EE');
+        Observer.Expect('FIN', 'count=1 1035|Finnish (Finland)|FIN|850|fi-FI');
+        Observer.Expect('FRA', 'count=1 1036|French (France)|FRA|850|fr-FR');
+        Observer.Expect('FRB', 'count=1 2060|French (Belgium)|FRB|850|fr-BE');
+        Observer.Expect('FRC', 'count=1 3084|French (Canada)|FRC|850|fr-CA');
+        Observer.Expect('FRS', 'count=1 4108|French (Switzerland)|FRS|850|fr-CH');
+        Observer.Expect('HRV', 'count=1 1050|Croatian (Croatia)|HRV|852|hr-HR');
+        Observer.Expect('HUN', 'count=1 1038|Hungarian (Hungary)|HUN|852|hu-HU');
+        Observer.Expect('IND', 'count=1 1057|Indonesian (Indonesia)|IND|850|id-ID');
+        Observer.Expect('ISL', 'count=1 1039|Icelandic (Iceland)|ISL|850|is-IS');
+        Observer.Expect('ITA', 'count=1 1040|Italian (Italy)|ITA|850|it-IT');
+        Observer.Expect('ITS', 'count=1 2064|Italian (Switzerland)|ITS|850|it-CH');
+        Observer.Expect('JPN', 'count=1 1041|Japanese (Japan)|JPN|932|ja-JP');
+        Observer.Expect('KOR', 'count=1 1042|Korean (South Korea)|KOR|949|ko-KR');
+        Observer.Expect('LTH', 'count=1 1063|Lithuanian (Lithuania)|LTH|775|lt-LT');
+        Observer.Verify();
     end;
 
     [Test]
@@ -190,6 +248,24 @@ codeunit 78400 "LT AG Win Lang"
         Observer.Observe('THA', QxByAbbreviation('THA'));
         Observer.Observe('TRK', QxByAbbreviation('TRK'));
         Observer.Observe('UKR', QxByAbbreviation('UKR'));
-        Observer.Finish();
+        Observer.Expect('LVI', 'count=1 1062|Latvian (Latvia)|LVI|775|lv-LV');
+        Observer.Expect('MSL', 'count=1 1086|Malay (Malaysia)|MSL|850|ms-MY');
+        Observer.Expect('NLD', 'count=1 1043|Dutch (Netherlands)|NLD|850|nl-NL');
+        Observer.Expect('NLB', 'count=1 2067|Dutch (Belgium)|NLB|850|nl-BE');
+        Observer.Expect('NON', 'count=1 2068|Norwegian Nynorsk (Norway)|NON|850|nn-NO');
+        Observer.Expect('NOR', 'count=1 1044|Norwegian Bokmål (Norway)|NOR|850|nb-NO');
+        Observer.Expect('PLK', 'count=1 1045|Polish (Poland)|PLK|852|pl-PL');
+        Observer.Expect('PTG', 'count=1 2070|Portuguese (Portugal)|PTG|850|pt-PT');
+        Observer.Expect('PTB', 'count=1 1046|Portuguese (Brazil)|PTB|850|pt-BR');
+        Observer.Expect('ROM', 'count=1 1048|Romanian (Romania)|ROM|852|ro-RO');
+        Observer.Expect('RUS', 'count=1 1049|Russian (Russia)|RUS|866|ru-RU');
+        Observer.Expect('SRP', 'count=1 11290|Serbian (Latin, Montenegro)|SRP|852|sr-Latn-ME');
+        Observer.Expect('SKY', 'count=1 1051|Slovak (Slovakia)|SKY|852|sk-SK');
+        Observer.Expect('SLV', 'count=1 1060|Slovenian (Slovenia)|SLV|852|sl-SI');
+        Observer.Expect('SVE', 'count=1 1053|Swedish (Sweden)|SVE|850|sv-SE');
+        Observer.Expect('THA', 'count=1 1054|Thai (Thailand)|THA|874|th-TH');
+        Observer.Expect('TRK', 'count=1 1055|Turkish (Türkiye)|TRK|857|tr-TR');
+        Observer.Expect('UKR', 'count=1 1058|Ukrainian (Ukraine)|UKR|866|uk-UA');
+        Observer.Verify();
     end;
 }
