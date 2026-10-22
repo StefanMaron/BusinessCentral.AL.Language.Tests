@@ -10,6 +10,10 @@
 //   per field in document order, before OnInsert. Elements out of schema order fail the import after the rows before them were inserted.
 //   Writer RG: table 87927, xmlports 87928 to 87931, test procedures RG_* (TableRelation on a fieldattribute and a fieldelement, FieldValidate
 //   left out / No / Yes, DefaultFieldsValidation true / false, AutoSave on / off; existing, missing and blank related value).
+//   Facts (CI, writer RG): the TableRelation is checked only when the node is validated (FieldValidate = Yes, or left out under
+//   DefaultFieldsValidation = true), at assignment, before OnValidate and before OnBeforeInsertRecord: DB:PrimRecordNotFound, no row; AutoSave
+//   off gives the same error. A node that is not validated stores the missing value; Insert never checks it. A blank value never fails; a blank
+//   fieldelement still runs OnValidate, a blank fieldattribute runs no OnValidate even with FieldValidate = Yes.
 // BC versions: 27, 28, 29
 
 table 81670 "LT BJ Xv Rel"
@@ -621,55 +625,127 @@ codeunit 81676 "LT BJ Xv Tests"
     procedure RG_FieldAttribute_Relation_DfvTrue_AutoSaveOn()
     begin
         RgProbe(Xmlport::"LT RG Xv True Save", true);
-        Observer.Finish();
+        Observer.Expect('AttrDef R1', 'Yes |  |  | val AttrDef=R1;before insert 1:R1:::::;insert 1; | 1:R1:::::,');
+        Observer.Expect('AttrDef NOPE', 'No | The field AttrDef of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('AttrDef blank', 'Yes |  |  | before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Expect('AttrNo R1', 'Yes |  |  | before insert 1::R1::::;insert 1; | 1::R1::::,');
+        Observer.Expect('AttrNo NOPE', 'Yes |  |  | before insert 1::NOPE::::;insert 1; | 1::NOPE::::,');
+        Observer.Expect('AttrNo blank', 'Yes |  |  | before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Expect('AttrYes R1', 'Yes |  |  | val AttrYes=R1;before insert 1:::R1:::;insert 1; | 1:::R1:::,');
+        Observer.Expect('AttrYes NOPE', 'No | The field AttrYes of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('AttrYes blank', 'Yes |  |  | before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RG_FieldElement_Relation_DfvTrue_AutoSaveOn()
     begin
         RgProbe(Xmlport::"LT RG Xv True Save", false);
-        Observer.Finish();
+        Observer.Expect('ElDef R1', 'Yes |  |  | val ElDef=R1;before insert 1::::R1::;insert 1; | 1::::R1::,');
+        Observer.Expect('ElDef NOPE', 'No | The field ElDef of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('ElDef blank', 'Yes |  |  | val ElDef=;before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Expect('ElNo R1', 'Yes |  |  | before insert 1:::::R1:;insert 1; | 1:::::R1:,');
+        Observer.Expect('ElNo NOPE', 'Yes |  |  | before insert 1:::::NOPE:;insert 1; | 1:::::NOPE:,');
+        Observer.Expect('ElNo blank', 'Yes |  |  | before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Expect('ElYes R1', 'Yes |  |  | val ElYes=R1;before insert 1::::::R1;insert 1; | 1::::::R1,');
+        Observer.Expect('ElYes NOPE', 'No | The field ElYes of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('ElYes blank', 'Yes |  |  | val ElYes=;before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RG_FieldAttribute_Relation_DfvFalse_AutoSaveOn()
     begin
         RgProbe(Xmlport::"LT RG Xv False Save", true);
-        Observer.Finish();
+        Observer.Expect('AttrDef R1', 'Yes |  |  | before insert 1:R1:::::;insert 1; | 1:R1:::::,');
+        Observer.Expect('AttrDef NOPE', 'Yes |  |  | before insert 1:NOPE:::::;insert 1; | 1:NOPE:::::,');
+        Observer.Expect('AttrDef blank', 'Yes |  |  | before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Expect('AttrNo R1', 'Yes |  |  | before insert 1::R1::::;insert 1; | 1::R1::::,');
+        Observer.Expect('AttrNo NOPE', 'Yes |  |  | before insert 1::NOPE::::;insert 1; | 1::NOPE::::,');
+        Observer.Expect('AttrNo blank', 'Yes |  |  | before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Expect('AttrYes R1', 'Yes |  |  | val AttrYes=R1;before insert 1:::R1:::;insert 1; | 1:::R1:::,');
+        Observer.Expect('AttrYes NOPE', 'No | The field AttrYes of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('AttrYes blank', 'Yes |  |  | before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RG_FieldElement_Relation_DfvFalse_AutoSaveOn()
     begin
         RgProbe(Xmlport::"LT RG Xv False Save", false);
-        Observer.Finish();
+        Observer.Expect('ElDef R1', 'Yes |  |  | before insert 1::::R1::;insert 1; | 1::::R1::,');
+        Observer.Expect('ElDef NOPE', 'Yes |  |  | before insert 1::::NOPE::;insert 1; | 1::::NOPE::,');
+        Observer.Expect('ElDef blank', 'Yes |  |  | before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Expect('ElNo R1', 'Yes |  |  | before insert 1:::::R1:;insert 1; | 1:::::R1:,');
+        Observer.Expect('ElNo NOPE', 'Yes |  |  | before insert 1:::::NOPE:;insert 1; | 1:::::NOPE:,');
+        Observer.Expect('ElNo blank', 'Yes |  |  | before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Expect('ElYes R1', 'Yes |  |  | val ElYes=R1;before insert 1::::::R1;insert 1; | 1::::::R1,');
+        Observer.Expect('ElYes NOPE', 'No | The field ElYes of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('ElYes blank', 'Yes |  |  | val ElYes=;before insert 1::::::;insert 1; | 1::::::,');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RG_FieldAttribute_Relation_DfvTrue_AutoSaveOff()
     begin
         RgProbe(Xmlport::"LT RG Xv True NoSave", true);
-        Observer.Finish();
+        Observer.Expect('AttrDef R1', 'Yes |  |  | val AttrDef=R1;before insert 1:R1:::::; | ');
+        Observer.Expect('AttrDef NOPE', 'No | The field AttrDef of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('AttrDef blank', 'Yes |  |  | before insert 1::::::; | ');
+        Observer.Expect('AttrNo R1', 'Yes |  |  | before insert 1::R1::::; | ');
+        Observer.Expect('AttrNo NOPE', 'Yes |  |  | before insert 1::NOPE::::; | ');
+        Observer.Expect('AttrNo blank', 'Yes |  |  | before insert 1::::::; | ');
+        Observer.Expect('AttrYes R1', 'Yes |  |  | val AttrYes=R1;before insert 1:::R1:::; | ');
+        Observer.Expect('AttrYes NOPE', 'No | The field AttrYes of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('AttrYes blank', 'Yes |  |  | before insert 1::::::; | ');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RG_FieldElement_Relation_DfvTrue_AutoSaveOff()
     begin
         RgProbe(Xmlport::"LT RG Xv True NoSave", false);
-        Observer.Finish();
+        Observer.Expect('ElDef R1', 'Yes |  |  | val ElDef=R1;before insert 1::::R1::; | ');
+        Observer.Expect('ElDef NOPE', 'No | The field ElDef of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('ElDef blank', 'Yes |  |  | val ElDef=;before insert 1::::::; | ');
+        Observer.Expect('ElNo R1', 'Yes |  |  | before insert 1:::::R1:; | ');
+        Observer.Expect('ElNo NOPE', 'Yes |  |  | before insert 1:::::NOPE:; | ');
+        Observer.Expect('ElNo blank', 'Yes |  |  | before insert 1::::::; | ');
+        Observer.Expect('ElYes R1', 'Yes |  |  | val ElYes=R1;before insert 1::::::R1; | ');
+        Observer.Expect('ElYes NOPE', 'No | The field ElYes of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('ElYes blank', 'Yes |  |  | val ElYes=;before insert 1::::::; | ');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RG_FieldAttribute_Relation_DfvFalse_AutoSaveOff()
     begin
         RgProbe(Xmlport::"LT RG Xv False NoSave", true);
-        Observer.Finish();
+        Observer.Expect('AttrDef R1', 'Yes |  |  | before insert 1:R1:::::; | ');
+        Observer.Expect('AttrDef NOPE', 'Yes |  |  | before insert 1:NOPE:::::; | ');
+        Observer.Expect('AttrDef blank', 'Yes |  |  | before insert 1::::::; | ');
+        Observer.Expect('AttrNo R1', 'Yes |  |  | before insert 1::R1::::; | ');
+        Observer.Expect('AttrNo NOPE', 'Yes |  |  | before insert 1::NOPE::::; | ');
+        Observer.Expect('AttrNo blank', 'Yes |  |  | before insert 1::::::; | ');
+        Observer.Expect('AttrYes R1', 'Yes |  |  | val AttrYes=R1;before insert 1:::R1:::; | ');
+        Observer.Expect('AttrYes NOPE', 'No | The field AttrYes of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('AttrYes blank', 'Yes |  |  | before insert 1::::::; | ');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RG_FieldElement_Relation_DfvFalse_AutoSaveOff()
     begin
         RgProbe(Xmlport::"LT RG Xv False NoSave", false);
-        Observer.Finish();
+        Observer.Expect('ElDef R1', 'Yes |  |  | before insert 1::::R1::; | ');
+        Observer.Expect('ElDef NOPE', 'Yes |  |  | before insert 1::::NOPE::; | ');
+        Observer.Expect('ElDef blank', 'Yes |  |  | before insert 1::::::; | ');
+        Observer.Expect('ElNo R1', 'Yes |  |  | before insert 1:::::R1:; | ');
+        Observer.Expect('ElNo NOPE', 'Yes |  |  | before insert 1:::::NOPE:; | ');
+        Observer.Expect('ElNo blank', 'Yes |  |  | before insert 1::::::; | ');
+        Observer.Expect('ElYes R1', 'Yes |  |  | val ElYes=R1;before insert 1::::::R1; | ');
+        Observer.Expect('ElYes NOPE', 'No | The field ElYes of table LT RG Xv Row contains a value (NOPE) that cannot be found in the related table (LT BJ Xv Rel). | DB:PrimRecordNotFound |  | ');
+        Observer.Expect('ElYes blank', 'Yes |  |  | val ElYes=;before insert 1::::::; | ');
+        Observer.Verify();
     end;
 }
