@@ -20,6 +20,24 @@
       "version": "1.0.0.0"
     },
     {
+      "id": "cd6a4292-f27b-4af9-89bc-15a5956f5c71",
+      "name": "AL Language XApp A",
+      "publisher": "AL Language",
+      "version": "1.0.0.0"
+    },
+    {
+      "id": "c87ced6d-11a6-4ad2-87c7-ac10083d0a2f",
+      "name": "AL Language XApp B",
+      "publisher": "Zulu Probe Publisher",
+      "version": "1.0.0.0"
+    },
+    {
+      "id": "0df0fadc-d339-4b0f-a1d5-51dc51f10900",
+      "name": "AL Language XApp C",
+      "publisher": "Bravo Probe Publisher",
+      "version": "1.0.0.0"
+    },
+    {
       "id": "63ca2fa4-4f03-4f2b-a480-172fef340d3f",
       "name": "System Application",
       "publisher": "Microsoft",
