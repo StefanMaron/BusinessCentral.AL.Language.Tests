@@ -596,6 +596,7 @@ is only a reference.
 | 2068 | AL0117 | Ternary used as a statement (writer QW). |
 | 2069 | AL0122 | Ternary with a Date and an Integer branch, both orders (writer QW). |
 | 2070 | AL0322 | Ternary in a page control's Visible or Editable property (writer QW). |
+| 2071 | AL0196 | Bare and Rec. calls of a method that a table (cross-app fixture A) and a table extension of another app (fixture B) both declare, from a table extension in a third app (writer QY). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

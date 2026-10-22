@@ -273,12 +273,15 @@ jobs:
       runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-bcc60c1c74c72098cfc368de89034051238f4592"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
-      # Dependency apps of al-language, in publish order (an app after the apps it depends on). The three cross-app fixtures
-      # (CONTRIBUTING.md, "Multi-app fixtures") hold no tests: al-language depends on them, and their app ids, names and publishers are
-      # chosen for the cross-app subscriber order probe. Every job that compiles al-language lists them, in this order.
+      # Dependency apps of al-language, in publish order (an app after the apps it depends on). The cross-app fixtures
+      # (CONTRIBUTING.md, "Multi-app fixtures") hold no tests: al-language depends on A, B and C, and their app ids, names and publishers are
+      # chosen for the cross-app subscriber order probe. D depends on A only and nothing depends on D; it is published right after A,
+      # before B, on purpose (subscriber order of apps that do not depend on each other). Every job that compiles al-language lists
+      # them, in this order.
       app_dirs: |
         tests/al-language-internals-fixture
         tests/al-language-xapp-a
+        tests/al-language-xapp-d
         tests/al-language-xapp-b
         tests/al-language-xapp-c
       test_app_dirs:        "tests/al-language"
@@ -369,6 +372,7 @@ jobs:
       app_dirs: |
         tests/al-language-internals-fixture
         tests/al-language-xapp-a
+        tests/al-language-xapp-d
         tests/al-language-xapp-b
         tests/al-language-xapp-c
         tests/al-language
@@ -411,6 +415,7 @@ jobs:
       app_dirs: |
         tests/al-language-internals-fixture
         tests/al-language-xapp-a
+        tests/al-language-xapp-d
         tests/al-language-xapp-b
         tests/al-language-xapp-c
         tests/al-language
@@ -467,6 +472,7 @@ jobs:
       app_dirs: |
         tests/al-language-internals-fixture
         tests/al-language-xapp-a
+        tests/al-language-xapp-d
         tests/al-language-xapp-b
         tests/al-language-xapp-c
         tests/al-language

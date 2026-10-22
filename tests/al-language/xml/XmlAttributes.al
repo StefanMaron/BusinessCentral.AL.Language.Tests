@@ -542,4 +542,50 @@ codeunit 73402 "LT XmT Attributes"
         Observer.Expect('len', '3');
         Observer.Verify();
     end;
+
+    // Writer QZ: the assignment form Attr.Value := x (next to the method form Attr.Value(x)) on an attribute read from an element,
+    // on a created attribute before and after it is added, and on an attribute with a namespace.
+    [Test]
+    procedure QZ_Attribute_ValueAssignment()
+    var
+        E: XmlElement;
+        A: XmlAttribute;
+        B: XmlAttribute;
+        Fresh: XmlAttribute;
+        V: Text;
+    begin
+        E := XmlElement.Create('e');
+        E.SetAttribute('k', '1');
+        E.Attributes().Get('k', A);
+        A.Value := '3';
+        Observer.Observe('own var', A.Value());
+        GA(E, 'k', V);
+        Observer.Observe('element after assign', V + '|' + Str(E));
+        E.Attributes().Get('k', B);
+        B.Value('4');
+        Observer.Observe('first var after method form', A.Value());
+        Observer.Observe('element after method form', Str(E));
+        Fresh := XmlAttribute.Create('f', 'a');
+        Fresh.Value := 'b';
+        Observer.Observe('created', Fresh.Value());
+        E.Add(Fresh);
+        Fresh.Value := 'c';
+        Observer.Observe('created after add', Fresh.Value() + '|' + Str(E));
+        A.Value := '';
+        Observer.Observe('assign empty', '[' + A.Value() + ']|' + Str(E));
+        E.SetAttribute('n', 'urn:q', 'x');
+        E.Attributes().Get('n', 'urn:q', A);
+        A.Value := 'y';
+        GA(E, 'n', 'urn:q', V);
+        Observer.Observe('namespaced', V + '|' + A.Value());
+        Observer.Expect('own var', '3');
+        Observer.Expect('element after assign', '3|<e k="3" />');
+        Observer.Expect('first var after method form', '4');
+        Observer.Expect('element after method form', '<e k="4" />');
+        Observer.Expect('created', 'b');
+        Observer.Expect('created after add', 'c|<e k="4" f="c" />');
+        Observer.Expect('assign empty', '[]|<e k="" f="c" />');
+        Observer.Expect('namespaced', 'y|y');
+        Observer.Verify();
+    end;
 }

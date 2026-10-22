@@ -720,4 +720,113 @@ codeunit 84475 "LT CG Query Leads"
         TempBlob.CreateOutStream(OutS);
         Query.SaveAsJson(Id, OutS);
     end;
+
+    // Writer QZ: a filter() element over a FlowField (fixtures in QzQueryFlowFieldFilter.al).
+    // Headers: Q1 no lines; Q2 one line (5); Q3 two lines (2, 3); Q4 two lines (1, -1).
+    local procedure QzSeed()
+    var
+        H: Record "LT QZ Q Header";
+        L: Record "LT QZ Q Line";
+    begin
+        H.DeleteAll();
+        L.DeleteAll();
+        H."No." := 'Q1';
+        H.Insert();
+        H."No." := 'Q2';
+        H.Insert();
+        H."No." := 'Q3';
+        H.Insert();
+        H."No." := 'Q4';
+        H.Insert();
+        QzLine('Q2', 1, 5);
+        QzLine('Q3', 1, 2);
+        QzLine('Q3', 2, 3);
+        QzLine('Q4', 1, 1);
+        QzLine('Q4', 2, -1);
+    end;
+
+    local procedure QzLine(HeaderNo: Code[20]; LineNo: Integer; Amount: Decimal)
+    var
+        L: Record "LT QZ Q Line";
+    begin
+        L."Header No." := HeaderNo;
+        L."Line No." := LineNo;
+        L.Amount := Amount;
+        L.Insert();
+    end;
+
+    [Test]
+    procedure QZ_FilterElement_FlowField_ColumnFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+        NoLines: Query "LT QZ Q No Lines";
+        Many: Query "LT QZ Q Many Lines";
+        Rows: Text;
+    begin
+        QzSeed();
+        NoLines.Open();
+        while NoLines.Read() do
+            Rows += NoLines.No + ' ';
+        NoLines.Close();
+        Observer.Observe('exist const(false)', Rows);
+        Rows := '';
+        Many.Open();
+        while Many.Read() do
+            Rows += Many.No + ' ';
+        Many.Close();
+        Observer.Observe('count > 1 and sum <> 0', Rows);
+        Rows := '';
+        NoLines.SetRange(HasLines, true);
+        NoLines.Open();
+        while NoLines.Read() do
+            Rows += NoLines.No + ' ';
+        NoLines.Close();
+        Observer.Observe('exist SetRange(true) over const(false)', Rows);
+        Observer.Expect('exist const(false)', 'Q1 ');
+        Observer.Expect('count > 1 and sum <> 0', 'Q3 ');
+        Observer.Expect('exist SetRange(true) over const(false)', 'Q2 Q3 Q4 ');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QZ_FilterElement_FlowField_RunTimeFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Q: Query "LT QZ Q Open Filter";
+        Rows: Text;
+    begin
+        QzSeed();
+        Q.Open();
+        while Q.Read() do
+            Rows += Q.No + ' ';
+        Q.Close();
+        Observer.Observe('no filter', Rows);
+        Rows := '';
+        Q.SetRange(HasLines, true);
+        Q.Open();
+        while Q.Read() do
+            Rows += Q.No + ' ';
+        Q.Close();
+        Observer.Observe('SetRange HasLines true', Rows);
+        Rows := '';
+        Q.SetRange(HasLines);
+        Q.SetFilter(LineSum, '>%1', 2);
+        Q.Open();
+        while Q.Read() do
+            Rows += Q.No + ' ';
+        Q.Close();
+        Observer.Observe('SetFilter LineSum > 2', Rows);
+        Rows := '';
+        Q.SetFilter(LineSum, '0');
+        Q.Open();
+        while Q.Read() do
+            Rows += Q.No + ' ';
+        Q.Close();
+        Observer.Observe('SetFilter LineSum 0', Rows);
+        Observer.Expect('no filter', 'Q1 Q2 Q3 Q4 ');
+        Observer.Expect('SetRange HasLines true', 'Q2 Q3 Q4 ');
+        Observer.Expect('SetFilter LineSum > 2', 'Q2 Q3 ');
+        Observer.Expect('SetFilter LineSum 0', 'Q1 Q4 ');
+        Observer.Verify();
+    end;
 }

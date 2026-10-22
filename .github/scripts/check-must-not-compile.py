@@ -38,6 +38,7 @@ CORPUS_DEPENDENCIES = {
     "AL Language XApp A": ("cd6a4292-f27b-4af9-89bc-15a5956f5c71", "AL Language", "1.0.0.0"),
     "AL Language XApp B": ("c87ced6d-11a6-4ad2-87c7-ac10083d0a2f", "Zulu Probe Publisher", "1.0.0.0"),
     "AL Language XApp C": ("0df0fadc-d339-4b0f-a1d5-51dc51f10900", "Bravo Probe Publisher", "1.0.0.0"),
+    "AL Language XApp D": ("e92be076-de11-44ed-895e-17031341df29", "Mike Probe Publisher", "1.0.0.0"),
 }
 
 

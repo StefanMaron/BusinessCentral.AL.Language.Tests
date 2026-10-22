@@ -389,6 +389,53 @@ codeunit 68042 "W4 CalcFields Tests"
         Observer.Expect('getfilter after setrange', '01/01/20');
         Observer.Verify();
     end;
+
+    // Writer QZ: CalcFormula filter('...') with a quoted literal next to filter operators (fixtures in QzCalcFormulaQuotedFilter.al).
+    // Lines of H1: 'x', '', 'y', 'x|y', 'A*', 'Ab'.
+    [Test]
+    procedure QZ_CalcFormula_QuotedLiteralFilters()
+    var
+        Observer: Codeunit "Probe Observer";
+        Head: Record "LT QZ CF Head";
+        Line: Record "LT QZ CF Line";
+        Names: List of [Text];
+        Name: Text;
+    begin
+        Head.DeleteAll();
+        Line.DeleteAll();
+        Head.Code := 'H1';
+        Head.Insert();
+        Names.Add('x');
+        Names.Add('');
+        Names.Add('y');
+        Names.Add('x|y');
+        Names.Add('A*');
+        Names.Add('Ab');
+        foreach Name in Names do begin
+            Line.Hdr := 'H1';
+            Line.LineNo += 1;
+            Line.Name := CopyStr(Name, 1, MaxStrLen(Line.Name));
+            Line.Insert();
+        end;
+        Head.CalcFields(QuotedNotEmpty, QuotedEmpty, PlainNotEmpty, QuotedPipe, PlainPipe, QuotedStar, PlainStar, QuotedNotX);
+        Observer.Observe('filter(''<>'''''''''')', Format(Head.QuotedNotEmpty));
+        Observer.Observe('filter('''''''''''')', Format(Head.QuotedEmpty));
+        Observer.Observe('filter(<> '''')', Format(Head.PlainNotEmpty));
+        Observer.Observe('quoted x|y', Format(Head.QuotedPipe));
+        Observer.Observe('plain x|y', Format(Head.PlainPipe));
+        Observer.Observe('quoted A*', Format(Head.QuotedStar));
+        Observer.Observe('plain A*', Format(Head.PlainStar));
+        Observer.Observe('quoted <>x', Format(Head.QuotedNotX));
+        Observer.Expect('filter(''<>'''''''''')', '5');
+        Observer.Expect('filter('''''''''''')', '1');
+        Observer.Expect('filter(<> '''')', '5');
+        Observer.Expect('quoted x|y', '1');
+        Observer.Expect('plain x|y', '2');
+        Observer.Expect('quoted A*', '2');
+        Observer.Expect('plain A*', '2');
+        Observer.Expect('quoted <>x', '5');
+        Observer.Verify();
+    end;
 }
 
 enum 82962 "LT BR CF Enum"

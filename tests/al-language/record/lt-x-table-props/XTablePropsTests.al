@@ -922,4 +922,43 @@ Observer.Verify();
         Observer.Verify();
     end;
 
+
+    // Writer QZ: CharAllowed through SetValue on a List page (fixture page 87708 in QzCharAllowedList.al).
+    [Test]
+    procedure QZ_CharAllowed_TestPage_List()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT X Props";
+        List: TestPage "LT QZ X Props List";
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.Id := 2;
+        Row.Insert();
+        List.OpenEdit();
+        List.GoToRecord(Row);
+        List.Digits.SetValue('456');
+        Observer.Observe('list_digits_allowed', List.Digits.Value);
+        asserterror begin
+            List.Digits.SetValue('4x6');
+            Error('no error');
+        end;
+        Observer.ObserveError('list_digits_disallowed');
+        Observer.Observe('list_digits_after_error', List.Digits.Value);
+        asserterror begin
+            List.Picky.SetValue('abq');
+            Error('no error');
+        end;
+        Observer.ObserveError('list_picky_disallowed');
+        Observer.Observe('list_picky_after_error', List.Picky.Value);
+        List.Close();
+        Observer.Expect('list_digits_allowed', '456');
+        Observer.Expect('list_digits_disallowed|text', 'Validation error for Field: Digits,  Message = ''The character X is not valid in this field. You can specify the following characters: 09.''');
+        Observer.Expect('list_digits_disallowed|code', 'TestValidation');
+        Observer.Expect('list_digits_after_error', '456');
+        Observer.Expect('list_picky_disallowed|text', 'Validation error for Field: Picky,  Message = ''The character q is not valid in this field. You can specify the following characters: ad,mp,zz.''');
+        Observer.Expect('list_picky_disallowed|code', 'TestValidation');
+        Observer.Expect('list_picky_after_error', '');
+        Observer.Verify();
+    end;
 }
