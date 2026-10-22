@@ -340,4 +340,146 @@ codeunit 61286 "LT S Media Files"
         Observer.Expect('mediaset count after get', '1');
         Observer.Verify();
     end;
+
+    // ---- Writer RD (Microsoft's DemoTool, round 2: Item.Picture.ImportFile(Path, "No.") into a MediaSet with the result unused,
+    // Sales Document Icon SetIconFromFile of 'SalesStatusIcons\Quote.PNG' into a MediaSet, Word Template.Template.ImportFile(Path, 'Template')
+    // of a .docx into a Media): a JPEG and then a 2 x 3 PNG with an upper-case .PNG extension into the same MediaSet (the returned Guid against
+    // MediaId and Item(1), the order of the items, Mime Type, Width, Height); a .docx file into a Media (Tenant Media row, File Name form,
+    // the exported bytes). The Tenant Media File Name of a MediaSet item differs between the Linux and the Windows service tier (windows-check QX
+    // item 9) and is not asserted here. ----
+
+    local procedure RdPngBase64(): Text
+    begin
+        exit('iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAEElEQVR42mP4zwAE/xlQKAA+1gX7ttb52gAAAABJRU5ErkJggg==');
+    end;
+
+    local procedure RdDocxBase64(): Text
+    begin
+        exit('UEsDBBQAAAAIAAAAIVx5bjPX6AAAAK0BAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbH1QyU7DMBD9FWuuKHHggBCK0wPLETiUDxjZk8SqN3nc0v49Tlt6QIXjzFv1+tXeO7GjzDYGBbdt' +
+            'B4KCjsaGScHn+rV5AMEFg0EXAyk4EMNq6NeHRCyqNrCCuZT0KCXrmTxyGxOFiowxeyz1zJNMqDc4kbzrunupYygUSlMWDxj6Zxpx64p42df3qUcmxyCeTsQlSwGm5KzGUnG5C+ZXSnNO' +
+            'aKvyyOHZJr6pBJBXExbk74Cz7r0Ok60h8YG5vKGvLPkVs5Em6q2vyvZ/mys94zhaTRf94pZy1MRcF/euvSAebfjpL49zD99QSwMEFAAAAAgAAAAhXJv9N+qtAAAAKQEAAAsAAABfcmVs' +
+            'cy8ucmVsc43POw7CMAwG4KtE3mlaBoRQ0y4IqSsqB7ASN61oHkrCo7cnAwNFDIy2f3+W6/ZpZnanECdnBVRFCYysdGqyWsClP232wGJCq3B2lgQsFKFt6jPNmPJKHCcfWTZsFDCm5A+c' +
+            'RzmSwVg4TzZPBhcMplwGzT3KK2ri27Lc8fBpwNpknRIQOlUB6xdP/9huGCZJRydvhmz6ceIrkWUMmpKAhwuKq3e7yCzwpuarF5sXUEsDBBQAAAAIAAAAIVzXDGLpogAAANcAAAARAAAA' +
+            'd29yZC9kb2N1bWVudC54bWxFjkEOwiAQRa9C2FuqC2Oa0m6MK1emHgBhbJvADAG09vZCXbh5PzOT/zJt/3GWvSHEmVDyfVVzBqjJzDhKfh8uuxNnMSk0yhKC5CtE3nft0hjSLweYWBZg' +
+            'bBbJp5R8I0TUEzgVK/KA+fak4FTKYxjFQsH4QBpizH5nxaGuj8KpGXlRPsisJX1BKEjddWC3M0vgvFUJWlF2hWGj3/jrif9P3RdQSwECFAMUAAAACAAAACFceW4z1+gAAACtAQAAEwAA' +
+            'AAAAAAAAAAAAgAEAAAAAW0NvbnRlbnRfVHlwZXNdLnhtbFBLAQIUAxQAAAAIAAAAIVyb/TfqrQAAACkBAAALAAAAAAAAAAAAAACAARkBAABfcmVscy8ucmVsc1BLAQIUAxQAAAAIAAAA' +
+            'IVzXDGLpogAAANcAAAARAAAAAAAAAAAAAACAAe8BAAB3b3JkL2RvY3VtZW50LnhtbFBLBQYAAAAAAwADALkAAADAAgAAAAA=');
+    end;
+
+    local procedure RdWriteBase64(Name: Text; Base64Text: Text)
+    var
+        F: File;
+        OutS: OutStream;
+        Base64: Codeunit "Base64 Convert";
+    begin
+        F.Create(Name);
+        F.CreateOutStream(OutS);
+        Base64.FromBase64(Base64Text, OutS);
+        F.Close();
+    end;
+
+    local procedure RdTenant(Id: Guid; BaseName: Text): Text
+    var
+        Tenant: Record "Tenant Media";
+    begin
+        if not Tenant.Get(Id) then
+            exit('no tenant media row');
+        Tenant.CalcFields(Content);
+        exit('description=[' + Tenant.Description + '] mime=[' + Tenant."Mime Type" + '] filename_contains_source_name=' + Format(StrPos(Tenant."File Name", BaseName) > 0) + ' width=' + Format(Tenant.Width) + ' height=' + Format(Tenant.Height) + ' hascontent=' + Format(Tenant.Content.HasValue()));
+    end;
+
+    [Test]
+    procedure RD_MediaSet_ImportFile_JpegThenUpperCasePng()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "PZ OnPrem Media Row";
+        Jpg: Text;
+        Png: Text;
+        Id1: Guid;
+        Id2: Guid;
+        IdPic: Guid;
+    begin
+        Row.SetFilter(Code, 'LTRD*');
+        Row.DeleteAll();
+        Row.Reset();
+        Jpg := TempName('.jpg');
+        Png := TempName('.PNG');
+        QxWriteJpeg(Jpg);
+        RdWriteBase64(Png, RdPngBase64());
+        Observer.Observe('png file length', Format(LenOf(Png)));
+        Row.Code := 'LTRDA';
+        Id1 := Row.Set.ImportFile(Jpg, 'jpeg item');
+        Row.Insert();
+        Id2 := Row.Set.ImportFile(Png, 'png item');
+        Row.Modify();
+        Observer.Observe('count', Format(Row.Set.Count()));
+        Observer.Observe('returned ids equal', Format(Id1 = Id2));
+        Observer.Observe('returned id is MediaId', Format(Id1 = Row.Set.MediaId()));
+        Observer.Observe('returned id is Item(1)', Format(Id1 = Row.Set.Item(1)));
+        Observer.Observe('returned id is Item(2)', Format(Id1 = Row.Set.Item(2)));
+        Observer.Observe('Item(1) is Item(2)', Format(Row.Set.Item(1) = Row.Set.Item(2)));
+        Observer.Observe('format returned id length', Format(StrLen(Format(Id1))));
+        Observer.Observe('format Item(1) length', Format(StrLen(Format(Row.Set.Item(1)))));
+        Observer.Observe('item 1', RdTenant(Row.Set.Item(1), BaseOf(Jpg)));
+        Observer.Observe('item 2', RdTenant(Row.Set.Item(2), BaseOf(Png)));
+        Row.Get('LTRDA');
+        Observer.Observe('count after get', Format(Row.Set.Count()));
+        Observer.Observe('item 1 after get', RdTenant(Row.Set.Item(1), BaseOf(Jpg)));
+        Observer.Observe('item 2 after get', RdTenant(Row.Set.Item(2), BaseOf(Png)));
+        Row.Code := 'LTRDB';
+        IdPic := Row.Pic.ImportFile(Png, 'png media');
+        Row.Insert();
+        Observer.Observe('media png returned id is MediaId', Format(IdPic = Row.Pic.MediaId()));
+        Observer.Observe('media png', RdTenant(IdPic, BaseOf(Png)));
+        Row.Reset();
+        Row.SetFilter(Code, 'LTRD*');
+        Row.DeleteAll();
+        Cleanup(Jpg);
+        Cleanup(Png);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RD_Media_ImportFile_Docx()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "PZ OnPrem Media Row";
+        Tenant: Record "Tenant Media";
+        TempBlob: Codeunit "Temp Blob";
+        Base64: Codeunit "Base64 Convert";
+        OutS: OutStream;
+        InS: InStream;
+        Src: Text;
+        Id: Guid;
+    begin
+        Row.SetFilter(Code, 'LTRD*');
+        Row.DeleteAll();
+        Row.Reset();
+        Src := TempName('.docx');
+        RdWriteBase64(Src, RdDocxBase64());
+        Observer.Observe('file length', Format(LenOf(Src)));
+        Row.Code := 'LTRDD';
+        Id := Row.Pic.ImportFile(Src, 'Template');
+        Row.Insert();
+        Observer.Observe('returned id is MediaId', Format(Id = Row.Pic.MediaId()));
+        Observer.Observe('hasvalue', Format(Row.Pic.HasValue()));
+        Observer.Observe('tenant', RdTenant(Id, BaseOf(Src)));
+        Observer.Observe('file name', QxFileName(Id, Src));
+        if Tenant.Get(Id) then begin
+            Tenant.CalcFields(Content);
+            Tenant.Content.CreateInStream(InS);
+            Observer.Observe('tenant content is the file', Format(Base64.ToBase64(InS) = RdDocxBase64()));
+        end;
+        Row.Get('LTRDD');
+        TempBlob.CreateOutStream(OutS);
+        Row.Pic.ExportStream(OutS);
+        Observer.Observe('export length', Format(TempBlob.Length()));
+        TempBlob.CreateInStream(InS);
+        Observer.Observe('export is the file', Format(Base64.ToBase64(InS) = RdDocxBase64()));
+        Row.Reset();
+        Row.SetFilter(Code, 'LTRD*');
+        Row.DeleteAll();
+        Cleanup(Src);
+        Observer.Finish();
+    end;
 }

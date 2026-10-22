@@ -264,6 +264,209 @@ xmlport 87748 "LT RA XP View Linked"
     end;
 }
 
+// ---- Writer RD (Microsoft's DemoTool, round 2: the export half of Base Application xmlport "Imp / Exp Data Exch Def & Map", run by
+// Create Data Exch. Column Def.ExportDataExchDef with a Data Exch. Def record): a non-temporary child tableelement linked to its parent
+// (LinkTable, LinkFields, MinOccurs = Zero) with SourceTableView = sorting(<link field>, <second field>) of a secondary key, the same with a
+// where(Type = const(...)) part, a where on the link field itself, and a grandchild linked on two fields. Tables 87920 to 87922,
+// xmlports 87923 to 87926, tests RD_* in codeunit 87750. ----
+
+table 87920 "LT RD XP Def"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Code; Code[20]) { }
+    }
+
+    keys
+    {
+        key(PK; Code) { Clustered = true; }
+    }
+}
+
+table 87921 "LT RD XP Line Def"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; DefCode; Code[20]) { }
+        field(2; Code; Code[20]) { }
+        field(3; Type; Option) { OptionMembers = Detail,Header,Footer; }
+        field(4; ParentCode; Code[20]) { }
+    }
+
+    keys
+    {
+        key(PK; DefCode, Code) { Clustered = true; }
+        key(ByParent; DefCode, ParentCode) { }
+    }
+}
+
+table 87922 "LT RD XP Column Def"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; DefCode; Code[20]) { }
+        field(2; LineCode; Code[20]) { }
+        field(3; ColumnNo; Integer) { }
+        field(4; Show; Boolean) { }
+    }
+
+    keys
+    {
+        key(PK; DefCode, LineCode, ColumnNo) { Clustered = true; }
+    }
+}
+
+xmlport 87923 "LT RD XP Linked Sorting"
+{
+    Direction = Export;
+    Format = Xml;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Def; "LT RD XP Def")
+            {
+                MinOccurs = Zero;
+                fieldattribute(Code; Def.Code) { }
+                tableelement(LineDef; "LT RD XP Line Def")
+                {
+                    LinkTable = Def;
+                    LinkFields = DefCode = field(Code);
+                    MinOccurs = Zero;
+                    SourceTableView = sorting(DefCode, ParentCode);
+                    fieldattribute(Code; LineDef.Code) { }
+                    fieldattribute(Type; LineDef.Type) { }
+                    fieldattribute(Parent; LineDef.ParentCode) { }
+                    tableelement(ColDef; "LT RD XP Column Def")
+                    {
+                        LinkTable = LineDef;
+                        LinkFields = DefCode = field(DefCode), LineCode = field(Code);
+                        MinOccurs = Zero;
+                        fieldattribute(No; ColDef.ColumnNo) { }
+                    }
+                }
+            }
+        }
+    }
+}
+
+xmlport 87924 "LT RD XP Linked Where"
+{
+    Direction = Export;
+    Format = Xml;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Def; "LT RD XP Def")
+            {
+                MinOccurs = Zero;
+                fieldattribute(Code; Def.Code) { }
+                tableelement(LineDef; "LT RD XP Line Def")
+                {
+                    LinkTable = Def;
+                    LinkFields = DefCode = field(Code);
+                    MinOccurs = Zero;
+                    SourceTableView = sorting(DefCode, ParentCode) where(Type = const(Detail));
+                    fieldattribute(Code; LineDef.Code) { }
+                    fieldattribute(Type; LineDef.Type) { }
+                    fieldattribute(Parent; LineDef.ParentCode) { }
+                    tableelement(ColDef; "LT RD XP Column Def")
+                    {
+                        LinkTable = LineDef;
+                        LinkFields = DefCode = field(DefCode), LineCode = field(Code);
+                        MinOccurs = Zero;
+                        SourceTableView = where(Show = const(true));
+                        fieldattribute(No; ColDef.ColumnNo) { }
+                    }
+                }
+            }
+        }
+    }
+}
+
+xmlport 87925 "LT RD XP Linked Where Link"
+{
+    Direction = Export;
+    Format = Xml;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Def; "LT RD XP Def")
+            {
+                MinOccurs = Zero;
+                fieldattribute(Code; Def.Code) { }
+                tableelement(LineDef; "LT RD XP Line Def")
+                {
+                    LinkTable = Def;
+                    LinkFields = DefCode = field(Code);
+                    MinOccurs = Zero;
+                    SourceTableView = where(DefCode = const('A'));
+                    fieldattribute(Code; LineDef.Code) { }
+                    fieldattribute(Type; LineDef.Type) { }
+                    fieldattribute(Parent; LineDef.ParentCode) { }
+                    tableelement(ColDef; "LT RD XP Column Def")
+                    {
+                        LinkTable = LineDef;
+                        LinkFields = DefCode = field(DefCode), LineCode = field(Code);
+                        MinOccurs = Zero;
+                        fieldattribute(No; ColDef.ColumnNo) { }
+                    }
+                }
+            }
+        }
+    }
+}
+
+xmlport 87926 "LT RD XP Linked None"
+{
+    Direction = Export;
+    Format = Xml;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Def; "LT RD XP Def")
+            {
+                MinOccurs = Zero;
+                fieldattribute(Code; Def.Code) { }
+                tableelement(LineDef; "LT RD XP Line Def")
+                {
+                    LinkTable = Def;
+                    LinkFields = DefCode = field(Code);
+                    MinOccurs = Zero;
+                    SourceTableView = sorting(DefCode, Code);
+                    fieldattribute(Code; LineDef.Code) { }
+                    fieldattribute(Type; LineDef.Type) { }
+                    fieldattribute(Parent; LineDef.ParentCode) { }
+                    tableelement(ColDef; "LT RD XP Column Def")
+                    {
+                        LinkTable = LineDef;
+                        LinkFields = DefCode = field(DefCode), LineCode = field(Code);
+                        MinOccurs = Zero;
+                        fieldattribute(No; ColDef.ColumnNo) { }
+                    }
+                }
+            }
+        }
+    }
+}
+
 codeunit 87749 "LT RA XP Import Runner"
 {
     TableNo = "LT RA XP Occ Row";
@@ -490,5 +693,116 @@ codeunit 87750 "LT RA XP Export Tests"
         Observer.Observe('linked sorting(B)', ReadAll(TempBlob));
         Observer.Expect('linked sorting(B)', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Head Id="1">|    <Line Id="3" B="A" />|    <Line Id="5" B="B" />|    <Line Id="1" B="C" />|  </Head>|  <Head Id="2">|    <Line Id="4" B="A" />|    <Line Id="2" B="B" />|  </Head>|</Root>|');
         Observer.Verify();
+    end;
+
+    // ---- Writer RD: linked non-temporary tableelements with SourceTableView on export (xmlports 87923 to 87926). ----
+
+    local procedure RdSeed()
+    var
+        Def: Record "LT RD XP Def";
+        LineDef: Record "LT RD XP Line Def";
+        ColDef: Record "LT RD XP Column Def";
+    begin
+        RdWipe();
+        Def.Code := 'A';
+        Def.Insert();
+        Def.Code := 'B';
+        Def.Insert();
+        Def.Code := 'C';
+        Def.Insert();
+        RdLine('A', 'L1', LineDef.Type::Footer, 'Z');
+        RdLine('A', 'L2', LineDef.Type::Detail, 'M');
+        RdLine('A', 'L3', LineDef.Type::Detail, '');
+        RdLine('A', 'L4', LineDef.Type::Header, 'B');
+        RdLine('B', 'L1', LineDef.Type::Detail, 'Q');
+        RdLine('B', 'L2', LineDef.Type::Header, '');
+        RdColumn('A', 'L2', 2, true);
+        RdColumn('A', 'L2', 1, false);
+        RdColumn('A', 'L3', 1, true);
+        RdColumn('B', 'L1', 3, true);
+        RdColumn('B', 'L2', 1, true);
+    end;
+
+    local procedure RdLine(DefCode: Code[20]; Code: Code[20]; LineType: Option; ParentCode: Code[20])
+    var
+        LineDef: Record "LT RD XP Line Def";
+    begin
+        LineDef.DefCode := DefCode;
+        LineDef.Code := Code;
+        LineDef.Type := LineType;
+        LineDef.ParentCode := ParentCode;
+        LineDef.Insert();
+    end;
+
+    local procedure RdColumn(DefCode: Code[20]; LineCode: Code[20]; ColumnNo: Integer; Show: Boolean)
+    var
+        ColDef: Record "LT RD XP Column Def";
+    begin
+        ColDef.DefCode := DefCode;
+        ColDef.LineCode := LineCode;
+        ColDef.ColumnNo := ColumnNo;
+        ColDef.Show := Show;
+        ColDef.Insert();
+    end;
+
+    local procedure RdWipe()
+    var
+        Def: Record "LT RD XP Def";
+        LineDef: Record "LT RD XP Line Def";
+        ColDef: Record "LT RD XP Column Def";
+    begin
+        Def.DeleteAll();
+        LineDef.DeleteAll();
+        ColDef.DeleteAll();
+    end;
+
+    local procedure RdExport(XmlportId: Integer; DefFilter: Text): Text
+    var
+        Def: Record "LT RD XP Def";
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        Result: Text;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        if DefFilter = '' then
+            Xmlport.Export(XmlportId, OutS)
+        else begin
+            Def.SetFilter(Code, DefFilter);
+            Xmlport.Export(XmlportId, OutS, Def);
+        end;
+        Result := ReadAll(TempBlob);
+        exit(Result.Replace('<?xml version="1.0" encoding="UTF-16" standalone="no"?>|', '<decl>|'));
+    end;
+
+    [Test]
+    procedure RD_LinkedTableElement_SourceTableViewSorting_Export()
+    begin
+        RdSeed();
+        Observer.Observe('sorting(DefCode, ParentCode)', RdExport(Xmlport::"LT RD XP Linked Sorting", ''));
+        Observer.Observe('sorting(DefCode, Code)', RdExport(Xmlport::"LT RD XP Linked None", ''));
+        RdWipe();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RD_LinkedTableElement_SourceTableViewWhere_Export()
+    begin
+        RdSeed();
+        Observer.Observe('where(Type = const(Detail))', RdExport(Xmlport::"LT RD XP Linked Where", ''));
+        Observer.Observe('where on the link field', RdExport(Xmlport::"LT RD XP Linked Where Link", ''));
+        RdWipe();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RD_LinkedTableElement_SourceTableView_ExportWithRecord()
+    begin
+        RdSeed();
+        Observer.Observe('sorting, record B', RdExport(Xmlport::"LT RD XP Linked Sorting", 'B'));
+        Observer.Observe('where, record A|C', RdExport(Xmlport::"LT RD XP Linked Where", 'A|C'));
+        Observer.Observe('where on the link field, record B', RdExport(Xmlport::"LT RD XP Linked Where Link", 'B'));
+        Observer.Observe('sorting, record D (no row)', RdExport(Xmlport::"LT RD XP Linked Sorting", 'D'));
+        RdWipe();
+        Observer.Finish();
     end;
 }

@@ -20,6 +20,14 @@ dotnet
     }
 }
 
+dotnet
+{
+    assembly("System.Xml")
+    {
+        type("System.Xml.XmlDocument"; LtRdXmlDocument) { }
+    }
+}
+
 table 99400 "LT QX DN Row"
 {
     DataClassification = SystemMetadata;
@@ -164,5 +172,188 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Observer.Expect('metadata is null', 'No');
         Observer.Expect('columns', '[99400|1|Id|Yes][99400|2|RowName|Yes][99400|3|Amount|Yes][99400|9||Yes]');
         Observer.Verify();
+    end;
+
+    // ---- Writer RD (Microsoft's DemoTool, round 2: Export RapidStart Packages and Config. XML Exchange.ExportPackageXML on the server:
+    // FileManagement.ServerDirectoryExists / ServerRemoveDirectory(Path, true) / ServerCreateDirectory (InitializeMediaTempFolder),
+    // ServerTempFileName(''), DotNet XmlDocument.Save(ServerFile), ConfigPckgCompressionMgt.ServersideCompress(Src, Dst),
+    // ServerFileExists, DeleteServerFile): what AL sees of each step under TemporaryPath, and the static DotNet System.IO.Directory.Exists. ----
+
+    local procedure RdMask(Value: Text): Text
+    var
+        Index: Integer;
+        Result: Text;
+    begin
+        for Index := 1 to StrLen(Value) do
+            if Value[Index] in ['0' .. '9', 'a' .. 'z', 'A' .. 'Z'] then
+                Result += 'x'
+            else
+                Result += Format(Value[Index]);
+        exit(Result);
+    end;
+
+    local procedure RdTempNameShape(Name: Text): Text
+    begin
+        if not Name.StartsWith(TemporaryPath()) then
+            exit('not under TemporaryPath: ' + RdMask(Name));
+        exit('<tmp>' + RdMask(CopyStr(Name, StrLen(TemporaryPath()) + 1)));
+    end;
+
+    local procedure RdFileLength(Name: Text): Integer
+    var
+        F: File;
+        L: Integer;
+    begin
+        if not File.Exists(Name) then
+            exit(-1);
+        F.Open(Name);
+        L := F.Len();
+        F.Close();
+        exit(L);
+    end;
+
+    local procedure RdFirstBytes(Name: Text; Count: Integer): Text
+    var
+        F: File;
+        InS: InStream;
+        B: Byte;
+        Index: Integer;
+        Result: Text;
+    begin
+        F.Open(Name);
+        F.CreateInStream(InS);
+        for Index := 1 to Count do
+            if not InS.EOS() then begin
+                InS.Read(B);
+                Result += Format(B) + ' ';
+            end;
+        F.Close();
+        exit(Result);
+    end;
+
+    local procedure RdReadText(Name: Text): Text
+    var
+        F: File;
+        InS: InStream;
+        Line: Text;
+        Result: Text;
+    begin
+        F.TextMode(false);
+        F.Open(Name);
+        F.CreateInStream(InS, TextEncoding::UTF8);
+        while not InS.EOS() do begin
+            InS.ReadText(Line);
+            Result += Line + '|';
+        end;
+        F.Close();
+        exit(Result);
+    end;
+
+    [Test]
+    procedure RD_DirectoryExists_Static()
+    var
+        Directory: DotNet LtQxDirectory;
+        Path: Text;
+    begin
+        Path := TemporaryPath() + 'ltrd' + DelChr(Format(CreateGuid()), '=', '{}-');
+        Observer.Observe('missing', Format(Directory.Exists(Path)));
+        Directory.CreateDirectory(Path);
+        Observer.Observe('created', Format(Directory.Exists(Path)));
+        Observer.Observe('created with trailing slash', Format(Directory.Exists(Path + '/')));
+        WriteFile(Path + '/f.txt');
+        Observer.Observe('a file path', Format(Directory.Exists(Path + '/f.txt')));
+        Observer.Observe('empty text', Format(Directory.Exists('')));
+        Observer.Observe('TemporaryPath', Format(Directory.Exists(TemporaryPath())));
+        Directory.Delete(Path, true);
+        Observer.Observe('deleted', Format(Directory.Exists(Path)));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RD_FileManagement_ServerFolderOperations()
+    var
+        FileManagement: Codeunit "File Management";
+        Path: Text;
+        Media: Text;
+    begin
+        Path := TemporaryPath() + 'ltrd' + DelChr(Format(CreateGuid()), '=', '{}-');
+        Media := Path + '/Media';
+        Observer.Observe('exists missing', Format(FileManagement.ServerDirectoryExists(Media)));
+        FileManagement.ServerRemoveDirectory(Media, true);
+        Observer.Observe('remove missing: no error, exists', Format(FileManagement.ServerDirectoryExists(Media)));
+        FileManagement.ServerCreateDirectory(Media);
+        Observer.Observe('create nested: exists', Format(FileManagement.ServerDirectoryExists(Media)));
+        FileManagement.ServerCreateDirectory(Media);
+        Observer.Observe('create again: exists', Format(FileManagement.ServerDirectoryExists(Media)));
+        WriteFile(Media + '/a.txt');
+        WriteFile(Media + '/b.txt');
+        Observer.Observe('file exists', Format(FileManagement.ServerFileExists(Media + '/a.txt')));
+        Observer.Observe('delete file', Format(FileManagement.DeleteServerFile(Media + '/a.txt')));
+        Observer.Observe('file exists after delete', Format(FileManagement.ServerFileExists(Media + '/a.txt')));
+        Observer.Observe('delete missing file', Format(FileManagement.DeleteServerFile(Media + '/a.txt')));
+        FileManagement.ServerRemoveDirectory(Media, true);
+        Observer.Observe('remove recursive with a file: exists', Format(FileManagement.ServerDirectoryExists(Media)));
+        Observer.Observe('remove recursive: file exists', Format(FileManagement.ServerFileExists(Media + '/b.txt')));
+        Observer.Observe('parent exists', Format(FileManagement.ServerDirectoryExists(Path)));
+        FileManagement.ServerRemoveDirectory(Path, false);
+        Observer.Observe('remove empty non-recursive: exists', Format(FileManagement.ServerDirectoryExists(Path)));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RD_ServerTempFileName_XmlSave_Compress()
+    var
+        FileManagement: Codeunit "File Management";
+        ConfigPckgCompressionMgt: Codeunit "Config. Pckg. Compression Mgt.";
+        DataCompression: Codeunit "Data Compression";
+        PackageXml: DotNet LtRdXmlDocument;
+        F: File;
+        InS: InStream;
+        XmlFile: Text;
+        GzFile: Text;
+        BackFile: Text;
+        SecondName: Text;
+    begin
+        XmlFile := FileManagement.ServerTempFileName('');
+        Observer.Observe('temp name shape', RdTempNameShape(XmlFile));
+        Observer.Observe('temp name exists', Format(File.Exists(XmlFile)));
+        SecondName := FileManagement.ServerTempFileName('xml');
+        Observer.Observe('temp name xml shape', RdTempNameShape(SecondName));
+        Observer.Observe('two names differ', Format(SecondName <> XmlFile));
+        Observer.Observe('directory of temp name is TemporaryPath', Format(FileManagement.GetDirectoryName(XmlFile) + '/' = TemporaryPath()));
+        PackageXml := PackageXml.XmlDocument();
+        PackageXml.LoadXml('<DataList><Row Id="1">one</Row></DataList>');
+        PackageXml.Save(XmlFile);
+        Observer.Observe('saved exists', Format(File.Exists(XmlFile)));
+        Observer.Observe('saved length', Format(RdFileLength(XmlFile)));
+        Observer.Observe('saved first bytes', RdFirstBytes(XmlFile, 4));
+        Observer.Observe('saved text', RdReadText(XmlFile));
+        PackageXml := PackageXml.XmlDocument();
+        PackageXml.LoadXml('<?xml version="1.0" encoding="UTF-16" standalone="yes"?><DataList><Row Id="1">one</Row></DataList>');
+        PackageXml.Save(SecondName);
+        Observer.Observe('utf-16 declaration: length', Format(RdFileLength(SecondName)));
+        Observer.Observe('utf-16 declaration: first bytes', RdFirstBytes(SecondName, 4));
+        GzFile := FileManagement.ServerTempFileName('');
+        ConfigPckgCompressionMgt.ServersideCompress(XmlFile, GzFile);
+        Observer.Observe('compressed exists', Format(File.Exists(GzFile)));
+        Observer.Observe('compressed length > 0', Format(RdFileLength(GzFile) > 0));
+        Observer.Observe('compressed first bytes', RdFirstBytes(GzFile, 3));
+        F.Open(GzFile);
+        F.CreateInStream(InS);
+        Observer.Observe('IsGZip compressed', Format(DataCompression.IsGZip(InS)));
+        F.Close();
+        F.Open(XmlFile);
+        F.CreateInStream(InS);
+        Observer.Observe('IsGZip plain', Format(DataCompression.IsGZip(InS)));
+        F.Close();
+        BackFile := FileManagement.ServerTempFileName('');
+        Observer.Observe('decompress', Format(ConfigPckgCompressionMgt.ServersideDecompress(GzFile, BackFile)));
+        Observer.Observe('decompressed text', RdReadText(BackFile));
+        Observer.Observe('decompress a plain file', Format(ConfigPckgCompressionMgt.ServersideDecompress(XmlFile, FileManagement.ServerTempFileName(''))));
+        asserterror ConfigPckgCompressionMgt.ServersideCompress(XmlFile, GzFile);
+        Observer.Observe('compress onto an existing file: error has the name', Format(StrPos(GetLastErrorText(), GzFile) > 0));
+        Observer.Observe('compress onto an existing file: error', GetLastErrorText().Replace(GzFile, '<dst>'));
+        Observer.Observe('delete', Format(FileManagement.DeleteServerFile(XmlFile)) + Format(FileManagement.DeleteServerFile(SecondName)) + Format(FileManagement.DeleteServerFile(GzFile)) + Format(FileManagement.DeleteServerFile(BackFile)));
+        Observer.Finish();
     end;
 }
