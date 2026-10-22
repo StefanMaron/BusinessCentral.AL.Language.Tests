@@ -2,6 +2,9 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), Temp Blob (Base Application); own tables 79005, 79018, enum 79019
 // Facts: Text + Guid concatenation and MaxStrLen of a Guid; an Option compared with a Decimal; the bytes OutStream.Write produces for value types not pinned elsewhere (Code, Option, Enum, DateFormula, RecordId, Variant, Label, BigText, Record, JsonObject); the Field table row of the rowversion field (No. 0, name timestamp) on an own table and on Customer.
+// Facts (writer QT): RecordRef on a table with a key over SystemRowVersion (own key or from a tableextension): the FieldIndex walk never meets
+//   the rowversion field, Field(0) is timestamp (No. 0, BigInteger, Normal), FieldExist(0) is No, the key's FieldIndex(1) is timestamp No. 0.
+//   QT_FieldTable_* record the Field table answers but do not assert them (Linux suspect, Windows check queued).
 // BC versions: 27.5+
 
 table 79005 "LT AJ Item"
@@ -387,5 +390,148 @@ codeunit 79013 "LT AJ Misc"
         if not Fld.Get(TableNumber, FieldNumber) then
             exit('not found');
         exit(StrSubstNo('TableNo=%1|No=%2|Name=%3|Type=%4|Class=%5|Len=%6|Enabled=%7|Obsolete=%8', Fld.TableNo, Fld."No.", Fld.FieldName, Fld.Type, Fld.Class, Fld.Len, Fld.Enabled, Fld.ObsoleteState));
+    end;
+
+    // ---- Writer QT (2026-10-22, al-runtime-rs PR 5658): the Field table and RecordRef on tables with a key over SystemRowVersion: "KRV Row"
+    // (own key RowVersionKey), "KRV Modified Row" (own key, plus a tableextension that modifies a field) and "Customer Bank Account" (key added
+    // by tableextension "KRV Bank Account Ext"); "LT AJ Ts" (no such key) as the control. Fixtures in recordref/TestKeyMetadataRowVersionRemoved.Fixtures.al. ----
+
+    local procedure QtRowVersionRows(TableNumber: Integer): Text
+    var
+        Fld: Record Field;
+        Result: Text;
+    begin
+        Fld.SetRange(TableNo, TableNumber);
+        Fld.SetRange(FieldName, 'timestamp');
+        if Fld.FindSet() then
+            repeat
+                Result += Format(Fld."No.") + ':' + Fld.FieldName + ':' + Format(Fld.Type) + ':' + Format(Fld.Class) + ':' + Format(Fld.Len) + ':' + Format(Fld.Enabled) + ';';
+            until Fld.Next() = 0;
+        exit(Result);
+    end;
+
+    local procedure QtFieldTableAnswers(TableNumber: Integer)
+    var
+        Fld: Record Field;
+    begin
+        Observer.Observe('Get(table, 0)', Describe(TableNumber, 0));
+        Observer.Observe('by name timestamp', QtRowVersionRows(TableNumber));
+        Fld.SetRange(TableNo, TableNumber);
+        Fld.SetRange("No.", 0);
+        Observer.Observe('No. = 0 count', Format(Fld.Count()));
+        Fld.SetRange("No.");
+        Fld.SetRange(Type, Fld.Type::BigInteger);
+        Observer.Observe('BigInteger count', Format(Fld.Count()));
+        Fld.SetRange(Type);
+        Fld.SetRange(FieldName, 'SystemRowVersion');
+        Observer.Observe('by name SystemRowVersion count', Format(Fld.Count()));
+    end;
+
+    local procedure QtRecordRefAnswers(TableNumber: Integer)
+    var
+        Fld: Record Field;
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        KRef: KeyRef;
+        Index: Integer;
+        Found: Text;
+    begin
+        RecRef.Open(TableNumber);
+        for Index := 1 to RecRef.FieldCount() do begin
+            FldRef := RecRef.FieldIndex(Index);
+            if (FldRef.Name() = 'timestamp') or (FldRef.Number() = 0) then
+                Found += Format(Index) + ':' + FldRef.Name() + '#' + Format(FldRef.Number()) + ';';
+        end;
+        Observer.Observe('FieldIndex walk finds timestamp', '[' + Found + ']');
+        FldRef := RecRef.Field(0);
+        Observer.Observe('Field(0)', FldRef.Name() + '#' + Format(FldRef.Number()) + '#' + Format(FldRef.Type()) + '#' + Format(FldRef.Class()));
+        Observer.Observe('FieldExist(0)', Format(RecRef.FieldExist(0)));
+        Found := '';
+        for Index := 1 to RecRef.KeyCount() do begin
+            KRef := RecRef.KeyIndex(Index);
+            if KRef.FieldIndex(1).Name() = 'timestamp' then
+                Found += Format(Index) + ':' + KRef.FieldIndex(1).Name() + '#' + Format(KRef.FieldIndex(1).Number()) + '#' + Format(KRef.FieldCount()) + ';';
+        end;
+        Observer.Observe('key on rowversion', '[' + Found + ']');
+        Fld.SetRange(TableNo, TableNumber);
+        Fld.SetRange(FieldName, 'timestamp');
+        if Fld.FindFirst() then begin
+            FldRef := RecRef.Field(Fld."No.");
+            Observer.Observe('Field(No. of the timestamp row)', FldRef.Name() + '#' + Format(FldRef.Number()));
+        end else
+            Observer.Observe('Field(No. of the timestamp row)', 'no row');
+        RecRef.Close();
+    end;
+
+    [Test]
+    procedure QT_FieldTable_OwnKeyOnRowVersion()
+    begin
+        QtFieldTableAnswers(Database::"KRV Row");
+        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
+        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
+        Observer.Discard();
+    end;
+
+    [Test]
+    procedure QT_FieldTable_OwnKeyOnRowVersion_TableWithModifyExtension()
+    begin
+        QtFieldTableAnswers(Database::"KRV Modified Row");
+        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
+        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
+        Observer.Discard();
+    end;
+
+    [Test]
+    procedure QT_FieldTable_KeyOnRowVersionFromTableExtension()
+    begin
+        QtFieldTableAnswers(Database::"Customer Bank Account");
+        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
+        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
+        Observer.Discard();
+    end;
+
+    [Test]
+    procedure QT_FieldTable_NoKeyOnRowVersion_Control()
+    begin
+        QtFieldTableAnswers(Database::"LT AJ Ts");
+        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
+        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
+        Observer.Discard();
+    end;
+
+    [Test]
+    procedure QT_RecordRef_OwnKeyOnRowVersion()
+    begin
+        QtRecordRefAnswers(Database::"KRV Row");
+        Observer.Expect('FieldIndex walk finds timestamp', '[]');
+        Observer.Expect('Field(0)', 'timestamp#0#BigInteger#Normal');
+        Observer.Expect('FieldExist(0)', 'No');
+        Observer.Expect('key on rowversion', '[2:timestamp#0#1;]');
+        Observer.Expect('Field(No. of the timestamp row)', 'timestamp#0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QT_RecordRef_KeyOnRowVersionFromTableExtension()
+    begin
+        QtRecordRefAnswers(Database::"Customer Bank Account");
+        Observer.Expect('FieldIndex walk finds timestamp', '[]');
+        Observer.Expect('Field(0)', 'timestamp#0#BigInteger#Normal');
+        Observer.Expect('FieldExist(0)', 'No');
+        Observer.Expect('key on rowversion', '[2:timestamp#0#1;]');
+        Observer.Expect('Field(No. of the timestamp row)', 'timestamp#0');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QT_RecordRef_NoKeyOnRowVersion_Control()
+    begin
+        QtRecordRefAnswers(Database::"LT AJ Ts");
+        Observer.Expect('FieldIndex walk finds timestamp', '[]');
+        Observer.Expect('Field(0)', 'timestamp#0#BigInteger#Normal');
+        Observer.Expect('FieldExist(0)', 'No');
+        Observer.Expect('key on rowversion', '[]');
+        Observer.Expect('Field(No. of the timestamp row)', 'timestamp#0');
+        Observer.Verify();
     end;
 }
