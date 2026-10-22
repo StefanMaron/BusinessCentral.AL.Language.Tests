@@ -3,6 +3,8 @@
 // Fixtures used: Probe Observer (69160)
 // Probe: the columns and the rows of the Web Service table in a fresh tenant (issue 580 item 7). Object id 61281.
 // Writer QX (Microsoft's DemoTool): System Application Web Service Management.CreateWebService and CreateTenantWebService on page 42.
+// Writer RD (DemoTool round 2): CreateTenantWebService calls of Create Web Services on rows the fresh tenant has (no row changes), Published = false,
+//   an empty name (the object name without spaces, a new row), a new name (a new row); Tenant Web Service Columns / OData counts unchanged.
 
 codeunit 61281 "LT PT Web Service Rows"
 {
@@ -139,6 +141,142 @@ codeunit 61281 "LT PT Web Service Rows"
         Observer.Expect('page 42 after tenant call', 'ws[LTQXSalesOrder|Yes]ws[SalesOrder|Yes]tws[LTQXTenantSalesOrder|Yes]');
         Observer.Expect('counts end', '18|65');
         Observer.Expect('counts cleaned', '17|64');
+        Observer.Verify();
+    end;
+
+    // ---- Writer RD (Microsoft's DemoTool, Create Web Services: CreateJobWebServices, CreateWorkflowWebhookWebServices and
+    // CreateExcelTemplateWebServices call WebServiceManagement.CreateTenantWebService(Type, Id, Name, true) for rows the fresh tenant already
+    // has): every Tenant Web Service row (all columns) before and after each group of calls, the Tenant Web Service Columns and OData
+    // counts, a Published = false call, a call with a new name for the same page, and the rows after the test restored them. ----
+
+    local procedure RdAllRows(): Text
+    var
+        RR: RecordRef;
+        Result: Text;
+    begin
+        RR.Open(Database::"Tenant Web Service");
+        if RR.FindSet() then
+            repeat
+                Result += Row(RR) + '#';
+            until RR.Next() = 0;
+        exit(Result);
+    end;
+
+    local procedure RdTenantRows(ObjectType: Option; ObjectId: Integer): Text
+    var
+        TenantWebService: Record "Tenant Web Service";
+        RR: RecordRef;
+        Result: Text;
+    begin
+        TenantWebService.SetRange("Object Type", ObjectType);
+        TenantWebService.SetRange("Object ID", ObjectId);
+        if TenantWebService.FindSet() then
+            repeat
+                RR.GetTable(TenantWebService);
+                Result += '[' + Row(RR) + ']';
+            until TenantWebService.Next() = 0;
+        exit(Result);
+    end;
+
+    local procedure RdCounts(): Text
+    var
+        WebService: Record "Web Service";
+        TenantWebService: Record "Tenant Web Service";
+        Columns: Record "Tenant Web Service Columns";
+        OData: Record "Tenant Web Service OData";
+    begin
+        exit(Format(WebService.Count()) + '|' + Format(TenantWebService.Count()) + '|' + Format(Columns.Count()) + '|' + Format(OData.Count()));
+    end;
+
+    local procedure RdWorkflowWebhookCalls()
+    var
+        TenantWebService: Record "Tenant Web Service";
+        WebServiceManagement: Codeunit "Web Service Management";
+    begin
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Sales Document Entity", 'salesDocuments', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Sales Document Line Entity", 'salesDocumentLines', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Purchase Document Entity", 'purchaseDocuments', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Purchase Document Line Entity", 'purchaseDocumentLines', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Sales Document Entity", 'workflowSalesDocuments', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Sales Document Line Entity", 'workflowSalesDocumentLines', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Purchase Document Entity", 'workflowPurchaseDocuments', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Purchase Document Line Entity", 'workflowPurchaseDocumentLines', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Gen. Journal Batch Entity", 'workflowGenJournalBatches', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Gen. Journal Line Entity", 'workflowGenJournalLines', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Workflow - Customer Entity", 'workflowCustomers', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Workflow - Item Entity", 'workflowItems', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Workflow - Vendor Entity", 'workflowVendors', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Workflow Webhook Subscriptions", 'workflowWebhookSubscriptions', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Codeunit, Codeunit::"Workflow Webhook Subscription", 'WorkflowActionResponse', true);
+    end;
+
+    local procedure RdExcelTemplateCalls()
+    var
+        TenantWebService: Record "Tenant Web Service";
+        WebServiceManagement: Codeunit "Web Service Management";
+    begin
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Income Statement Entity", 'ExcelTemplateIncomeStatement', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Balance Sheet Entity", 'ExcelTemplateBalanceSheet', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Trial Balance Entity", 'ExcelTemplateTrialBalance', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Retained Earnings Entity", 'ExcelTemplateRetainedEarnings', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Cash Flow Statement Entity", 'ExcelTemplateCashFlowStatement', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Aged AR Entity", 'ExcelTemplateAgedAccountsReceivable', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Aged AP Entity", 'ExcelTemplateAgedAccountsPayable', true);
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::ExcelTemplateCompanyInfo, 'ExcelTemplateViewCompanyInformation', true);
+    end;
+
+    [Test]
+    procedure RD_CreateTenantWebService_DemoToolCalls()
+    var
+        TenantWebService: Record "Tenant Web Service";
+        WebServiceManagement: Codeunit "Web Service Management";
+        Observer: Codeunit "Probe Observer";
+        Before: Text;
+    begin
+        Before := RdAllRows();
+        Observer.Observe('counts before', RdCounts());
+        Observer.Observe('job list before', RdTenantRows(TenantWebService."Object Type"::Page, Page::"Job List"));
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Job List", 'Job List', true);
+        Observer.Observe('job list call: all rows unchanged', Format(RdAllRows() = Before));
+        Observer.Observe('job list after', RdTenantRows(TenantWebService."Object Type"::Page, Page::"Job List"));
+        Observer.Observe('counts after job list', RdCounts());
+        RdWorkflowWebhookCalls();
+        Observer.Observe('workflow calls: all rows unchanged', Format(RdAllRows() = Before));
+        Observer.Observe('counts after workflow', RdCounts());
+        RdExcelTemplateCalls();
+        Observer.Observe('excel calls: all rows unchanged', Format(RdAllRows() = Before));
+        Observer.Observe('counts after excel', RdCounts());
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Job List", 'Job List', false);
+        Observer.Observe('job list unpublished call', RdTenantRows(TenantWebService."Object Type"::Page, Page::"Job List"));
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Job List", '', true);
+        Observer.Observe('job list empty name call', RdTenantRows(TenantWebService."Object Type"::Page, Page::"Job List"));
+        Observer.Observe('counts after empty name', RdCounts());
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Job List", 'LTRDJobList', true);
+        Observer.Observe('job list new name call', RdTenantRows(TenantWebService."Object Type"::Page, Page::"Job List"));
+        Observer.Observe('counts after new name', RdCounts());
+        TenantWebService.SetRange("Object Type", TenantWebService."Object Type"::Page);
+        TenantWebService.SetRange("Object ID", Page::"Job List");
+        TenantWebService.SetFilter("Service Name", '<>%1', 'Job List');
+        TenantWebService.DeleteAll();
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Job List", 'Job List', true);
+        Observer.Observe('restored: all rows as before', Format(RdAllRows() = Before));
+        Observer.Observe('counts restored', RdCounts());
+        Observer.Expect('counts before', '17|64|402|29');
+        Observer.Expect('job list before', '[3=Page;9=Job List;6=89;12=Yes;13=No;14=No;]');
+        Observer.Expect('job list call: all rows unchanged', 'Yes');
+        Observer.Expect('job list after', '[3=Page;9=Job List;6=89;12=Yes;13=No;14=No;]');
+        Observer.Expect('counts after job list', '17|64|402|29');
+        Observer.Expect('workflow calls: all rows unchanged', 'Yes');
+        Observer.Expect('counts after workflow', '17|64|402|29');
+        Observer.Expect('excel calls: all rows unchanged', 'Yes');
+        Observer.Expect('counts after excel', '17|64|402|29');
+        Observer.Expect('job list unpublished call', '[3=Page;9=Job List;6=89;12=No;13=No;14=No;]');
+        Observer.Expect('job list empty name call', '[3=Page;9=Job List;6=89;12=No;13=No;14=No;][3=Page;9=JobList;6=89;12=Yes;13=No;14=No;]');
+        Observer.Expect('counts after empty name', '17|65|402|29');
+        Observer.Expect('job list new name call', '[3=Page;9=Job List;6=89;12=No;13=No;14=No;][3=Page;9=JobList;6=89;12=Yes;13=No;14=No;][3=Page;9=LTRDJobList;6=89;12=Yes;13=No;14=No;]');
+        Observer.Expect('counts after new name', '17|66|402|29');
+        Observer.Expect('restored: all rows as before', 'Yes');
+        Observer.Expect('counts restored', '17|64|402|29');
         Observer.Verify();
     end;
 }
