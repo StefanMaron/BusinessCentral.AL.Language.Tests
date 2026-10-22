@@ -6,8 +6,26 @@
 // an Option passed to an Integer parameter is its ordinal (int:1), `Opt = 1`, `Opt > 0` and `Opt::B = 1` compare it as a number; case Opt of Opt::C and of 2 both match;
 // `for I := 0 to Opt` runs ordinal + 1 times. Integer to Option: `Opt := 2` is C, an Integer variable likewise; an ordinal beyond the members (7, -1) is kept (Format
 // shows the number); Evaluate(Opt, '1') and Evaluate(Opt, 'C') both succeed.
-// Fixtures used: self-contained codeunit 69540
+// Fixtures used: Probe Observer (69160); self-contained codeunit 69540; writer QS: table 87355 (tests QS_*: Option compared with Decimal)
 // BC versions: 27.5
+
+// Writer QS: an Option field and a Decimal field for the Option-versus-Decimal comparisons (tests QS_*).
+table 87355 "LT QS Opt Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Kind; Option) { OptionMembers = None,Quantity,Amount; }
+        field(3; Qty; Decimal) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
 
 codeunit 69540 "PR Option Integer Probe"
 {
@@ -152,5 +170,133 @@ codeunit 69540 "PR Option Integer Probe"
         Observer.Expect('negative option = -1', 'Yes');
         Observer.Expect('negative option < A', 'Yes');
         Observer.Verify();
+    end;
+
+    local procedure QsCompare(O: Option None,Quantity,Amount; D: Decimal): Text
+    begin
+        exit(StrSubstNo('=%1 <>%2 <%3 >%4 <=%5 >=%6 rev=%7 rev<%8', O = D, O <> D, O < D, O > D, O <= D, O >= D, D = O, D < O));
+    end;
+
+    [Test]
+    procedure QS_OptionVariable_VersusDecimal()
+    var
+        Observer: Codeunit "Probe Observer";
+        O: Option None,Quantity,Amount;
+    begin
+        O := O::Quantity;
+        Observer.Observe('Quantity vs 0', QsCompare(O, 0));
+        Observer.Observe('Quantity vs 1', QsCompare(O, 1));
+        Observer.Observe('Quantity vs 1.0', QsCompare(O, 1.0));
+        Observer.Observe('Quantity vs 0.5', QsCompare(O, 0.5));
+        Observer.Observe('Quantity vs 1.5', QsCompare(O, 1.5));
+        Observer.Observe('Quantity vs 0.99999', QsCompare(O, 0.99999));
+        Observer.Observe('Quantity vs 2', QsCompare(O, 2));
+        Observer.Observe('Quantity vs -1', QsCompare(O, -1));
+        O := O::None;
+        Observer.Observe('None vs 0', QsCompare(O, 0));
+        Observer.Observe('None vs -0.5', QsCompare(O, -0.5));
+        O := O::Amount;
+        Observer.Observe('Amount vs 2.0', QsCompare(O, 2.0));
+        Observer.Observe('Amount vs 1.99', QsCompare(O, 1.99));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QS_OptionMember_VersusDecimalConstant()
+    var
+        Observer: Codeunit "Probe Observer";
+        O: Option None,Quantity,Amount;
+        D: Decimal;
+    begin
+        Observer.Observe('Quantity = 1.0', Format(O::Quantity = 1.0));
+        Observer.Observe('Quantity = 1.5', Format(O::Quantity = 1.5));
+        Observer.Observe('Quantity <> 1.0', Format(O::Quantity <> 1.0));
+        Observer.Observe('Quantity > 0.5', Format(O::Quantity > 0.5));
+        Observer.Observe('Quantity < 1.5', Format(O::Quantity < 1.5));
+        Observer.Observe('Amount >= 2.0', Format(O::Amount >= 2.0));
+        Observer.Observe('None <= -0.1', Format(O::None <= -0.1));
+        D := 1;
+        Observer.Observe('Quantity = D 1', Format(O::Quantity = D));
+        Observer.Observe('D 1 = Quantity', Format(D = O::Quantity));
+        D := 1.25;
+        Observer.Observe('Quantity < D 1.25', Format(O::Quantity < D));
+        Observer.Observe('D 1.25 > Amount', Format(D > O::Amount));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QS_OptionField_VersusDecimalField()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QS Opt Row";
+    begin
+        Row.Kind := Row.Kind::Quantity;
+        Row.Qty := 1;
+        Observer.Observe('Kind Quantity vs Qty 1', StrSubstNo('=%1 <>%2 <%3 >%4', Row.Kind = Row.Qty, Row.Kind <> Row.Qty, Row.Kind < Row.Qty, Row.Kind > Row.Qty));
+        Row.Qty := 0;
+        Observer.Observe('Kind Quantity vs Qty 0', StrSubstNo('=%1 <>%2 <%3 >%4', Row.Kind = Row.Qty, Row.Kind <> Row.Qty, Row.Kind < Row.Qty, Row.Kind > Row.Qty));
+        Row.Qty := 2;
+        Observer.Observe('member Quantity vs Qty 2', StrSubstNo('=%1 <>%2 <%3 >%4', Row.Kind::Quantity = Row.Qty, Row.Kind::Quantity <> Row.Qty, Row.Kind::Quantity < Row.Qty, Row.Kind::Quantity > Row.Qty));
+        Row.Qty := 1.5;
+        Observer.Observe('Qty 1.5 vs Kind Quantity', StrSubstNo('=%1 <>%2 <%3 >%4', Row.Qty = Row.Kind, Row.Qty <> Row.Kind, Row.Qty < Row.Kind, Row.Qty > Row.Kind));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QS_Case_DecimalSelector_OptionLabel()
+    var
+        Observer: Codeunit "Probe Observer";
+        O: Option None,Quantity,Amount;
+        D: Decimal;
+        Values: List of [Decimal];
+        Hit: Text;
+    begin
+        Values.Add(0);
+        Values.Add(1);
+        Values.Add(1.0);
+        Values.Add(1.5);
+        Values.Add(2);
+        foreach D in Values do begin
+            case D of
+                O::None:
+                    Hit := 'None';
+                O::Quantity:
+                    Hit := 'Quantity';
+                O::Amount:
+                    Hit := 'Amount';
+                else
+                    Hit := 'else';
+            end;
+            Observer.Observe('case ' + Format(D), Hit);
+        end;
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QS_Case_OptionSelector_DecimalVariableLabel()
+    var
+        Observer: Codeunit "Probe Observer";
+        O: Option None,Quantity,Amount;
+        D: Decimal;
+        Hit: Text;
+    begin
+        O := O::Quantity;
+        D := 1;
+        case O of
+            D:
+                Hit := 'D';
+            else
+                Hit := 'else';
+        end;
+        Observer.Observe('Quantity vs label D 1', Hit);
+        D := 1.5;
+        case O of
+            D:
+                Hit := 'D';
+            else
+                Hit := 'else';
+        end;
+        Observer.Observe('Quantity vs label D 1.5', Hit);
+        Observer.Finish();
     end;
 }

@@ -580,6 +580,9 @@ is only a reference.
 | 1992 | AL0193 | `Validate` of an Enum field with a Variant (writer QO). |
 | 1993 | AL0122 | A Variant assigned to an Enum field of a record (writer QO; 0263 is the Enum variable). |
 | 2000 | AL0322 | A field control of a page binds `Visible`, `Enabled` or `Editable` to a procedure call (writer QQ, AL Runner issue 3762; on an action it compiles with warning AL0573). |
+| 2008 | AL0398 | A Decimal constant as a case label of an Option (writer QS; =, <>, <, > of Option and Decimal compile: types/PROptionInteger.al). |
+| 2009 | AL0398 | Decimal constants in the `in` list of an Option (writer QS). |
+| 2010 | AL0385 | IncludeCaption on a report column whose source is a global variable (writer QS; 0015 is an expression). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
