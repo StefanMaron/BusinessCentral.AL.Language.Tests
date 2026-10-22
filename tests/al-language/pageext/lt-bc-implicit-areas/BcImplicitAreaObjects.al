@@ -123,3 +123,62 @@ pageextension 80970 "BC No Layout Ext" extends "BC No Layout Card"
         }
     }
 }
+
+// Writer QV (AL Runner issue 5674): the same page extensions on a List page that declares only area(Content), and the reporter's
+// extension of Base Application's List page 7500 "Item Attributes" (which declares no FactBoxes area either).
+page 87466 "LT QV Implicit FB List"
+{
+    PageType = List;
+    SourceTable = "BC Implicit Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Number; Rec.Number) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+pageextension 87467 "LT QV Implicit FB List Links" extends "LT QV Implicit FB List"
+{
+    layout
+    {
+        addfirst(FactBoxes)
+        {
+            systempart(QVLinks; Links) { ApplicationArea = All; }
+        }
+    }
+}
+
+pageextension 87468 "LT QV Implicit FB List Part" extends "LT QV Implicit FB List"
+{
+    layout
+    {
+        addlast(FactBoxes)
+        {
+            part(QVPart; "BC Implicit FB Part")
+            {
+                ApplicationArea = All;
+                SubPageLink = Number = field(Number);
+            }
+        }
+    }
+}
+
+pageextension 87469 "LT QV Item Attr. FactBoxes" extends "Item Attributes"
+{
+    layout
+    {
+        addfirst(FactBoxes)
+        {
+            systempart(QVItemAttrLinks; Links) { ApplicationArea = All; }
+        }
+    }
+}
