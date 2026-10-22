@@ -86,4 +86,45 @@ codeunit 80972 "BC Implicit Areas"
         Observer.Expect('part visible', 'Yes');
         Observer.Verify();
     end;
+
+    // Writer QV (AL Runner issue 5674): a List page that declares no area(FactBoxes); extensions add a system part (addfirst) and a
+    // part with a SubPageLink (addlast).
+    [Test]
+    procedure QV_List_FactBoxes_NotDeclared_OpenView_Closes()
+    var
+        List: TestPage "LT QV Implicit FB List";
+    begin
+        Setup();
+        List.OpenView();
+        List.Close();
+    end;
+
+    [Test]
+    procedure QV_List_FactBoxes_NotDeclared_PartFollowsRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        List: TestPage "LT QV Implicit FB List";
+    begin
+        Setup();
+        List.OpenView();
+        Observer.Observe('open number', List.Number.Value());
+        Observer.Observe('open part number', List.QVPart.PartNumber.Value());
+        Observer.Observe('part visible', Format(List.QVPart.Visible()));
+        Observer.Observe('part editable', Format(List.QVPart.Editable()));
+        Observer.Observe('part next', Format(List.QVPart.Next()));
+        Observer.Observe('gotokey 5', Format(List.GoToKey(5)) + '|' + List.Number.Value() + '|' + List.QVPart.PartNumber.Value());
+        Observer.Observe('next', Format(List.Next()) + '|' + List.Number.Value() + '|' + List.QVPart.PartNumber.Value());
+        List.Close();
+        Observer.Finish();
+    end;
+
+    // The reporter's case: Base Application's List page 7500 "Item Attributes" with a system part added by addfirst(FactBoxes).
+    [Test]
+    procedure QV_ItemAttributes_FactBoxes_OpenView_Closes()
+    var
+        ItemAttributes: TestPage "Item Attributes";
+    begin
+        ItemAttributes.OpenView();
+        ItemAttributes.Close();
+    end;
 }

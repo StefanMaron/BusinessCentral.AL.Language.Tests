@@ -380,4 +380,45 @@ codeunit 72500 "LT JsT Object Basics"
         Observer.Expect('select_token_unclosed|code', 'InvalidOperation');
         Observer.Verify();
     end;
+
+    // Writer QV (AL Runner issue 5680): JsonObject.Remove of a key the object does not hold, in statement form (the Boolean result is not
+    // used), directly and in a procedure that takes the object by var; then the statement form on a key that exists.
+    local procedure QvRemoveKey(var O: JsonObject; KeyName: Text)
+    begin
+        O.Remove(KeyName);
+    end;
+
+    [TryFunction]
+    local procedure QvTryRemoveStatement(var O: JsonObject; KeyName: Text)
+    begin
+        O.Remove(KeyName);
+    end;
+
+    [Test]
+    procedure QV_RemoveMissingKey_StatementForm()
+    var
+        O: JsonObject;
+        Empty: JsonObject;
+        Txt: Text;
+    begin
+        O.Add('a', 1);
+        ClearLastError();
+        O.Remove('missing');
+        Observer.Observe('direct', 'no error|' + GetLastErrorText());
+        O.WriteTo(Txt);
+        Observer.Observe('after direct', Txt);
+        QvRemoveKey(O, 'missing');
+        O.WriteTo(Txt);
+        Observer.Observe('after var procedure', Txt);
+        Observer.Observe('try statement', Format(QvTryRemoveStatement(O, 'missing')));
+        Observer.ObserveError('try statement error');
+        Observer.Observe('value form', Format(O.Remove('missing')));
+        Empty.Remove('a');
+        Empty.WriteTo(Txt);
+        Observer.Observe('empty object', Txt);
+        O.Remove('a');
+        O.WriteTo(Txt);
+        Observer.Observe('existing statement', Txt);
+        Observer.Finish();
+    end;
 }

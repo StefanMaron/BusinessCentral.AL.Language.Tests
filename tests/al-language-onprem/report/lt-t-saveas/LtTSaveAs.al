@@ -46,6 +46,59 @@ report 98101 "LT T Save Report"
     }
 }
 
+// Writer QV (AL Runner issue 5666): CurrReport.Preview in a dataset column and in the report triggers when Report.SaveAsXml (static and on
+// a Report variable) runs the report. Log 98970 is used by test codeunit 98102 only.
+codeunit 98970 "LT QV OnPrem Preview Log"
+{
+    SingleInstance = true;
+
+    var
+        Entries: Text;
+
+    procedure Add(Entry: Text)
+    begin
+        Entries += Entry + ';';
+    end;
+
+    procedure Take(): Text
+    var
+        Result: Text;
+    begin
+        Result := Entries;
+        Entries := '';
+        exit(Result);
+    end;
+}
+
+report 98971 "LT QV OnPrem Preview Rpt"
+{
+    UsageCategory = None;
+    UseRequestPage = false;
+
+    dataset
+    {
+        dataitem(T; "LT T Save Row")
+        {
+            DataItemTableView = where(Id = const(1));
+            column(Id; Id) { }
+            column(PreviewValue; CurrReport.Preview()) { }
+
+            trigger OnAfterGetRecord()
+            begin
+                L.Add('get preview=' + Format(CurrReport.Preview()));
+            end;
+        }
+    }
+
+    var
+        L: Codeunit "LT QV OnPrem Preview Log";
+
+    trigger OnPreReport()
+    begin
+        L.Add('pre preview=' + Format(CurrReport.Preview()));
+    end;
+}
+
 codeunit 98102 "LT T Save As Tests"
 {
     Subtype = Test;
@@ -367,5 +420,54 @@ codeunit 98102 "LT T Save As Tests"
         Observer.Expect('other format|code', 'ObjectHasAlreadyBeenRun');
         Observer.Expect('after clear ok', 'Yes');
         Observer.Verify();
+    end;
+
+    [Test]
+    procedure QV_Preview_SaveAsXml_StaticAndInstance()
+    var
+        PreviewLog: Codeunit "LT QV OnPrem Preview Log";
+        Rpt: Report "LT QV OnPrem Preview Rpt";
+        SaveFile: File;
+        InStr: InStream;
+        Line: Text;
+        Full: Text;
+        Name: Text;
+    begin
+        Seed();
+        PreviewLog.Take();
+        Name := FileName('xml');
+        ClearLastError();
+        Observer.Observe('static ok', Format(Report.SaveAsXml(Report::"LT QV OnPrem Preview Rpt", Name)));
+        Observer.ObserveError('static error');
+        Observer.Observe('static log', PreviewLog.Take());
+        if Exists(Name) then begin
+            SaveFile.Open(Name);
+            SaveFile.CreateInStream(InStr);
+            while not InStr.EOS() do begin
+                InStr.ReadText(Line);
+                Full += Line + '|';
+            end;
+            SaveFile.Close();
+            Erase(Name);
+        end;
+        Observer.Observe('static column', ColumnValues(Full, 'PreviewValue'));
+        Name := FileName('xml');
+        Full := '';
+        ClearLastError();
+        Observer.Observe('instance ok', Format(Rpt.SaveAsXml(Name)));
+        Observer.ObserveError('instance error');
+        Observer.Observe('instance log', PreviewLog.Take());
+        if Exists(Name) then begin
+            SaveFile.Open(Name);
+            SaveFile.CreateInStream(InStr);
+            while not InStr.EOS() do begin
+                InStr.ReadText(Line);
+                Full += Line + '|';
+            end;
+            SaveFile.Close();
+            Erase(Name);
+        end;
+        Observer.Observe('instance column', ColumnValues(Full, 'PreviewValue'));
+        Observer.Finish();
     end;
 }

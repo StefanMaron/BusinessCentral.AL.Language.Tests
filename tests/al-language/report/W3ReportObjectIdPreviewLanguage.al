@@ -226,6 +226,95 @@ report 67760 "W3 Lang Rpt"
     end;
 }
 
+// Writer QV (AL Runner issue 5666): CurrReport.Preview read in a dataset column (directly and through a report procedure), in the report
+// triggers and in the request page triggers, for each way the tests of codeunit 67761 start the report. RDLC layout, so SaveAs Pdf and
+// the Preview and Print actions of the request page have a layout.
+report 87470 "LT QV Preview Rpt"
+{
+    UsageCategory = None;
+    DefaultRenderingLayout = QvRdlc;
+
+    dataset
+    {
+        dataitem(Row; "W3 Row")
+        {
+            column(Id; Id) { }
+            column(PreviewValue; CurrReport.Preview()) { }
+            column(PreviewLogged; ColumnPreview()) { }
+
+            trigger OnAfterGetRecord()
+            begin
+                LogPreview('get');
+            end;
+        }
+    }
+
+    requestpage
+    {
+        layout
+        {
+            area(Content)
+            {
+                field(Ctl; CtlVal)
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+
+        trigger OnOpenPage()
+        begin
+            LogPreview('rp open');
+        end;
+
+        trigger OnQueryClosePage(CloseAction: Action): Boolean
+        begin
+            LogPreview('rp close ' + Format(CloseAction));
+            exit(true);
+        end;
+    }
+
+    rendering
+    {
+        layout(QvRdlc)
+        {
+            Type = RDLC;
+            LayoutFile = './QvPreviewLayout.rdl';
+            Caption = 'LT QV preview layout';
+        }
+    }
+
+    var
+        CtlVal: Integer;
+        L: Codeunit "W3 ObjId Log";
+
+    local procedure LogPreview(Where: Text)
+    begin
+        L.Add(Where + ' preview=' + Format(CurrReport.Preview()));
+    end;
+
+    local procedure ColumnPreview(): Boolean
+    begin
+        LogPreview('column');
+        exit(CurrReport.Preview());
+    end;
+
+    trigger OnInitReport()
+    begin
+        LogPreview('init');
+    end;
+
+    trigger OnPreReport()
+    begin
+        LogPreview('pre');
+    end;
+
+    trigger OnPostReport()
+    begin
+        LogPreview('post');
+    end;
+}
+
 codeunit 67761 "W3 ObjId Probe"
 {
     Subtype = Test;
@@ -235,6 +324,7 @@ codeunit 67761 "W3 ObjId Probe"
         L: Codeunit "W3 ObjId Log";
         Dataset: Codeunit "W3 Dataset";
         Runner: Codeunit "W3 Runner";
+        QvRpAction: Text;
 
     local procedure Seed()
     var
@@ -514,5 +604,150 @@ codeunit 67761 "W3 ObjId Probe"
         Observer.Expect('item language', 'en-US');
         Observer.Expect('item formatRegion', 'fr-FR');
         Observer.Verify();
+    end;
+
+    // Writer QV (AL Runner issue 5666): CurrReport.Preview for report 87470 per start mode (log of the report and request page triggers,
+    // and the dataset column values where the start mode gives a dataset).
+    local procedure QvColumns(Xml: Text): Text
+    var
+        Line: Text;
+        Lf: Text[1];
+        Result: Text;
+    begin
+        Lf[1] := 10;
+        foreach Line in Xml.Split(Lf) do
+            if Line.Contains('<Column name="Preview') then
+                Result += Line.Trim() + '|';
+        exit(Result);
+    end;
+
+    [Test]
+    procedure QV_Preview_SaveAsXml_Column()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        InS: InStream;
+        Line: Text;
+        Xml: Text;
+    begin
+        Seed();
+        TempBlob.CreateOutStream(OutS);
+        ClearLastError();
+        Observer.Observe('saved', Format(Report.SaveAs(Report::"LT QV Preview Rpt", '', ReportFormat::Xml, OutS)));
+        Observer.ObserveError('save error');
+        TempBlob.CreateInStream(InS, TextEncoding::UTF8);
+        while not InS.EOS() do begin
+            InS.ReadText(Line);
+            Xml += Line + Dataset.Lf();
+        end;
+        Observer.Observe('columns', QvColumns(Xml));
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QV_Preview_SaveAsPdf()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+    begin
+        Seed();
+        TempBlob.CreateOutStream(OutS);
+        ClearLastError();
+        Observer.Observe('saved', Format(Report.SaveAs(Report::"LT QV Preview Rpt", '', ReportFormat::Pdf, OutS)));
+        Observer.ObserveError('save error');
+        Observer.Observe('has output', Format(TempBlob.Length() > 0));
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QV_Preview_Execute()
+    var
+        Observer: Codeunit "Probe Observer";
+        Result: Text;
+    begin
+        Seed();
+        Observer.Observe('ok', Format(Runner.Exec(Report::"LT QV Preview Rpt", 5, '', Result)));
+        Observer.ObserveError('error');
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QvPreviewRequestHandler')]
+    procedure QV_Preview_RunRequestPage()
+    var
+        Observer: Codeunit "Probe Observer";
+        Result: Text;
+    begin
+        Seed();
+        QvRpAction := 'ok';
+        Observer.Observe('ok', Format(Runner.Exec(Report::"LT QV Preview Rpt", 2, '', Result)));
+        Observer.ObserveError('error');
+        Observer.Observe('has parameters', Format(Result <> ''));
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QvPreviewRequestHandler')]
+    procedure QV_Preview_Run_PreviewAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Result: Text;
+    begin
+        Seed();
+        QvRpAction := 'preview';
+        Observer.Observe('ok', Format(Runner.Exec(Report::"LT QV Preview Rpt", 0, '', Result)));
+        Observer.ObserveError('error');
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QvPreviewRequestHandler')]
+    procedure QV_Preview_Run_PrintAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Result: Text;
+    begin
+        Seed();
+        QvRpAction := 'print';
+        Observer.Observe('ok', Format(Runner.Exec(Report::"LT QV Preview Rpt", 0, '', Result)));
+        Observer.ObserveError('error');
+        Observer.Observe('log', L.Take());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure QvPreviewRequestHandler(var RP: TestRequestPage "LT QV Preview Rpt")
+    begin
+        case QvRpAction of
+            'ok':
+                if not QvTryInvoke(RP, 'ok') then
+                    L.Add('OK error=' + GetLastErrorText());
+            'preview':
+                if not QvTryInvoke(RP, 'preview') then
+                    L.Add('Preview error=' + GetLastErrorText());
+            'print':
+                if not QvTryInvoke(RP, 'print') then
+                    L.Add('Print error=' + GetLastErrorText());
+        end;
+    end;
+
+    [TryFunction]
+    local procedure QvTryInvoke(var RP: TestRequestPage "LT QV Preview Rpt"; What: Text)
+    begin
+        case What of
+            'ok':
+                RP.OK().Invoke();
+            'preview':
+                RP.Preview().Invoke();
+            'print':
+                RP.Print().Invoke();
+        end;
     end;
 }

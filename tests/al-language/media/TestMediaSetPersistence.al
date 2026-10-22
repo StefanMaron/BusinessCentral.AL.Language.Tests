@@ -421,6 +421,148 @@ codeunit 60951 "Test MediaSet Persistence"
         Observer.Verify();
     end;
 
+    // Writer QV (AL Runner issue 5683): MediaSet.Insert with the id of a media of another record's MediaSet (Item(n) of that set).
+    [Test]
+    procedure QV_MediaSet_Insert_ItemOfAnotherRow()
+    var
+        Observer: Codeunit "Probe Observer";
+        Source: Record "ALT Media";
+        Target: Record "ALT Media";
+        Item1: Guid;
+    begin
+        Initialize();
+        Source.Code := 'QV1';
+        Source.Insert();
+        BrImport(Source, 'qv-source-bytes');
+        Source.Modify();
+        Item1 := Source.Images.Item(1);
+        Target.Code := 'QV2';
+        Target.Insert();
+        Observer.Observe('target set id empty before', Format(IsNullGuid(Target.Images.MediaId())));
+        Observer.Observe('insert', Format(Target.Images.Insert(Item1)));
+        Observer.Observe('target count before modify', Format(Target.Images.Count()));
+        Observer.Observe('target item1 before modify', Format(Target.Images.Item(1) = Item1));
+        Observer.Observe('target set id empty after insert', Format(IsNullGuid(Target.Images.MediaId())));
+        Target.Modify();
+        Target.Get('QV2');
+        Source.Get('QV1');
+        Observer.Observe('target stored', Format(Target.Images.Count()) + '|' + Format(Target.Images.Item(1) = Item1));
+        Observer.Observe('set ids differ', Format(Target.Images.MediaId() <> Source.Images.MediaId()));
+        Observer.Observe('source stored', Format(Source.Images.Count()) + '|' + Format(Source.Images.Item(1) = Item1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QV_MediaSet_Insert_SameIdTwice()
+    var
+        Observer: Codeunit "Probe Observer";
+        Source: Record "ALT Media";
+        Target: Record "ALT Media";
+        Item1: Guid;
+    begin
+        Initialize();
+        Source.Code := 'QV3';
+        Source.Insert();
+        BrImport(Source, 'qv-twice-bytes');
+        Source.Modify();
+        Item1 := Source.Images.Item(1);
+        Target.Code := 'QV4';
+        Target.Insert();
+        Observer.Observe('first insert', Format(Target.Images.Insert(Item1)));
+        ClearLastError();
+        Observer.Observe('second insert', Format(Target.Images.Insert(Item1)));
+        Observer.ObserveError('second insert error');
+        Observer.Observe('count', Format(Target.Images.Count()));
+        Target.Modify();
+        Target.Get('QV4');
+        Observer.Observe('stored count', Format(Target.Images.Count()));
+        // The id that the source set already holds, inserted into the source set itself.
+        Observer.Observe('insert into own set', Format(Source.Images.Insert(Item1)));
+        Observer.Observe('own set count', Format(Source.Images.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QV_MediaSet_Insert_RecordNotInserted()
+    var
+        Observer: Codeunit "Probe Observer";
+        Source: Record "ALT Media";
+        Target: Record "ALT Media";
+        Item1: Guid;
+    begin
+        Initialize();
+        Source.Code := 'QV5';
+        Source.Insert();
+        BrImport(Source, 'qv-new-row-bytes');
+        Source.Modify();
+        Item1 := Source.Images.Item(1);
+        Target.Init();
+        Target.Code := 'QV6';
+        ClearLastError();
+        Observer.Observe('insert', Format(Target.Images.Insert(Item1)));
+        Observer.ObserveError('insert error');
+        Observer.Observe('count', Format(Target.Images.Count()));
+        Target.Insert();
+        Target.Get('QV6');
+        Observer.Observe('stored', Format(Target.Images.Count()) + '|' + Format(Target.Images.Count() = 1));
+        if Target.Images.Count() = 1 then
+            Observer.Observe('stored item', Format(Target.Images.Item(1) = Item1));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QV_MediaSet_Insert_UnknownAndNullId()
+    var
+        Observer: Codeunit "Probe Observer";
+        Target: Record "ALT Media";
+        NullId: Guid;
+    begin
+        Initialize();
+        Target.Code := 'QV7';
+        Target.Insert();
+        ClearLastError();
+        Observer.Observe('unknown id', Format(Target.Images.Insert(CreateGuid())));
+        Observer.ObserveError('unknown id error');
+        Observer.Observe('count after unknown', Format(Target.Images.Count()));
+        ClearLastError();
+        Observer.Observe('null id', Format(Target.Images.Insert(NullId)));
+        Observer.ObserveError('null id error');
+        Observer.Observe('count after null', Format(Target.Images.Count()));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QV_MediaSet_Insert_SourceRemovesAfterwards()
+    var
+        Observer: Codeunit "Probe Observer";
+        Source: Record "ALT Media";
+        Target: Record "LT BR MediaSet Copy";
+        Item1: Guid;
+    begin
+        Initialize();
+        Target.DeleteAll();
+        Source.Code := 'QV8';
+        Source.Insert();
+        BrImport(Source, 'qv-other-table-bytes');
+        Source.Modify();
+        Item1 := Source.Images.Item(1);
+        Target.Code := 'QV8';
+        Target.Insert();
+        Observer.Observe('insert other table', Format(Target.Images.Insert(Item1)));
+        Observer.Observe('insert other field', Format(Target.Other.Insert(Item1)));
+        Target.Modify();
+        Observer.Observe('source remove', Format(Source.Images.Remove(Item1)));
+        Source.Modify();
+        Source.Get('QV8');
+        Target.Get('QV8');
+        Observer.Observe('source count', Format(Source.Images.Count()));
+        Observer.Observe('target images', Format(Target.Images.Count()) + '|' + Format(Target.Images.Count() = 1));
+        Observer.Observe('target other', Format(Target.Other.Count()));
+        if Target.Images.Count() = 1 then
+            Observer.Observe('target item', Format(Target.Images.Item(1) = Item1));
+        Observer.Finish();
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();

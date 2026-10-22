@@ -156,5 +156,87 @@ codeunit 78603 "LT AH Dataset Header"
         Observer.Expect('all_empty', '1=[<Company>] 2=[] 3=[] 4=[] 5=[] 6=[] 7=[] 8=[] ');
         Observer.Verify();
     end;
+
+    // Writer QV (AL Runner issue 5681): the CompanyLogo element of the header for a Company Information row without a Picture, with the
+    // reporter's 1x1 PNG, and with bytes that are no image. The raw line is read; Picture is written through Base64 Convert.FromBase64.
+    local procedure QvLogoLine(): Text
+    var
+        TempBlob: Codeunit "Temp Blob";
+        OutStr: OutStream;
+        InStr: InStream;
+        Line: Text;
+        Result: Text;
+    begin
+        TempBlob.CreateOutStream(OutStr);
+        if not Report.SaveAs(Report::"LT AH Header Report", '', ReportFormat::Xml, OutStr) then
+            exit('SaveAs returned false');
+        TempBlob.CreateInStream(InStr, TextEncoding::UTF8);
+        while not InStr.EOS() do begin
+            InStr.ReadText(Line);
+            if Line.Contains('CompanyLogo') then
+                Result += Line.Trim() + '|';
+        end;
+        exit(Result);
+    end;
+
+    local procedure QvLogoNode(): Text
+    var
+        TempBlob: Codeunit "Temp Blob";
+        OutStr: OutStream;
+        InStr: InStream;
+        Document: XmlDocument;
+        Node: XmlNode;
+    begin
+        TempBlob.CreateOutStream(OutStr);
+        if not Report.SaveAs(Report::"LT AH Header Report", '', ReportFormat::Xml, OutStr) then
+            exit('SaveAs returned false');
+        TempBlob.CreateInStream(InStr);
+        if not XmlDocument.ReadFrom(InStr, Document) then
+            exit('not XML');
+        if not Document.SelectSingleNode('/ReportDataSet/BCReportInformation/CompanyMetadata/CompanyLogo', Node) then
+            exit('no CompanyLogo element');
+        exit('[' + Node.AsXmlElement().InnerText() + ']');
+    end;
+
+    local procedure QvSetPicture(Base64Text: Text; PlainText: Text)
+    var
+        Info: Record "Company Information";
+        Base64: Codeunit "Base64 Convert";
+        OutS: OutStream;
+    begin
+        Info.Get();
+        Clear(Info.Picture);
+        if (Base64Text <> '') or (PlainText <> '') then begin
+            Info.Picture.CreateOutStream(OutS);
+            if Base64Text <> '' then
+                Base64.FromBase64(Base64Text, OutS)
+            else
+                OutS.WriteText(PlainText);
+        end;
+        Info.Modify();
+    end;
+
+    [Test]
+    procedure QV_Header_CompanyLogo_PictureVariants()
+    var
+        Observer: Codeunit "Probe Observer";
+        QkRows: Codeunit "LT QK Setup Rows";
+        Base64: Codeunit "Base64 Convert";
+        PngTxt: Text;
+    begin
+        PngTxt := 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        QkRows.WriteCompanyInformation();
+        QvSetPicture('', '');
+        Observer.Observe('no picture line', QvLogoLine());
+        Observer.Observe('no picture node', QvLogoNode());
+        QvSetPicture(PngTxt, '');
+        Observer.Observe('png line', QvLogoLine());
+        Observer.Observe('png node equals input', Format(QvLogoNode() = '[' + PngTxt + ']'));
+        QvSetPicture('', 'not an image');
+        Observer.Observe('text bytes node', QvLogoNode());
+        Observer.Observe('text bytes base64', Base64.ToBase64('not an image'));
+        QkRows.RestoreCompanyInformation();
+        Observer.Finish();
+    end;
 }
 #endif
