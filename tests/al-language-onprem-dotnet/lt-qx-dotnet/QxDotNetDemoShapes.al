@@ -26,6 +26,10 @@ dotnet
     {
         type("System.Xml.XmlDocument"; LtRdXmlDocument) { }
     }
+    assembly("mscorlib")
+    {
+        type("System.IO.File"; LtRdFile) { }
+    }
 }
 
 table 99400 "LT QX DN Row"
@@ -217,6 +221,7 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         F: File;
         InS: InStream;
         B: Byte;
+        Value: Integer;
         Index: Integer;
         Result: Text;
     begin
@@ -225,7 +230,8 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         for Index := 1 to Count do
             if not InS.EOS() then begin
                 InS.Read(B);
-                Result += Format(B) + ' ';
+                Value := B;
+                Result += Format(Value) + ' ';
             end;
         F.Close();
         exit(Result);
@@ -271,13 +277,21 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Observer.Observe('TemporaryPath', Format(Directory.Exists(TemporaryPath())));
         Directory.Delete(Path, true);
         Observer.Observe('deleted', Format(Directory.Exists(Path)));
-        Observer.Finish();
+        Observer.Expect('missing', 'No');
+        Observer.Expect('created', 'Yes');
+        Observer.Expect('created with trailing slash', 'Yes');
+        Observer.Expect('a file path', 'No');
+        Observer.Expect('empty text', 'No');
+        Observer.Expect('TemporaryPath', 'Yes');
+        Observer.Expect('deleted', 'No');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RD_FileManagement_ServerFolderOperations()
     var
         FileManagement: Codeunit "File Management";
+        DotNetFile: DotNet LtRdFile;
         Path: Text;
         Media: Text;
     begin
@@ -295,10 +309,15 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Observer.Observe('file exists', Format(FileManagement.ServerFileExists(Media + '/a.txt')));
         Observer.Observe('delete file', Format(FileManagement.DeleteServerFile(Media + '/a.txt')));
         Observer.Observe('file exists after delete', Format(FileManagement.ServerFileExists(Media + '/a.txt')));
+        Observer.Observe('AL File.Exists after delete', Format(File.Exists(Media + '/a.txt')));
+        Observer.Observe('DotNet File.Exists after delete', Format(DotNetFile.Exists(Media + '/a.txt')));
         Observer.Observe('delete missing file', Format(FileManagement.DeleteServerFile(Media + '/a.txt')));
         FileManagement.ServerRemoveDirectory(Media, true);
         Observer.Observe('remove recursive with a file: exists', Format(FileManagement.ServerDirectoryExists(Media)));
         Observer.Observe('remove recursive: file exists', Format(FileManagement.ServerFileExists(Media + '/b.txt')));
+        Observer.Observe('remove recursive: AL File.Exists', Format(File.Exists(Media + '/b.txt')));
+        Observer.Observe('remove recursive: DotNet File.Exists', Format(DotNetFile.Exists(Media + '/b.txt')));
+        Observer.Observe('never created: AL File.Exists', Format(File.Exists(Media + '/never.txt')));
         Observer.Observe('parent exists', Format(FileManagement.ServerDirectoryExists(Path)));
         FileManagement.ServerRemoveDirectory(Path, false);
         Observer.Observe('remove empty non-recursive: exists', Format(FileManagement.ServerDirectoryExists(Path)));

@@ -259,6 +259,22 @@ codeunit 61281 "LT PT Web Service Rows"
         WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Job List", 'Job List', true);
         Observer.Observe('restored: all rows as before', Format(RdAllRows() = Before));
         Observer.Observe('counts restored', RdCounts());
-        Observer.Finish();
+        Observer.Expect('counts before', '17|64|402|29');
+        Observer.Expect('job list before', '[3=Page;9=Job List;6=89;12=Yes;13=No;14=No;]');
+        Observer.Expect('job list call: all rows unchanged', 'Yes');
+        Observer.Expect('job list after', '[3=Page;9=Job List;6=89;12=Yes;13=No;14=No;]');
+        Observer.Expect('counts after job list', '17|64|402|29');
+        Observer.Expect('workflow calls: all rows unchanged', 'Yes');
+        Observer.Expect('counts after workflow', '17|64|402|29');
+        Observer.Expect('excel calls: all rows unchanged', 'Yes');
+        Observer.Expect('counts after excel', '17|64|402|29');
+        Observer.Expect('job list unpublished call', '[3=Page;9=Job List;6=89;12=No;13=No;14=No;]');
+        Observer.Expect('job list empty name call', '[3=Page;9=Job List;6=89;12=No;13=No;14=No;][3=Page;9=JobList;6=89;12=Yes;13=No;14=No;]');
+        Observer.Expect('counts after empty name', '17|65|402|29');
+        Observer.Expect('job list new name call', '[3=Page;9=Job List;6=89;12=No;13=No;14=No;][3=Page;9=JobList;6=89;12=Yes;13=No;14=No;][3=Page;9=LTRDJobList;6=89;12=Yes;13=No;14=No;]');
+        Observer.Expect('counts after new name', '17|66|402|29');
+        Observer.Expect('restored: all rows as before', 'Yes');
+        Observer.Expect('counts restored', '17|64|402|29');
+        Observer.Verify();
     end;
 }

@@ -436,7 +436,23 @@ codeunit 61286 "LT S Media Files"
         Row.DeleteAll();
         Cleanup(Jpg);
         Cleanup(Png);
-        Observer.Finish();
+        Observer.Expect('png file length', '73');
+        Observer.Expect('count', '2');
+        Observer.Expect('returned ids equal', 'Yes');
+        Observer.Expect('returned id is MediaId', 'Yes');
+        Observer.Expect('returned id is Item(1)', 'No');
+        Observer.Expect('returned id is Item(2)', 'No');
+        Observer.Expect('Item(1) is Item(2)', 'No');
+        Observer.Expect('format returned id length', '38');
+        Observer.Expect('format Item(1) length', '38');
+        Observer.Expect('item 1', 'description=[jpeg item] mime=[image/jpeg] filename_contains_source_name=Yes width=3 height=2 hascontent=Yes');
+        Observer.Expect('item 2', 'description=[png item] mime=[image/png] filename_contains_source_name=Yes width=2 height=3 hascontent=Yes');
+        Observer.Expect('count after get', '2');
+        Observer.Expect('item 1 after get', 'description=[jpeg item] mime=[image/jpeg] filename_contains_source_name=Yes width=3 height=2 hascontent=Yes');
+        Observer.Expect('item 2 after get', 'description=[png item] mime=[image/png] filename_contains_source_name=Yes width=2 height=3 hascontent=Yes');
+        Observer.Expect('media png returned id is MediaId', 'Yes');
+        Observer.Expect('media png', 'description=[png media] mime=[image/png] filename_contains_source_name=Yes width=2 height=3 hascontent=Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -476,6 +492,11 @@ codeunit 61286 "LT S Media Files"
         Observer.Observe('export length', Format(TempBlob.Length()));
         TempBlob.CreateInStream(InS);
         Observer.Observe('export is the file', Format(Base64.ToBase64(InS) = RdDocxBase64()));
+        TempBlob.CreateInStream(InS);
+        if Base64.ToBase64(InS) <> RdDocxBase64() then begin
+            TempBlob.CreateInStream(InS);
+            Observer.Observe('export base64', Base64.ToBase64(InS));
+        end;
         Row.Reset();
         Row.SetFilter(Code, 'LTRD*');
         Row.DeleteAll();

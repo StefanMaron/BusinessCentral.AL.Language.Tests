@@ -781,7 +781,9 @@ codeunit 87750 "LT RA XP Export Tests"
         Observer.Observe('sorting(DefCode, ParentCode)', RdExport(Xmlport::"LT RD XP Linked Sorting", ''));
         Observer.Observe('sorting(DefCode, Code)', RdExport(Xmlport::"LT RD XP Linked None", ''));
         RdWipe();
-        Observer.Finish();
+        Observer.Expect('sorting(DefCode, ParentCode)', '<decl>|<Root>|  <Def Code="A">|    <LineDef Code="L3" Type="Detail" Parent="">|      <ColDef No="1" />|    </LineDef>|    <LineDef Code="L4" Type="Header" Parent="B" />|    <LineDef Code="L2" Type="Detail" Parent="M">|      <ColDef No="1" />|      <ColDef No="2" />|    </LineDef>|    <LineDef Code="L1" Type="Footer" Parent="Z" />|  </Def>|  <Def Code="B">|    <LineDef Code="L2" Type="Header" Parent="">|      <ColDef No="1" />|    </LineDef>|    <LineDef Code="L1" Type="Detail" Parent="Q">|      <ColDef No="3" />|    </LineDef>|  </Def>|  <Def Code="C" />|</Root>|');
+        Observer.Expect('sorting(DefCode, Code)', '<decl>|<Root>|  <Def Code="A">|    <LineDef Code="L1" Type="Footer" Parent="Z" />|    <LineDef Code="L2" Type="Detail" Parent="M">|      <ColDef No="1" />|      <ColDef No="2" />|    </LineDef>|    <LineDef Code="L3" Type="Detail" Parent="">|      <ColDef No="1" />|    </LineDef>|    <LineDef Code="L4" Type="Header" Parent="B" />|  </Def>|  <Def Code="B">|    <LineDef Code="L1" Type="Detail" Parent="Q">|      <ColDef No="3" />|    </LineDef>|    <LineDef Code="L2" Type="Header" Parent="">|      <ColDef No="1" />|    </LineDef>|  </Def>|  <Def Code="C" />|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -791,7 +793,9 @@ codeunit 87750 "LT RA XP Export Tests"
         Observer.Observe('where(Type = const(Detail))', RdExport(Xmlport::"LT RD XP Linked Where", ''));
         Observer.Observe('where on the link field', RdExport(Xmlport::"LT RD XP Linked Where Link", ''));
         RdWipe();
-        Observer.Finish();
+        Observer.Expect('where(Type = const(Detail))', '<decl>|<Root>|  <Def Code="A">|    <LineDef Code="L3" Type="Detail" Parent="">|      <ColDef No="1" />|    </LineDef>|    <LineDef Code="L2" Type="Detail" Parent="M">|      <ColDef No="2" />|    </LineDef>|  </Def>|  <Def Code="B">|    <LineDef Code="L1" Type="Detail" Parent="Q">|      <ColDef No="3" />|    </LineDef>|  </Def>|  <Def Code="C" />|</Root>|');
+        Observer.Expect('where on the link field', '<decl>|<Root>|  <Def Code="A">|    <LineDef Code="L1" Type="Footer" Parent="Z" />|    <LineDef Code="L2" Type="Detail" Parent="M">|      <ColDef No="1" />|      <ColDef No="2" />|    </LineDef>|    <LineDef Code="L3" Type="Detail" Parent="">|      <ColDef No="1" />|    </LineDef>|    <LineDef Code="L4" Type="Header" Parent="B" />|  </Def>|  <Def Code="B" />|  <Def Code="C" />|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -803,6 +807,10 @@ codeunit 87750 "LT RA XP Export Tests"
         Observer.Observe('where on the link field, record B', RdExport(Xmlport::"LT RD XP Linked Where Link", 'B'));
         Observer.Observe('sorting, record D (no row)', RdExport(Xmlport::"LT RD XP Linked Sorting", 'D'));
         RdWipe();
-        Observer.Finish();
+        Observer.Expect('sorting, record B', '<decl>|<Root>|  <Def Code="B">|    <LineDef Code="L2" Type="Header" Parent="">|      <ColDef No="1" />|    </LineDef>|    <LineDef Code="L1" Type="Detail" Parent="Q">|      <ColDef No="3" />|    </LineDef>|  </Def>|</Root>|');
+        Observer.Expect('where, record A|C', '<decl>|<Root>|  <Def Code="A">|    <LineDef Code="L3" Type="Detail" Parent="">|      <ColDef No="1" />|    </LineDef>|    <LineDef Code="L2" Type="Detail" Parent="M">|      <ColDef No="2" />|    </LineDef>|  </Def>|  <Def Code="C" />|</Root>|');
+        Observer.Expect('where on the link field, record B', '<decl>|<Root>|  <Def Code="B" />|</Root>|');
+        Observer.Expect('sorting, record D (no row)', '<decl>|<Root />|');
+        Observer.Verify();
     end;
 }
