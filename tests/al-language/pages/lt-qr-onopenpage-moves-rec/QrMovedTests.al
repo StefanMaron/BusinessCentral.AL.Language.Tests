@@ -639,4 +639,303 @@ codeunit 87266 "LT QR Moved Tests"
         Observer.Expect('previous log', 'R:C;R:C;C:C;');
         Observer.Verify();
     end;
+
+    // ---- Writer QT (2026-10-22): a temporary Worksheet (and List) that a procedure fills BEFORE Run / RunModal; objects in
+    // QtTempWorksheetObjects.al. Which row the page opens on (No.|Name), the triggers on the way, Next and Previous from there. ----
+
+    local procedure QtReadWs(var P: TestPage "LT QT Temp Ws")
+    begin
+        Observer.Observe('open', P.NoCtl.Value() + '|' + P.NameCtl.Value());
+        Observer.Observe('open log', Log.Take());
+        Observer.Observe('next', Format(P.Next()) + '|' + P.NoCtl.Value());
+        Observer.Observe('next log', Log.Take());
+        Observer.Observe('previous', Format(P.Previous()) + '|' + P.NoCtl.Value());
+        Observer.Observe('previous log', Log.Take());
+    end;
+
+    [ModalPageHandler]
+    procedure QtModalWs(var P: TestPage "LT QT Temp Ws")
+    begin
+        QtReadWs(P);
+    end;
+
+    local procedure QtRunModalWs(Pos: Text; Lookup: Boolean)
+    var
+        Pg: Page "LT QT Temp Ws";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        if Lookup then
+            Pg.LookupMode(true);
+        Observer.Observe('before run log', Log.Take());
+        Pg.RunModal();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    local procedure QtReadWsNext(var P: TestPage "LT QT Temp Ws Next")
+    begin
+        Observer.Observe('open', P.NoCtl.Value() + '|' + P.NameCtl.Value());
+        Observer.Observe('open log', Log.Take());
+        Observer.Observe('next', Format(P.Next()) + '|' + P.NoCtl.Value());
+        Observer.Observe('next log', Log.Take());
+        Observer.Observe('previous', Format(P.Previous()) + '|' + P.NoCtl.Value());
+        Observer.Observe('previous log', Log.Take());
+    end;
+
+    [ModalPageHandler]
+    procedure QtModalWsNext(var P: TestPage "LT QT Temp Ws Next")
+    begin
+        QtReadWsNext(P);
+    end;
+
+    local procedure QtRunModalWsNext(Pos: Text; Lookup: Boolean)
+    var
+        Pg: Page "LT QT Temp Ws Next";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        if Lookup then
+            Pg.LookupMode(true);
+        Observer.Observe('before run log', Log.Take());
+        Pg.RunModal();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    local procedure QtReadWsFind(var P: TestPage "LT QT Temp Ws Find Next")
+    begin
+        Observer.Observe('open', P.NoCtl.Value() + '|' + P.NameCtl.Value());
+        Observer.Observe('open log', Log.Take());
+        Observer.Observe('next', Format(P.Next()) + '|' + P.NoCtl.Value());
+        Observer.Observe('next log', Log.Take());
+        Observer.Observe('previous', Format(P.Previous()) + '|' + P.NoCtl.Value());
+        Observer.Observe('previous log', Log.Take());
+    end;
+
+    [ModalPageHandler]
+    procedure QtModalWsFind(var P: TestPage "LT QT Temp Ws Find Next")
+    begin
+        QtReadWsFind(P);
+    end;
+
+    local procedure QtRunModalWsFind(Pos: Text; Lookup: Boolean)
+    var
+        Pg: Page "LT QT Temp Ws Find Next";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        if Lookup then
+            Pg.LookupMode(true);
+        Observer.Observe('before run log', Log.Take());
+        Pg.RunModal();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    local procedure QtReadList(var P: TestPage "LT QT Temp List")
+    begin
+        Observer.Observe('open', P.NoCtl.Value() + '|' + P.NameCtl.Value());
+        Observer.Observe('open log', Log.Take());
+        Observer.Observe('next', Format(P.Next()) + '|' + P.NoCtl.Value());
+        Observer.Observe('next log', Log.Take());
+        Observer.Observe('previous', Format(P.Previous()) + '|' + P.NoCtl.Value());
+        Observer.Observe('previous log', Log.Take());
+    end;
+
+    [ModalPageHandler]
+    procedure QtModalList(var P: TestPage "LT QT Temp List")
+    begin
+        QtReadList(P);
+    end;
+
+    local procedure QtRunModalList(Pos: Text; Lookup: Boolean)
+    var
+        Pg: Page "LT QT Temp List";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        if Lookup then
+            Pg.LookupMode(true);
+        Observer.Observe('before run log', Log.Take());
+        Pg.RunModal();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    local procedure QtRunWs(Pos: Text)
+    var
+        Pg: Page "LT QT Temp Ws";
+        P: TestPage "LT QT Temp Ws";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        Log.Take();
+        P.Trap();
+        Pg.Run();
+        QtReadWs(P);
+        P.Close();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_D_NoMove()
+    begin
+        QtRunModalWs('', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_A()
+    begin
+        QtRunModalWs('A', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_B()
+    begin
+        QtRunModalWs('B', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_BB_Between()
+    begin
+        QtRunModalWs('BB', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_E_PastLast()
+    begin
+        QtRunModalWs('E', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_ByName_B()
+    begin
+        QtRunModalWs('NAME:B', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_Lookup_A()
+    begin
+        QtRunModalWs('A', true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_Lookup_B()
+    begin
+        QtRunModalWs('B', true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_Lookup_BB_Between()
+    begin
+        QtRunModalWs('BB', true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsNext')]
+    procedure QT_TempWsNext_RunModal_A()
+    begin
+        QtRunModalWsNext('A', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsNext')]
+    procedure QT_TempWsNext_RunModal_B()
+    begin
+        QtRunModalWsNext('B', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsNext')]
+    procedure QT_TempWsNext_RunModal_BB_Between()
+    begin
+        QtRunModalWsNext('BB', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsNext')]
+    procedure QT_TempWsNext_Lookup_B()
+    begin
+        QtRunModalWsNext('B', true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsFind')]
+    procedure QT_TempWsFind_RunModal_B()
+    begin
+        QtRunModalWsFind('B', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsFind')]
+    procedure QT_TempWsFind_RunModal_BB_Between()
+    begin
+        QtRunModalWsFind('BB', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalList')]
+    procedure QT_TempList_RunModal_B()
+    begin
+        QtRunModalList('B', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalList')]
+    procedure QT_TempList_RunModal_BB_Between()
+    begin
+        QtRunModalList('BB', false);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalList')]
+    procedure QT_TempList_Lookup_B()
+    begin
+        QtRunModalList('B', true);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_TempWs_Run_B()
+    begin
+        QtRunWs('B');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_TempWs_Run_BB_Between()
+    begin
+        QtRunWs('BB');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_TempWs_Run_A()
+    begin
+        QtRunWs('A');
+        Observer.Finish();
+    end;
 }

@@ -3446,4 +3446,901 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         Observer.Expect('lines-after-close', '30000:q=3,a=3 35000:q=0,a=7 40000:q=4,a=4');
         Observer.Verify();
     end;
+
+    // ---- Writer QT (2026-10-22): (a) al-runtime-rs bump 44 pin PR 5620: Last() (and First, Next, New) on an EMPTY part whose table has an
+    // OnValidate on its key fields ("LT QT Val Line"), for AutoSplitKey + DelayedInsert, DelayedInsert only and neither; with the key
+    // OnValidate raising an error; and a part with two lines as the control. (b) the host's reads at open, in order, for Card, Card Both,
+    // ListPlus, ListPlus Both and Document hosts with part "LT QL Note Lines" (OpenEdit, then GoToKey, then a part Update(false); OpenView;
+    // three heads with GoToKey + Next). (c) QN_EmptyPart_HostOpenNew and QN_EmptyPart_HostNext_ThenNextAgain step by step. Objects in
+    // QtPartObjects.al. ----
+
+    local procedure SeedQtVal(Fail: Boolean; WithLines: Boolean)
+    var
+        Head: Record "LT QJ Head";
+        Line: Record "LT QT Val Line";
+    begin
+        Seed();
+        Line.DeleteAll();
+        if Fail then begin
+            Head.Get('H1');
+            Head.Note := 'fail';
+            Head.Modify();
+        end;
+        if WithLines then begin
+            Line."Doc No." := 'H1';
+            Line."Line No." := 10000;
+            Line.Amt := 1;
+            Line.Insert();
+            Line."Line No." := 20000;
+            Line.Amt := 2;
+            Line.Insert();
+        end;
+        Log.Reset();
+    end;
+
+    local procedure StoredValLines(): Text
+    var
+        Line: Record "LT QT Val Line";
+        Result: Text;
+    begin
+        if Line.FindSet() then
+            repeat
+                if Result <> '' then
+                    Result += ' ';
+                Result += Line."Doc No." + ':' + Format(Line."Line No.") + ':a=' + Format(Line.Amt);
+            until Line.Next() = 0;
+        exit('[' + Result + ']');
+    end;
+
+    [Test]
+    procedure QT_ValPartSplit_Empty_Last()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Split";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H1');
+        Observer.Observe('log-gotokey', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        Observer.Observe('part-amt', TP.Lines.AmtF.Value());
+        Observer.Observe('lines-after-last', StoredValLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartSplit_Empty_Last_ThenType()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Split";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        TP.Lines.Last();
+        Log.Take();
+        TP.Lines.AmtF.SetValue(7);
+        Observer.Observe('log-type', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        Observer.Observe('lines-after-type', StoredValLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartSplit_TwoLines_Last()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Split";
+    begin
+        SeedQtVal(false, true);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartDelayed_Empty_Last()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Delayed";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H1');
+        Observer.Observe('log-gotokey', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        Observer.Observe('part-amt', TP.Lines.AmtF.Value());
+        Observer.Observe('lines-after-last', StoredValLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartDelayed_Empty_Last_ThenType()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Delayed";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        TP.Lines.Last();
+        Log.Take();
+        TP.Lines.AmtF.SetValue(7);
+        Observer.Observe('log-type', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        Observer.Observe('lines-after-type', StoredValLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartDelayed_TwoLines_Last()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Delayed";
+    begin
+        SeedQtVal(false, true);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartPlain_Empty_Last()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Plain";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H1');
+        Observer.Observe('log-gotokey', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        Observer.Observe('part-amt', TP.Lines.AmtF.Value());
+        Observer.Observe('lines-after-last', StoredValLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartPlain_Empty_Last_ThenType()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Plain";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        TP.Lines.Last();
+        Log.Take();
+        TP.Lines.AmtF.SetValue(7);
+        Observer.Observe('log-type', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        Observer.Observe('lines-after-type', StoredValLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartPlain_TwoLines_Last()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Plain";
+    begin
+        SeedQtVal(false, true);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure QtTryOpenSplit(var TP: TestPage "LT QT Val Host Split")
+    begin
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+    end;
+
+    [TryFunction]
+    local procedure QtTryLastSplit(var TP: TestPage "LT QT Val Host Split"; var Result: Boolean)
+    begin
+        Result := TP.Lines.Last();
+    end;
+
+    [TryFunction]
+    local procedure QtTryTypeSplit(var TP: TestPage "LT QT Val Host Split")
+    begin
+        TP.Lines.AmtF.SetValue(7);
+    end;
+
+    [Test]
+    procedure QT_ValPartSplit_Empty_Last_KeyValidateErrors()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Split";
+        Result: Boolean;
+    begin
+        SeedQtVal(true, false);
+        if QtTryOpenSplit(TP) then
+            Observer.Observe('open', 'ok')
+        else
+            Observer.ObserveError('open');
+        Observer.Observe('log-open', Log.Take());
+        if QtTryLastSplit(TP, Result) then
+            Observer.Observe('last', 'ok ' + Format(Result))
+        else
+            Observer.ObserveError('last');
+        Observer.Observe('log-last', Log.Take());
+        if QtTryTypeSplit(TP) then
+            Observer.Observe('type', 'ok')
+        else
+            Observer.ObserveError('type');
+        Observer.Observe('log-type', Log.Take());
+        Observer.Observe('lines-after-type', StoredValLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [TryFunction]
+    local procedure QtTryOpenPlain(var TP: TestPage "LT QT Val Host Plain")
+    begin
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+    end;
+
+    [TryFunction]
+    local procedure QtTryLastPlain(var TP: TestPage "LT QT Val Host Plain"; var Result: Boolean)
+    begin
+        Result := TP.Lines.Last();
+    end;
+
+    [TryFunction]
+    local procedure QtTryTypePlain(var TP: TestPage "LT QT Val Host Plain")
+    begin
+        TP.Lines.AmtF.SetValue(7);
+    end;
+
+    [Test]
+    procedure QT_ValPartPlain_Empty_Last_KeyValidateErrors()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Plain";
+        Result: Boolean;
+    begin
+        SeedQtVal(true, false);
+        if QtTryOpenPlain(TP) then
+            Observer.Observe('open', 'ok')
+        else
+            Observer.ObserveError('open');
+        Observer.Observe('log-open', Log.Take());
+        if QtTryLastPlain(TP, Result) then
+            Observer.Observe('last', 'ok ' + Format(Result))
+        else
+            Observer.ObserveError('last');
+        Observer.Observe('log-last', Log.Take());
+        if QtTryTypePlain(TP) then
+            Observer.Observe('type', 'ok')
+        else
+            Observer.ObserveError('type');
+        Observer.Observe('log-type', Log.Take());
+        Observer.Observe('lines-after-type', StoredValLines());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartSplit_Empty_First()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Split";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        Observer.Observe('result', Format(TP.Lines.First()));
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartSplit_Empty_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Split";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        Observer.Observe('result', Format(TP.Lines.Next()));
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartSplit_Empty_Previous()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Split";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        Observer.Observe('result', Format(TP.Lines.Previous()));
+        Observer.Observe('log', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_ValPartSplit_Empty_New_ThenType()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Val Host Split";
+    begin
+        SeedQtVal(false, false);
+        TP.OpenEdit();
+        TP.GoToKey('H1');
+        Log.Take();
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Lines.AmtF.SetValue(7);
+        Observer.Observe('log-type', Log.Take());
+        Observer.Observe('part-line', TP.Lines.LineNoF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredValLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostCard_OpenEdit_GoToKey_PartUpdate()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Card Host";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H1');
+        Observer.Observe('log-gotokey', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostCard_OpenEdit_PartUpdate_NoGoToKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Card Host";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostCard_OpenView()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Card Host";
+    begin
+        Seed();
+        TP.OpenView();
+        Observer.Observe('log-openview', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostCard_ThreeHeads_GoToKeyH2_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Card Host";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H2');
+        Observer.Observe('log-gotokey', Log.Take());
+        Observer.Observe('next', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostCardBoth_OpenEdit_GoToKey_PartUpdate()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Card Host Both";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H1');
+        Observer.Observe('log-gotokey', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostCardBoth_OpenEdit_PartUpdate_NoGoToKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Card Host Both";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostCardBoth_OpenView()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Card Host Both";
+    begin
+        Seed();
+        TP.OpenView();
+        Observer.Observe('log-openview', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostCardBoth_ThreeHeads_GoToKeyH2_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Card Host Both";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H2');
+        Observer.Observe('log-gotokey', Log.Take());
+        Observer.Observe('next', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostListPlus_OpenEdit_GoToKey_PartUpdate()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT ListPlus Host";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H1');
+        Observer.Observe('log-gotokey', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostListPlus_OpenEdit_PartUpdate_NoGoToKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT ListPlus Host";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostListPlus_OpenView()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT ListPlus Host";
+    begin
+        Seed();
+        TP.OpenView();
+        Observer.Observe('log-openview', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostListPlus_ThreeHeads_GoToKeyH2_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT ListPlus Host";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H2');
+        Observer.Observe('log-gotokey', Log.Take());
+        Observer.Observe('next', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostListPlusBoth_OpenEdit_GoToKey_PartUpdate()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT ListPlus Host Both";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H1');
+        Observer.Observe('log-gotokey', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostListPlusBoth_OpenEdit_PartUpdate_NoGoToKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT ListPlus Host Both";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostListPlusBoth_OpenView()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT ListPlus Host Both";
+    begin
+        Seed();
+        TP.OpenView();
+        Observer.Observe('log-openview', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostListPlusBoth_ThreeHeads_GoToKeyH2_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT ListPlus Host Both";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H2');
+        Observer.Observe('log-gotokey', Log.Take());
+        Observer.Observe('next', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostDoc_OpenEdit_GoToKey_PartUpdate()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Doc Host";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H1');
+        Observer.Observe('log-gotokey', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        Observer.Observe('part-amt-after-part', TP.Lines.AmtF.Value());
+        Observer.Observe('host-total-after-part', TP.TotalF.Value());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('lines-after-close', StoredLines());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostDoc_OpenEdit_PartUpdate_NoGoToKey()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Doc Host";
+    begin
+        Seed();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.Lines.AmtF.SetValue(5);
+        Observer.Observe('log-part-edit', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostDoc_OpenView()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Doc Host";
+    begin
+        Seed();
+        TP.OpenView();
+        Observer.Observe('log-openview', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_HostDoc_ThreeHeads_GoToKeyH2_Next()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QT Doc Host";
+    begin
+        SeedQl();
+        TP.OpenEdit();
+        Observer.Observe('log-openedit', Log.Take());
+        TP.GoToKey('H2');
+        Observer.Observe('log-gotokey', Log.Take());
+        Observer.Observe('next', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_EmptyPart_HostOpenNew_CloseOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, false);
+        TP.OpenNew();
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('heads-after-open', StoredHeads());
+        Observer.Observe('heads-before-close', StoredHeads());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('heads-after-close', StoredHeads());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_EmptyPart_HostOpenNew_LastOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, false);
+        TP.OpenNew();
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('heads-after-open', StoredHeads());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        Observer.Observe('heads-before-close', StoredHeads());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('heads-after-close', StoredHeads());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_EmptyPart_HostOpenNew_NewOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, false);
+        TP.OpenNew();
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('heads-after-open', StoredHeads());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('heads-before-close', StoredHeads());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('heads-after-close', StoredHeads());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_EmptyPart_HostOpenNew_LastThenNew()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, false);
+        TP.OpenNew();
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('heads-after-open', StoredHeads());
+        Observer.Observe('last-result', Format(TP.Lines.Last()));
+        Observer.Observe('log-last', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        Observer.Observe('heads-before-close', StoredHeads());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('heads-after-close', StoredHeads());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_EmptyPart_HostOpenNew_ReadHostOnly()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, false);
+        TP.OpenNew();
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('heads-after-open', StoredHeads());
+        Observer.Observe('host-descr', TP.DescrF.Value());
+        Observer.Observe('log-read', Log.Take());
+        Observer.Observe('heads-before-close', StoredHeads());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Observe('heads-after-close', StoredHeads());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_EmptyPart_HostNext_Steps()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, true);
+        TP.OpenEdit();
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('next-1', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next-1', Log.Take());
+        Observer.Observe('next-2', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next-2', Log.Take());
+        Observer.Observe('next-3', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next-3', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure QT_EmptyPart_HostNext_Steps_ReadPartLine()
+    var
+        Observer: Codeunit "Probe Observer";
+        TP: TestPage "LT QJ Save Host";
+    begin
+        SeedQn(false, true);
+        TP.OpenEdit();
+        Observer.Observe('log-open', Log.Take());
+        Observer.Observe('next-1', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next-1', Log.Take());
+        Observer.Observe('part-line-1', TP.Lines.LineNoF.Value());
+        Observer.Observe('log-read-1', Log.Take());
+        Observer.Observe('next-2', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next-2', Log.Take());
+        Observer.Observe('part-line-2', TP.Lines.LineNoF.Value());
+        Observer.Observe('log-read-2', Log.Take());
+        Observer.Observe('next-3', Format(TP.Next()) + '|' + TP.NoF.Value());
+        Observer.Observe('log-next-3', Log.Take());
+        Observer.Observe('part-line-3', TP.Lines.LineNoF.Value());
+        Observer.Observe('log-read-3', Log.Take());
+        TP.Lines.New();
+        Observer.Observe('log-new', Log.Take());
+        TP.Close();
+        Observer.Observe('log-close', Log.Take());
+        Observer.Finish();
+    end;
 }

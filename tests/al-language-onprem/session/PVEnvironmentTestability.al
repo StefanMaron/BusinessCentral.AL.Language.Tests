@@ -12,6 +12,32 @@ codeunit 61293 "PV Environment Testability"
     Subtype = Test;
     TestPermissions = Disabled;
 
+    // Writer QT (2026-10-22, al-runtime-rs PR 5658): what the OnPrem-target app reads before any test library call, and IsOnPrem and
+    // IsSaaSInfrastructure after SetTestabilitySoftwareAsAService(true) and (false). Declared first so it runs before the test below.
+    [Test]
+    procedure QT_EnvironmentInformation_OnPremApp_DefaultAndSaaSSwitch()
+    var
+        EnvInfo: Codeunit "Environment Information";
+        EnvTestLib: Codeunit "Environment Info Test Library";
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('default_is_onprem', Format(EnvInfo.IsOnPrem()));
+        Observer.Observe('default_is_saas', Format(EnvInfo.IsSaaS()));
+        Observer.Observe('default_is_saas_infrastructure', Format(EnvInfo.IsSaaSInfrastructure()));
+        Observer.Observe('default_is_sandbox', Format(EnvInfo.IsSandbox()));
+        Observer.Observe('default_is_production', Format(EnvInfo.IsProduction()));
+        Observer.Observe('default_environment_name', '[' + EnvInfo.GetEnvironmentName() + ']');
+        EnvTestLib.SetTestabilitySoftwareAsAService(true);
+        Observer.Observe('saas_true_is_onprem', Format(EnvInfo.IsOnPrem()));
+        Observer.Observe('saas_true_is_saas', Format(EnvInfo.IsSaaS()));
+        Observer.Observe('saas_true_is_saas_infrastructure', Format(EnvInfo.IsSaaSInfrastructure()));
+        EnvTestLib.SetTestabilitySoftwareAsAService(false);
+        Observer.Observe('saas_false_is_onprem', Format(EnvInfo.IsOnPrem()));
+        Observer.Observe('saas_false_is_saas', Format(EnvInfo.IsSaaS()));
+        Observer.Observe('saas_false_is_saas_infrastructure', Format(EnvInfo.IsSaaSInfrastructure()));
+        Observer.Finish();
+    end;
+
     [Test]
     procedure EnvironmentInformation_SandboxAndProduction_ThroughTheTestLibrary()
     var

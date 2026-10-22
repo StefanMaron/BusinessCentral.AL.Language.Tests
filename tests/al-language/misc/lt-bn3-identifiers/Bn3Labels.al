@@ -88,4 +88,77 @@ codeunit 83853 "LT BN3 Labels Tests"
         Observer.Expect('global variable', 'global');
         Observer.Verify();
     end;
+
+    // Writer QT (2026-10-22, al-runtime-rs PR 5642 and 5656): the 22 statement and operator keywords the AL compiler accepts as unquoted
+    // variable names in a var section (If, Then, Else, Case, While, Do, Repeat, Until, For, To, DownTo, ForEach, In, Exit, And, Or, Xor,
+    // Not, Div, Mod, With, AssertError), used quoted in statements; and keywords accepted as parameter names (If, Exit, Repeat, Local,
+    // Fields, Keys, Layout). Used unquoted in a statement the compiler rejects them: must-not-compile case 2040 (AL0224).
+
+    local procedure QtKeywordParameters(If: Integer; Exit: Integer; Repeat: Integer; Local: Integer; Fields: Integer; Keys: Integer; Layout: Integer): Integer
+    begin
+        exit("If" + "Exit" * 10 + "Repeat" * 100 + "Local" * 1000 + "Fields" * 10000 + "Keys" * 100000 + "Layout" * 1000000);
+    end;
+
+    [Test]
+    procedure QT_KeywordsAsVariableNames_Compile_AndHoldValues()
+    var
+        Observer: Codeunit "Probe Observer";
+        If: Integer;
+        Then: Integer;
+        Else: Integer;
+        Case: Integer;
+        While: Integer;
+        Do: Integer;
+        Repeat: Integer;
+        Until: Integer;
+        For: Integer;
+        To: Integer;
+        DownTo: Integer;
+        ForEach: Integer;
+        In: Integer;
+        Exit: Integer;
+        And: Integer;
+        Or: Integer;
+        Xor: Integer;
+        Not: Integer;
+        Div: Integer;
+        Mod: Integer;
+        With: Integer;
+        AssertError: Text;
+    begin
+        "If" := 1;
+        "Then" := 2;
+        "Else" := 3;
+        "Case" := 4;
+        "While" := 5;
+        "Do" := 6;
+        "Repeat" := 7;
+        "Until" := 8;
+        "For" := 9;
+        "To" := 10;
+        "DownTo" := 11;
+        "ForEach" := 12;
+        "In" := 13;
+        "Exit" := 14;
+        "And" := 15;
+        "Or" := 16;
+        "Xor" := 17;
+        "Not" := 18;
+        "Div" := 19;
+        "Mod" := 20;
+        "With" := 21;
+        "AssertError" := 'twenty-two';
+        Observer.Observe('sum', Format("If" + "Then" + "Else" + "Case" + "While" + "Do" + "Repeat" + "Until" + "For" + "To" + "DownTo" + "ForEach" + "In" + "Exit" + "And" + "Or" + "Xor" + "Not" + "Div" + "Mod" + "With"));
+        Observer.Observe('text', "AssertError");
+        if "If" < "Then" then
+            Observer.Observe('if on keyword variables', 'then')
+        else
+            Observer.Observe('if on keyword variables', 'else');
+        for "For" := "To" to "DownTo" do
+            "Repeat" += "For";
+        Observer.Observe('for loop variable', Format("For") + '|' + Format("Repeat"));
+        Observer.Observe('div mod', Format("Div" div 4) + '|' + Format("Mod" mod 6));
+        Observer.Observe('keyword parameters', Format(QtKeywordParameters("If", "Then", "Else", "Case", "While", "Do", "Repeat")));
+        Observer.Finish();
+    end;
 }
