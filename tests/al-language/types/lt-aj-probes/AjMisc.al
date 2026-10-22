@@ -555,4 +555,74 @@ codeunit 79013 "LT AJ Misc"
         Observer.Expect('Field(No. of the timestamp row)', 'timestamp#0');
         Observer.Verify();
     end;
+
+    // ---- Writer RA (2026-10-22): the Field table read filtered only on TableNo, FindSet loop, on tables with a key over SystemRowVersion and the
+    // control: count, then each row as No.:FieldName:ObsoleteState in the order FindSet gives (a table with more than 15 rows: the first 3 rows,
+    // the position of the timestamp row, the last 8 rows, and whether the No. values ascend). The same with ObsoleteState <> Removed added. ----
+
+    local procedure RaFieldScan(TableNumber: Integer; WithoutRemoved: Boolean): Text
+    var
+        Fld: Record Field;
+        Rows: List of [Text];
+        Row: Text;
+        Result: Text;
+        TimestampAt: Integer;
+        PrevNo: Integer;
+        Ascending: Boolean;
+        Index: Integer;
+    begin
+        Fld.SetRange(TableNo, TableNumber);
+        if WithoutRemoved then
+            Fld.SetFilter(ObsoleteState, '<>%1', Fld.ObsoleteState::Removed);
+        Ascending := true;
+        PrevNo := -1;
+        if Fld.FindSet() then
+            repeat
+                Rows.Add(Format(Fld."No.") + ':' + Fld.FieldName + ':' + Format(Fld.ObsoleteState));
+                if (Fld.FieldName = 'timestamp') and (TimestampAt = 0) then
+                    TimestampAt := Rows.Count();
+                if Fld."No." <= PrevNo then
+                    Ascending := false;
+                PrevNo := Fld."No.";
+            until Fld.Next() = 0;
+        Result := 'count=' + Format(Fld.Count()) + '|rows=' + Format(Rows.Count()) + '|timestamp at=' + Format(TimestampAt) + '|ascending=' + Format(Ascending) + '|';
+        if Rows.Count() <= 15 then begin
+            foreach Row in Rows do
+                Result += Row + ';';
+            exit(Result);
+        end;
+        for Index := 1 to 3 do
+            Result += Rows.Get(Index) + ';';
+        Result += '...;';
+        for Index := Rows.Count() - 7 to Rows.Count() do
+            Result += Rows.Get(Index) + ';';
+        exit(Result);
+    end;
+
+    local procedure RaObserveScans(TableNumber: Integer)
+    begin
+        Observer.Observe('TableNo only', RaFieldScan(TableNumber, false));
+        Observer.Observe('TableNo and ObsoleteState <> Removed', RaFieldScan(TableNumber, true));
+    end;
+
+    [Test]
+    procedure RA_FieldTable_ScanByTableNo_OwnKeyOnRowVersion()
+    begin
+        RaObserveScans(Database::"KRV Row");
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RA_FieldTable_ScanByTableNo_KeyOnRowVersionFromTableExtension()
+    begin
+        RaObserveScans(Database::"Customer Bank Account");
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RA_FieldTable_ScanByTableNo_NoKeyOnRowVersion_Control()
+    begin
+        RaObserveScans(Database::"LT AJ Ts");
+        Observer.Finish();
+    end;
 }
