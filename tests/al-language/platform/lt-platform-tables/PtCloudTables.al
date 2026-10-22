@@ -6,6 +6,7 @@
 // as text and code. Object id 67107.
 // Writer QX (Microsoft's DemoTool): Media Resources codes of a fresh tenant, Media Reference.ImportStream and Blob rows by Code; Tenant Report
 //   Layout Selection rows of a fresh tenant and the Insert(true)-else-Modify(true) of a report layout; OData Edm Type keys and the Edm Xml Blob.
+// Writer RE (Microsoft's DemoTool): Description and Edm Xml text of the 6 OData Edm Type rows of a fresh tenant (the same on BC 27, 28 and 29).
 
 codeunit 67107 "LT PT Cloud Tables"
 {
@@ -490,5 +491,116 @@ codeunit 67107 "LT PT Cloud Tables"
         Observer.Ignore('after modify');
         Observer.Expect('delete', 'Yes');
         Observer.Verify();
+    end;
+
+    // ---- Writer RE (Microsoft's DemoTool, Graph Mgt - General Tools.InsertOrUpdateODataType from UpdateAPIData): Description and Edm Xml of the
+    // 6 OData Edm Type rows of a fresh tenant (their keys are pinned in QX_ODataEdmType_RowsAndEdmXml). Each Edm Xml text is one line. ----
+
+    local procedure ReEdmXml(EdmKey: Code[50]): Text
+    var
+        EdmType: Record "OData Edm Type";
+        InS: InStream;
+        Line: Text;
+        Txt: Text;
+        Lf: Text[1];
+    begin
+        if not EdmType.Get(EdmKey) then
+            exit('<no row>');
+        EdmType.CalcFields("Edm Xml");
+        if not EdmType."Edm Xml".HasValue() then
+            exit('<no value>');
+        Lf[1] := 10;
+        EdmType."Edm Xml".CreateInStream(InS, TextEncoding::UTF8);
+        while not InS.EOS() do begin
+            InS.ReadText(Line);
+            if Txt <> '' then
+                Txt += Lf;
+            Txt += Line;
+        end;
+        exit(Txt);
+    end;
+
+    local procedure ReVerifyEdmXml(EdmKey: Code[50]; Expected: Text)
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('edm xml', ReEdmXml(EdmKey));
+        Observer.Expect('edm xml', Expected);
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_FreshDescriptions()
+    var
+        EdmType: Record "OData Edm Type";
+        Observer: Codeunit "Probe Observer";
+    begin
+        if EdmType.Get('BOOKINGSDATE') then
+            Observer.Observe('BOOKINGSDATE', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('BOOKINGSDATE', '<no row>');
+        if EdmType.Get('DIMENSION') then
+            Observer.Observe('DIMENSION', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('DIMENSION', '<no row>');
+        if EdmType.Get('DOCUMENTLINEOBJECTDETAILS') then
+            Observer.Observe('DOCUMENTLINEOBJECTDETAILS', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('DOCUMENTLINEOBJECTDETAILS', '<no row>');
+        if EdmType.Get('ITEM-UOM') then
+            Observer.Observe('ITEM-UOM', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('ITEM-UOM', '<no row>');
+        if EdmType.Get('ITEM-UOM-CONVERSION') then
+            Observer.Observe('ITEM-UOM-CONVERSION', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('ITEM-UOM-CONVERSION', '<no row>');
+        if EdmType.Get('POSTALADDRESS') then
+            Observer.Observe('POSTALADDRESS', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('POSTALADDRESS', '<no row>');
+        Observer.Expect('BOOKINGSDATE', 'description=[Graph CDM - Bookings Date complex type] edm xml length=168');
+        Observer.Expect('DIMENSION', 'description=[Graph CDM - Dimension complex type.] edm xml length=306');
+        Observer.Expect('DOCUMENTLINEOBJECTDETAILS', 'description=[Graph API - Complex type exposing details of the line object that is being sold.] edm xml length=218');
+        Observer.Expect('ITEM-UOM', 'description=[Graph CDM - Unit of Measure complex type on Item Entity page] edm xml length=357');
+        Observer.Expect('ITEM-UOM-CONVERSION', 'description=[Graph CDM - Unit of Measure Conversions complex type on Item Entity page] edm xml length=225');
+        Observer.Expect('POSTALADDRESS', 'description=[Graph CDM - Postal Address complex type] edm xml length=440');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_BookingsDate()
+    begin
+        ReVerifyEdmXml('BOOKINGSDATE', '<ComplexType Name="dateTimeTimeZoneType">  <Property Name="dateTime" Type="Edm.String" Nullable="false" />  <Property Name="timeZone" Type="Edm.String" /></ComplexType>');
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_Dimension()
+    begin
+        ReVerifyEdmXml('DIMENSION', '<ComplexType Name="dimensionType"><Property Name="code" Type="Edm.String" Nullable="false" /><Property Name="displayName" Type="Edm.String" Nullable="true" /><Property Name="valueCode" Type="Edm.String" Nullable="false" /><Property Name="valueDisplayName" Type="Edm.String" Nullable="true" /></ComplexType>');
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_DocumentLineObjectDetails()
+    begin
+        ReVerifyEdmXml('DOCUMENTLINEOBJECTDETAILS', '<ComplexType Name="documentLineObjectDetailsType"><Property Name="number" Type="Edm.String" Nullable="true" MaxLength="20"/><Property Name="displayName" Type="Edm.String" Nullable="true" MaxLength="100"/></ComplexType>');
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_ItemUom()
+    begin
+        ReVerifyEdmXml('ITEM-UOM', '<ComplexType Name="unitOfMeasureType"><Property Name="code" Type="Edm.String" Nullable="true" MaxLength="10" /><Property Name="displayName" Type="Edm.String" Nullable="true" MaxLength="50" /><Property Name="symbol" Type="Edm.String" Nullable="true" MaxLength="10" /><Property Name="unitConversion" Type="ITEM-UOM-CONVERSION" Nullable="true" /></ComplexType>');
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_ItemUomConversion()
+    begin
+        ReVerifyEdmXml('ITEM-UOM-CONVERSION', '<ComplexType Name="itemUnitOfMeasureConversionType"><Property Name="toUnitOfMeasure" Type="Edm.String" Nullable="true" MaxLength="10" /><Property Name="fromToConversionRate" Type="Edm.Decimal" Nullable="true" /></ComplexType>');
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_PostalAddress()
+    begin
+        ReVerifyEdmXml('POSTALADDRESS', '<ComplexType Name="postalAddressType"><Property Name="street" Type="Edm.String" Nullable="true" MaxLength="152" /><Property Name="city" Type="Edm.String" Nullable="true" MaxLength="30" /><Property Name="state" Type="Edm.String" Nullable="true" MaxLength="30" /><Property Name="countryLetterCode" Type="Edm.String" Nullable="true" MaxLength="10" /><Property Name="postalCode" Type="Edm.String" Nullable="true" MaxLength="20" /></ComplexType>');
     end;
 }

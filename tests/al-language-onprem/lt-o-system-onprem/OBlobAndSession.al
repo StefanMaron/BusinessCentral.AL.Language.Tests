@@ -58,6 +58,52 @@ codeunit 61236 "LT O Blob File"
         Observer.Verify();
     end;
 
+    // Writer RF (AL Runner issue 5681): Blob.Import on a stored row read with Get WITHOUT CalcFields (stored value longer than the
+    // imported file), then Modify; read back through another variable with Get + CalcFields (does any old byte remain).
+    [Test]
+    procedure RF_O_Blob_Import_GetWithoutCalcFields_Modify()
+    var
+        Observer: Codeunit "Probe Observer";
+        FileRow: Record "LT O Blob Row";
+        Row: Record "LT O Blob Row";
+        Fresh: Record "LT O Blob Row";
+        Out: OutStream;
+        Inn: InStream;
+        Path: Text;
+        Result: Text;
+        Content: Text;
+    begin
+        Path := TemporaryPath() + 'lt-rf-blob-import.bin';
+        FileRow.Data.CreateOutStream(Out);
+        Out.WriteText('imp');
+        if not TryExport(FileRow, Path, Result) then
+            Observer.ObserveError('export');
+        if Row.Get(87801) then
+            Row.Delete();
+        Row.Init();
+        Row.Id := 87801;
+        Row.Data.CreateOutStream(Out);
+        Out.WriteText('a long stored value');
+        Row.Insert();
+        Row.Get(87801);
+        Observer.Observe('before import', StrSubstNo('has=%1|len=%2', Row.Data.HasValue(), Row.Data.Length()));
+        if not TryImport(Row, Path, Result) then
+            Observer.ObserveError('import');
+        Observer.Observe('after import', StrSubstNo('has=%1|len=%2', Row.Data.HasValue(), Row.Data.Length()));
+        Row.Modify();
+        Fresh.Get(87801);
+        Fresh.CalcFields(Data);
+        Fresh.Data.CreateInStream(Inn);
+        Inn.ReadText(Content);
+        Observer.Observe('read back', StrSubstNo('has=%1|len=%2|text=%3', Fresh.Data.HasValue(), Fresh.Data.Length(), Content));
+        Fresh.Delete();
+        if Erase(Path) then;
+        Observer.Expect('before import', 'has=Yes|len=25');
+        Observer.Expect('after import', 'has=Yes|len=3');
+        Observer.Expect('read back', 'has=Yes|len=3|text=imp');
+        Observer.Verify();
+    end;
+
     // The error text holds the service tier's temporary folder: observe its start and end only.
     local procedure ObservePathError(var Observer: Codeunit "Probe Observer"; Tag: Text)
     var
