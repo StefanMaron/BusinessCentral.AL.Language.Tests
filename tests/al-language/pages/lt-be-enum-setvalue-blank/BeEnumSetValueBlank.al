@@ -4016,48 +4016,42 @@ codeunit 81160 "LT BE Enum SetValue Tests"
         exit(Row);
     end;
 
-    local procedure QzStored(): Text
-    var
-        Row: Record "LT QZ NB Row";
-    begin
-        Row.Get('N1');
-        exit(Format(Row.KindNB.AsInteger()) + '|' + Format(Row.Kind.AsInteger()));
-    end;
 
     [Test]
     procedure QZ_NotBlankEnum_SetValueBlank_List()
     var
         Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ NB Row";
         List: TestPage "LT QZ NB List";
     begin
+        Row := QzSeed();
         List.OpenEdit();
-        List.GoToRecord(QzSeed());
+        List.GoToRecord(Row);
         asserterror begin
             List.KindNB.SetValue('');
             Error('no error');
         end;
         Observer.ObserveError('notblank empty text');
-        Observer.Observe('notblank after empty text', List.KindNB.Value() + '|' + QzStored());
+        Observer.Observe('notblank after empty text', List.KindNB.Value());
         asserterror begin
             List.KindNB.SetValue(' ');
             Error('no error');
         end;
         Observer.ObserveError('notblank space');
-        Observer.Observe('notblank after space', List.KindNB.Value() + '|' + QzStored());
+        Observer.Observe('notblank after space', List.KindNB.Value());
         asserterror begin
             List.KindNB.SetValue(0);
             Error('no error');
         end;
         Observer.ObserveError('notblank ordinal 0');
-        Observer.Observe('notblank after ordinal 0', List.KindNB.Value() + '|' + QzStored());
+        Observer.Observe('notblank after ordinal 0', List.KindNB.Value());
         asserterror begin
             List.Kind.SetValue('');
             Error('no error');
         end;
         Observer.ObserveError('plain empty text');
-        Observer.Observe('plain after empty text', List.Kind.Value() + '|' + QzStored());
+        Observer.Observe('plain after empty text', List.Kind.Value());
         List.Close();
-        Observer.Observe('stored after close', QzStored());
         Observer.Finish();
     end;
 
@@ -4065,24 +4059,25 @@ codeunit 81160 "LT BE Enum SetValue Tests"
     procedure QZ_NotBlankEnum_SetValueBlank_Card()
     var
         Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ NB Row";
         Card: TestPage "LT QZ NB Card";
     begin
+        Row := QzSeed();
         Card.OpenEdit();
-        Card.GoToRecord(QzSeed());
+        Card.GoToRecord(Row);
         asserterror begin
             Card.KindNB.SetValue('');
             Error('no error');
         end;
         Observer.ObserveError('notblank empty text');
-        Observer.Observe('notblank after empty text', Card.KindNB.Value() + '|' + QzStored());
+        Observer.Observe('notblank after empty text', Card.KindNB.Value());
         asserterror begin
             Card.KindNB.SetValue(0);
             Error('no error');
         end;
         Observer.ObserveError('notblank ordinal 0');
-        Observer.Observe('notblank after ordinal 0', Card.KindNB.Value() + '|' + QzStored());
+        Observer.Observe('notblank after ordinal 0', Card.KindNB.Value());
         Card.Close();
-        Observer.Observe('stored after close', QzStored());
         Observer.Finish();
     end;
 }

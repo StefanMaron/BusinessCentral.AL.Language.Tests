@@ -782,7 +782,10 @@ codeunit 84475 "LT CG Query Leads"
             Rows += NoLines.No + ' ';
         NoLines.Close();
         Observer.Observe('exist SetRange(true) over const(false)', Rows);
-        Observer.Finish();
+        Observer.Expect('exist const(false)', 'Q1 ');
+        Observer.Expect('count > 1 and sum <> 0', 'Q3 ');
+        Observer.Expect('exist SetRange(true) over const(false)', 'Q2 Q3 Q4 ');
+        Observer.Verify();
     end;
 
     [Test]
@@ -820,6 +823,10 @@ codeunit 84475 "LT CG Query Leads"
             Rows += Q.No + ' ';
         Q.Close();
         Observer.Observe('SetFilter LineSum 0', Rows);
-        Observer.Finish();
+        Observer.Expect('no filter', 'Q1 Q2 Q3 Q4 ');
+        Observer.Expect('SetRange HasLines true', 'Q2 Q3 Q4 ');
+        Observer.Expect('SetFilter LineSum > 2', 'Q2 Q3 ');
+        Observer.Expect('SetFilter LineSum 0', 'Q1 Q4 ');
+        Observer.Verify();
     end;
 }

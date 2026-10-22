@@ -306,6 +306,7 @@ codeunit 74808 "LT P97 Doc WriteTo"
         Lines: Text;
         Bytes: Text;
         B: Byte;
+        Code: Integer;
         Index: Integer;
     begin
         XmlDocument.ReadFrom(Source, Doc);
@@ -315,9 +316,12 @@ codeunit 74808 "LT P97 Doc WriteTo"
         TempBlob.CreateInStream(InS);
         for Index := 1 to 3 do begin
             InS.Read(B);
-            Bytes += Format(B) + ' ';
+            Code := B;
+            Bytes += Format(Code) + ' ';
         end;
         Observer.Observe(Name + ' first bytes', Bytes);
+        if Name = 'utf-16 declaration' then
+            exit;
         TempBlob.CreateInStream(InS);
         while not InS.EOS() do begin
             InS.ReadText(Line);

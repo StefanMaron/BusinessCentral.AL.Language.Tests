@@ -578,6 +578,14 @@ codeunit 73402 "LT XmT Attributes"
         A.Value := 'y';
         GA(E, 'n', 'urn:q', V);
         Observer.Observe('namespaced', V + '|' + A.Value());
-        Observer.Finish();
+        Observer.Expect('own var', '3');
+        Observer.Expect('element after assign', '3|<e k="3" />');
+        Observer.Expect('first var after method form', '4');
+        Observer.Expect('element after method form', '<e k="4" />');
+        Observer.Expect('created', 'b');
+        Observer.Expect('created after add', 'c|<e k="4" f="c" />');
+        Observer.Expect('assign empty', '[]|<e k="" f="c" />');
+        Observer.Expect('namespaced', 'y|y');
+        Observer.Verify();
     end;
 }

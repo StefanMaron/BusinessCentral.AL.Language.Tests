@@ -533,7 +533,19 @@ codeunit 70011 "LT P146 Page Expr SetValue"
         P.Plain.SetValue('def');
         Observer.Observe('after plain', P.UpperCtl.Value() + '|' + P.Plain.Value());
         P.Close();
-        Observer.Finish();
+        Observer.Expect('values', '42.00|5|ABC|abc');
+        Observer.Expect('editable', 'No|No|No|Yes');
+        Observer.Expect('total|text', 'no error');
+        Observer.Expect('total|code', 'Dialog');
+        Observer.Expect('total after', '42.00');
+        Observer.Expect('sum|text', 'no error');
+        Observer.Expect('sum|code', 'Dialog');
+        Observer.Expect('sum after', '5');
+        Observer.Expect('upper|text', 'no error');
+        Observer.Expect('upper|code', 'Dialog');
+        Observer.Expect('upper after', 'ABC');
+        Observer.Expect('after plain', 'DEF|def');
+        Observer.Verify();
     end;
 }
 

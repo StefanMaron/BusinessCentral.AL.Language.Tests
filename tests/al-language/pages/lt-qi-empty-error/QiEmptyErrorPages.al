@@ -342,10 +342,12 @@ codeunit 86853 "LT QI EE Tests"
     procedure QZ_EE_TableValidate_ConfirmNo_List_NoAsserterror()
     var
         Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ EE Row";
         List: TestPage "LT QZ EE List";
     begin
+        Row := QzSeed();
         List.OpenEdit();
-        List.GoToRecord(QzSeed());
+        List.GoToRecord(Row);
         List.AutoGen.SetValue(false);
         Observer.Observe('went-on', 'yes');
         Observer.ObserveError('after-setvalue');
@@ -360,10 +362,12 @@ codeunit 86853 "LT QI EE Tests"
     procedure QZ_EE_TableValidate_ConfirmNo_List_Asserterror()
     var
         Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ EE Row";
         List: TestPage "LT QZ EE List";
     begin
+        Row := QzSeed();
         List.OpenEdit();
-        List.GoToRecord(QzSeed());
+        List.GoToRecord(Row);
         asserterror begin
             List.AutoGen.SetValue(false);
             Error('no error');
@@ -379,10 +383,12 @@ codeunit 86853 "LT QI EE Tests"
     procedure QZ_EE_TableValidate_Direct_List_NoAsserterror()
     var
         Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ EE Row";
         List: TestPage "LT QZ EE List";
     begin
+        Row := QzSeed();
         List.OpenEdit();
-        List.GoToRecord(QzSeed());
+        List.GoToRecord(Row);
         List.Name.SetValue('empty');
         Observer.Observe('went-on', 'yes');
         Observer.ObserveError('after-setvalue');
@@ -396,17 +402,24 @@ codeunit 86853 "LT QI EE Tests"
     procedure QZ_EE_TableValidate_Direct_Card_NoAsserterror()
     var
         Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ EE Row";
         Card: TestPage "LT QZ EE Card";
     begin
+        Row := QzSeed();
         Card.OpenEdit();
-        Card.GoToRecord(QzSeed());
+        Card.GoToRecord(Row);
         Card.Name.SetValue('empty');
         Observer.Observe('went-on', 'yes');
         Observer.ObserveError('after-setvalue');
         Observer.Observe('value-after', Card.Name.Value());
         Card.Close();
         Observer.Observe('stored-after-close', QzStored());
-        Observer.Finish();
+        Observer.Expect('went-on', 'yes');
+        Observer.Expect('after-setvalue|text', '');
+        Observer.Expect('after-setvalue|code', 'NSValidateField:Dialog');
+        Observer.Expect('value-after', 'seed');
+        Observer.Expect('stored-after-close', 'Yes|seed');
+        Observer.Verify();
     end;
 
     [ConfirmHandler]

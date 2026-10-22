@@ -125,7 +125,9 @@ codeunit 60524 "Test Page Control Fld PageExt"
         Card.Close();
         Row.Get(1);
         Observer.Observe('stored', Row.A + '|' + Row.B + '|' + Row.C + '|' + Row.D + '|' + Row.E);
-        Observer.Finish();
+        Observer.Expect('values', '1|a|b|c|d|e');
+        Observer.Expect('stored', 'a2|b2|c2|d|e2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -136,23 +138,25 @@ codeunit 60524 "Test Page Control Fld PageExt"
         RecRef: RecordRef;
         Columns: Text;
         Rows: Text;
+        Name: Text;
         Index: Integer;
     begin
         RecRef.Open(Database::"Page Control Field");
         for Index := 1 to RecRef.FieldCount() do
             Columns += Format(RecRef.FieldIndex(Index).Number()) + '=' + RecRef.FieldIndex(Index).Name() + ',';
         Observer.Observe('columns', Columns);
+        // Sequence of each control (the rows come in ControlId order, an id the compiler derives, so they are read by name).
         PageControlField.SetRange(PageNo, Page::"LT QZ Move Card");
-        RecRef.Close();
-        RecRef.GetTable(PageControlField);
-        if RecRef.FindSet() then
-            repeat
-                Rows += '[';
-                for Index := 2 to RecRef.FieldCount() do
-                    Rows += Format(RecRef.FieldIndex(Index).Value()) + '|';
-                Rows += ']';
-            until RecRef.Next() = 0;
+        foreach Name in 'IdCtl,ACtl,BCtl,CCtl,DCtl,ECtl'.Split(',') do begin
+            PageControlField.SetRange(ControlName, Name);
+            if PageControlField.FindFirst() then
+                Rows += Name + '=' + Format(PageControlField.Sequence) + ';'
+            else
+                Rows += Name + '=no row;';
+        end;
         Observer.Observe('rows', Rows);
-        Observer.Finish();
+        Observer.Expect('columns', '1=PageNo,2=ControlId,3=ControlName,4=TableNo,5=FieldNo,6=Enabled,7=Editable,8=Visible,9=SourceExpression,10=OptionString,11=Sequence,');
+        Observer.Expect('rows', 'IdCtl=1;ACtl=5;BCtl=0;CCtl=2;DCtl=4;ECtl=3;');
+        Observer.Verify();
     end;
 }

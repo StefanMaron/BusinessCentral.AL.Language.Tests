@@ -182,7 +182,12 @@ codeunit 79002 "LT AJ This Run"
         Observer.Observe('in if', Bare.CallBareRunInIf() + '|' + Format(Bare.GetCount()));
         Ok := Bare.Run();
         Observer.Observe('outside Run', Format(Ok) + '|' + Format(Bare.GetCount()));
-        Observer.Finish();
+        Observer.Expect('first call', 'Yes|1');
+        Observer.Expect('second call', 'Yes|2');
+        Observer.Expect('statement', '3');
+        Observer.Expect('in if', 'if true|4');
+        Observer.Expect('outside Run', 'Yes|5');
+        Observer.Verify();
     end;
 
     [Test]
@@ -198,7 +203,12 @@ codeunit 79002 "LT AJ This Run"
         Observer.ObserveError('error returned');
         asserterror Failing.CallBareRunAsStatement();
         Observer.ObserveError('error statement');
-        Observer.Finish();
+        Observer.Expect('error returned', 'No');
+        Observer.Expect('error returned|text', 'LT QZ bare run failed');
+        Observer.Expect('error returned|code', 'Dialog');
+        Observer.Expect('error statement|text', 'LT QZ bare run failed');
+        Observer.Expect('error statement|code', 'Dialog');
+        Observer.Verify();
     end;
 
     [Test]
@@ -220,7 +230,12 @@ codeunit 79002 "LT AJ This Run"
         Ok := WithRec.CallBareRunRec(Item);
         Observer.Observe('failing', Format(Ok) + '|' + Format(Item.Id) + '|' + Item.Txt + '|' + Format(WithRec.GetCount()));
         Observer.ObserveError('failing');
-        Observer.Finish();
+        Observer.Expect('first', 'Yes|11|qz ran 1|1');
+        Observer.Expect('statement', '21|qz ran 2|2');
+        Observer.Expect('failing', 'No|21|fail|3');
+        Observer.Expect('failing|text', 'LT QZ bare run rec failed');
+        Observer.Expect('failing|code', 'Dialog');
+        Observer.Verify();
     end;
 }
 

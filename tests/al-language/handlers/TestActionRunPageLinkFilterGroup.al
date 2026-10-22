@@ -304,7 +304,9 @@ codeunit 60941 "ARLG Tests"
         Card.ChildList.Invoke();
         Observer.Observe('no rows', Log.Get());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('rows', 'list open code=P1 number=7 line=0 note= filters=;list agcr code=P1 number=7 line=1 note=one filters=;handler line=1 note=one;');
+        Observer.Expect('no rows', 'list open code=P2 number=1 line=0 note= filters=;list agcr code=P2 number=1 line=0 note= filters=;list agcr code=P2 number=1 line=0 note= filters=;handler line=0 note=;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -322,7 +324,9 @@ codeunit 60941 "ARLG Tests"
         Observer.Observe('trapped line', List.LineNo.Value() + '|' + List.Note.Value());
         List.Close();
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'list open code=P1 number=7 line=0 note= filters=;list agcr code=P1 number=7 line=1 note=one filters=;');
+        Observer.Expect('trapped line', '1|one');
+        Observer.Verify();
     end;
 
     [Test]
@@ -340,7 +344,9 @@ codeunit 60941 "ARLG Tests"
         Observer.Observe('trapped line', ChildCard.LineNo.Value() + '|' + ChildCard.Note.Value());
         ChildCard.Close();
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'card open code=P1 number=7 line=0 note= filters=;card agcr code=P1 number=7 line=1 note=one filters=;');
+        Observer.Expect('trapped line', '1|one');
+        Observer.Verify();
     end;
 
     [Test]
@@ -355,7 +361,8 @@ codeunit 60941 "ARLG Tests"
         Card.ChildListConst.Invoke();
         Observer.Observe('log', Log.Get());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('log', 'list open code=P1 number=7 line=0 note= filters=;list agcr code=P1 number=7 line=1 note=one filters=;handler line=1 note=one;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -373,7 +380,10 @@ codeunit 60941 "ARLG Tests"
         end;
         Observer.ObserveError('invoke');
         Observer.Observe('log', Log.Get());
-        Observer.Finish();
+        Observer.Expect('invoke|text', 'no error');
+        Observer.Expect('invoke|code', 'Dialog');
+        Observer.Expect('log', 'list open code=P1 number=7 line=0 note= filters=;');
+        Observer.Verify();
     end;
 
     [PageHandler]

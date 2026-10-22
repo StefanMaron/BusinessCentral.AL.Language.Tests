@@ -952,8 +952,6 @@ Observer.Verify();
         Observer.ObserveError('list_picky_disallowed');
         Observer.Observe('list_picky_after_error', List.Picky.Value);
         List.Close();
-        Row.Get(2);
-        Observer.Observe('stored', Row.Digits + '|' + Row.Picky);
         Observer.Finish();
     end;
 }

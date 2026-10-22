@@ -265,7 +265,15 @@ codeunit 61229 "LT PT OnPrem Tables"
         ClearLastError();
         Observer.Observe('try', Format(QzTryReadIntelligentCloud(Found)) + '|' + Format(Found));
         Observer.ObserveError('try');
-        Observer.Finish();
+        Observer.Expect('columns', '1=Primary Key,2=Enabled,');
+        Observer.Expect('is empty', 'Yes');
+        Observer.Expect('count', '0');
+        Observer.Expect('get', 'No');
+        Observer.Expect('find first', 'No');
+        Observer.Expect('try', 'Yes|No');
+        Observer.Expect('try|text', '');
+        Observer.Expect('try|code', '');
+        Observer.Verify();
     end;
 }
 

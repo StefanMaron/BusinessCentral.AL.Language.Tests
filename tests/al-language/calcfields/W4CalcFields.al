@@ -426,7 +426,15 @@ codeunit 68042 "W4 CalcFields Tests"
         Observer.Observe('quoted A*', Format(Head.QuotedStar));
         Observer.Observe('plain A*', Format(Head.PlainStar));
         Observer.Observe('quoted <>x', Format(Head.QuotedNotX));
-        Observer.Finish();
+        Observer.Expect('filter(''<>'''''''''')', '5');
+        Observer.Expect('filter('''''''''''')', '1');
+        Observer.Expect('filter(<> '''')', '5');
+        Observer.Expect('quoted x|y', '1');
+        Observer.Expect('plain x|y', '2');
+        Observer.Expect('quoted A*', '2');
+        Observer.Expect('plain A*', '2');
+        Observer.Expect('quoted <>x', '5');
+        Observer.Verify();
     end;
 }
 
