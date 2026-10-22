@@ -501,4 +501,259 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Expect('999 from row get', '00:00:01|2024-03-25T00:00:01Z');
         Observer.Verify();
     end;
+
+    local procedure KeyTime(var K: Record "LT RH Time Key Row"): Text
+    begin
+        exit(K."Entry Code" + '|' + Format(K."Entry Time", 0, 9) + '|' + Format(K."Entry Time" - 000000T) + '|' + K.Note);
+    end;
+
+    local procedure GetTime(var Observer: Codeunit "Probe Observer"; Name: Text; Code: Code[20]; T: Time)
+    var
+        K: Record "LT RH Time Key Row";
+    begin
+        if K.Get(Code, T) then
+            Observer.Observe(Name, 'found|' + KeyTime(K))
+        else
+            Observer.Observe(Name, 'not found');
+    end;
+
+    // al-runner issue 5689: a Time primary key field written with milliseconds the SQL column rounds (.001 -> .000, .002 -> .003, 23:59:59.999 -> midnight):
+    // what Insert answers, what the record variable holds after Insert, which values Get finds the row by, what FindFirst reads back, a second Insert whose value
+    // rounds to the same key, Modify, Rename and Delete through the unrounded value.
+    // Measured on 27.5, 28.5 and 29.0 (the same): the variable keeps .001 after Insert, Get with .001 or .000 finds the row and reads 10:00:00; Insert with a
+    // return value of a key that rounds to an existing one answers false; without a return value the Insert raises nothing and the duplicate error
+    // (DB:RecordExists) comes at the next read of the table (Count).
+    [Test]
+    procedure RH_TimeKey_Milliseconds_InsertGet()
+    var
+        Observer: Codeunit "Probe Observer";
+        K: Record "LT RH Time Key Row";
+        Stage: Text;
+        Cnt: Integer;
+    begin
+        K.DeleteAll();
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 100000T + 1;
+        K.Note := 'first';
+        Observer.Observe('insert', Format(K.Insert(true)));
+        Observer.Observe('var after insert', KeyTime(K));
+        GetTime(Observer, 'get .001', 'A', 100000T + 1);
+        GetTime(Observer, 'get .000', 'A', 100000T);
+        GetTime(Observer, 'get .002', 'A', 100000T + 2);
+        K.Reset();
+        K.FindFirst();
+        Observer.Observe('findfirst', KeyTime(K));
+        Observer.Observe('count', Format(K.Count()));
+        K.SetRange("Entry Time", 100000T + 1);
+        Observer.Observe('setrange .001 count', Format(K.Count()));
+        K.Reset();
+
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 100000T;
+        K.Note := 'second';
+        Observer.Observe('insert .000 return', Format(K.Insert()));
+        // Insert without a return value: where the duplicate key error is raised (Stage names the last step that ran).
+        ClearLastError();
+        asserterror begin
+            Stage := 'insert';
+            K.Init();
+            K."Entry Code" := 'A';
+            K."Entry Time" := 100000T;
+            K.Note := 'third';
+            K.Insert();
+            Stage := 'count';
+            K.Reset();
+            Cnt := K.Count();
+            Stage := 'done';
+        end;
+        Observer.Observe('plain insert .000 stage', Stage);
+        Observer.ObserveError('plain insert .000 error');
+        K.Reset();
+        Observer.Observe('count after duplicate', Format(K.Count()));
+        if K.FindSet() then
+            repeat
+                Observer.Observe('row after duplicate', KeyTime(K));
+            until K.Next() = 0;
+
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 100000T + 2;
+        K.Note := 'two';
+        Observer.Observe('insert .002', Format(K.Insert()));
+        GetTime(Observer, 'get .003', 'A', 100000T + 3);
+        GetTime(Observer, 'get .002 after', 'A', 100000T + 2);
+        K.Reset();
+        Observer.Observe('count after .002', Format(K.Count()));
+
+        K.Init();
+        K."Entry Code" := 'B';
+        K."Entry Time" := 235959.999T;
+        K.Note := 'late';
+        Observer.Observe('insert .999', Format(K.Insert()));
+        GetTime(Observer, 'get .999', 'B', 235959.999T);
+        GetTime(Observer, 'get midnight', 'B', 000000T);
+        Observer.Expect('insert', 'Yes');
+        Observer.Expect('var after insert', 'A|10:00:00.001|36000001|first');
+        Observer.Expect('get .001', 'found|A|10:00:00|36000000|first');
+        Observer.Expect('get .000', 'found|A|10:00:00|36000000|first');
+        Observer.Expect('get .002', 'not found');
+        Observer.Expect('findfirst', 'A|10:00:00|36000000|first');
+        Observer.Expect('count', '1');
+        Observer.Expect('setrange .001 count', '1');
+        Observer.Expect('insert .000 return', 'No');
+        Observer.Expect('plain insert .000 stage', 'count');
+        Observer.Expect('plain insert .000 error|text', 'The record in table LT RH Time Key Row already exists. Identification fields and values: Entry Code=''A'',Entry Time=''10:00:00 AM''');
+        Observer.Expect('plain insert .000 error|code', 'DB:RecordExists');
+        Observer.Expect('count after duplicate', '0');
+        Observer.Expect('insert .002', 'Yes');
+        Observer.Expect('get .003', 'found|A|10:00:00.003|36000003|two');
+        Observer.Expect('get .002 after', 'found|A|10:00:00.003|36000003|two');
+        Observer.Expect('count after .002', '1');
+        Observer.Expect('insert .999', 'Yes');
+        Observer.Expect('get .999', 'found|B|00:00:00|0|late');
+        Observer.Expect('get midnight', 'found|B|00:00:00|0|late');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RH_TimeKey_Milliseconds_ModifyRenameDelete()
+    var
+        Observer: Codeunit "Probe Observer";
+        K: Record "LT RH Time Key Row";
+    begin
+        K.DeleteAll();
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 100000T + 1;
+        K.Note := 'first';
+        K.Insert();
+        K.Note := 'modified';
+        Observer.Observe('modify var', Format(K.Modify()));
+        GetTime(Observer, 'after modify', 'A', 100000T);
+
+        K.Get('A', 100000T + 1);
+        Observer.Observe('rename', Format(K.Rename('A', 120000T + 1)));
+        Observer.Observe('var after rename', KeyTime(K));
+        GetTime(Observer, 'get renamed .000', 'A', 120000T);
+        GetTime(Observer, 'get old .000', 'A', 100000T);
+
+        K.Init();
+        K."Entry Code" := 'A';
+        K."Entry Time" := 120000T + 1;
+        Observer.Observe('delete unrounded', Format(K.Delete()));
+        K.Reset();
+        Observer.Observe('count after delete', Format(K.Count()));
+        Observer.Expect('modify var', 'Yes');
+        Observer.Expect('after modify', 'found|A|10:00:00|36000000|modified');
+        Observer.Expect('rename', 'Yes');
+        Observer.Expect('var after rename', 'A|12:00:00.001|43200001|modified');
+        Observer.Expect('get renamed .000', 'found|A|12:00:00|43200000|modified');
+        Observer.Expect('get old .000', 'not found');
+        Observer.Expect('delete unrounded', 'Yes');
+        Observer.Expect('count after delete', '0');
+        Observer.Verify();
+    end;
+
+    // The same for a DateTime primary key field.
+    [Test]
+    procedure RH_DateTimeKey_Milliseconds_InsertGet()
+    var
+        Observer: Codeunit "Probe Observer";
+        K: Record "LT RH DateTime Key Row";
+        Base: DateTime;
+        Stage: Text;
+        Cnt: Integer;
+    begin
+        Base := CreateDateTime(20240325D, 100000T);
+        K.DeleteAll();
+        K.Init();
+        K."At" := Base + 1;
+        K.Note := 'first';
+        Observer.Observe('insert', Format(K.Insert()));
+        Observer.Observe('var after insert', Format(K."At", 0, 9));
+        Clear(K);
+        Observer.Observe('get .001', Format(K.Get(Base + 1)) + '|' + Format(K."At", 0, 9));
+        Clear(K);
+        Observer.Observe('get .000', Format(K.Get(Base)) + '|' + Format(K."At", 0, 9));
+        K.Reset();
+        K.FindFirst();
+        Observer.Observe('findfirst', Format(K."At", 0, 9) + '|' + Format(K."At" - Base));
+        K.Init();
+        K."At" := Base;
+        K.Note := 'second';
+        Observer.Observe('insert .000 return', Format(K.Insert()));
+        ClearLastError();
+        asserterror begin
+            Stage := 'insert';
+            K.Init();
+            K."At" := Base;
+            K.Note := 'third';
+            K.Insert();
+            Stage := 'count';
+            K.Reset();
+            Cnt := K.Count();
+            Stage := 'done';
+        end;
+        Observer.Observe('plain insert .000 stage', Stage);
+        Observer.ObserveError('plain insert .000 error');
+        K.Reset();
+        Observer.Observe('count after duplicate', Format(K.Count()));
+        K.Init();
+        K."At" := CreateDateTime(20240325D, 235959.999T);
+        K.Note := 'late';
+        Observer.Observe('insert .999', Format(K.Insert()));
+        Clear(K);
+        Observer.Observe('get next day', Format(K.Get(CreateDateTime(20240326D, 000000T))) + '|' + Format(K."At", 0, 9));
+        K.Reset();
+        Observer.Observe('count', Format(K.Count()));
+        if K.FindSet() then
+            repeat
+                Observer.Observe('row', Format(K."At", 0, 9) + '|' + K.Note);
+            until K.Next() = 0;
+        Observer.Expect('insert', 'Yes');
+        Observer.Expect('var after insert', '2024-03-25T10:00:00.001Z');
+        Observer.Expect('get .001', 'Yes|2024-03-25T10:00:00Z');
+        Observer.Expect('get .000', 'Yes|2024-03-25T10:00:00Z');
+        Observer.Expect('findfirst', '2024-03-25T10:00:00Z|');
+        Observer.Expect('insert .000 return', 'No');
+        Observer.Expect('plain insert .000 stage', 'count');
+        Observer.Expect('plain insert .000 error|text', 'The record in table LT RH DateTime Key Row already exists. Identification fields and values: At=''03/25/24 10:00 AM''');
+        Observer.Expect('plain insert .000 error|code', 'DB:RecordExists');
+        Observer.Expect('count after duplicate', '0');
+        Observer.Expect('insert .999', 'Yes');
+        Observer.Expect('get next day', 'Yes|2024-03-26T00:00:00Z');
+        Observer.Expect('count', '1');
+        Observer.Expect('row', '2024-03-26T00:00:00Z|late');
+        Observer.Verify();
+    end;
+}
+
+// al-runner issue 5689: tables with a Time and a DateTime field in the primary key (object ids 88000 and 88001).
+table 88000 "LT RH Time Key Row"
+{
+    fields
+    {
+        field(1; "Entry Code"; Code[20]) { }
+        field(2; "Entry Time"; Time) { }
+        field(3; Note; Text[30]) { }
+    }
+    keys
+    {
+        key(PK; "Entry Code", "Entry Time") { Clustered = true; }
+    }
+}
+
+table 88001 "LT RH DateTime Key Row"
+{
+    fields
+    {
+        field(1; "At"; DateTime) { }
+        field(2; Note; Text[30]) { }
+    }
+    keys
+    {
+        key(PK; "At") { Clustered = true; }
+    }
 }
