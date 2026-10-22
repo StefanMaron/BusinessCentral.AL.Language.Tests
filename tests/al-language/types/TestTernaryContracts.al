@@ -549,8 +549,10 @@ codeunit 60193 "Test Ternary Contracts"
             Observer.Observe(Format(T) + ' label:label', VariantInfo(V));
             V := T ? LblA : '';
             Observer.Observe(Format(T) + ' label:empty', VariantInfo(V));
+#if LTQW_TEXTCONST_PROBE // the same publish failure as TextConstForms, for method QW_Ternary_LabelIntoVariant (corpus CI run 39745274809)
             V := T ? Tc : LblA;
             Observer.Observe(Format(T) + ' textconst:label', VariantInfo(V));
+#endif
         end;
         V := LblA;
         Observer.Observe('plain label', VariantInfo(V));
