@@ -206,6 +206,232 @@ codeunit 83951 "LT BW Cross App Tests"
         Observer.Verify();
     end;
 
+    // Writer QY (al-runtime-rs backlog "PROBES from multiapp-runtime", item 3): table extension 61114 of cross-app fixture B is a third table
+    // extension of "LT BW XA Base" (B's 61110 and 61113 are the others) and calls BwSame() and BwCaseName() bare and through Rec. Both table 61101
+    // of app A and table extension 61113 of app B declare them. It compiles in app B; the same calls from a table extension of a third app are
+    // AL0196 (must-not-compile 2071). Which body runs? Observed: app B's extension 61113 (BwSame and bwcasename), bare and through Rec.
+    [Test]
+    procedure TableExt_ThirdExtensionInSameAppCallsSameName_WhichBodyRuns()
+    var
+        Base: Record "LT BW XA Base";
+    begin
+        Initialize();
+        Observer.Observe('bare BwSame', Base.QyCallSameBare());
+        Observer.Observe('Rec.BwSame', Base.QyCallSameRec());
+        Observer.Observe('bare BwCaseName', Base.QyCallCaseNameBare());
+        Observer.Expect('bare BwSame', 'extension of app B');
+        Observer.Expect('Rec.BwSame', 'extension of app B');
+        Observer.Expect('bare BwCaseName', 'extension of app B, bwcasename');
+        Observer.Verify();
+    end;
+
+    // Writer QY (backlog "PROBES from multiapp-runtime", item 4): Rename of a row of cross-app fixture A's table "LT QY XA Rename Blobs", which has
+    // three Blob fields: "XA Blob" of the table itself (app A), "QY XB Blob" of app B's table extension, "QY M Blob" of this app's table
+    // extension. Observed: each Blob in the record variable right after Rename, after CalcFields on the variable, and in the database.
+    // Result (BC 27.5, 28.5, 29.0): right after Rename every Blob of the variable has no value (own field and both extension fields alike); CalcFields reads the
+    // renamed row, which holds the variable's Blob content from before Rename, also when it was written after Insert and never saved.
+    [Test]
+    procedure Rename_UnsavedBlobWrites_OwnFieldAndTwoExtensionFields()
+    var
+        Row: Record "LT QY XA Rename Blobs";
+    begin
+        Initialize();
+        QyInitialize();
+        Row."No." := 'OLD';
+        Row.Description := 'old row';
+        Row.Insert();
+        QySetBlobs(Row, 'unsaved');
+        Row.Rename('NEW');
+        QyObserveAfterRename(Row);
+        Observer.Expect('No. in variable', 'NEW');
+        Observer.Expect('variable', '<none>;<none>;<none>;');
+        Observer.Expect('variable after CalcFields', 'XA unsaved;XB unsaved;M unsaved;');
+        Observer.Expect('get NEW', 'Yes');
+        Observer.Expect('database', 'XA unsaved;XB unsaved;M unsaved;');
+        Observer.Expect('database description', 'old row');
+        Observer.Expect('get OLD', 'No');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Rename_BlobsWrittenBeforeInsert_OwnFieldAndTwoExtensionFields()
+    var
+        Row: Record "LT QY XA Rename Blobs";
+    begin
+        Initialize();
+        QyInitialize();
+        Row."No." := 'OLD';
+        Row.Description := 'old row';
+        QySetBlobs(Row, 'inserted');
+        Row.Insert();
+        Row.Rename('NEW');
+        QyObserveAfterRename(Row);
+        Observer.Expect('No. in variable', 'NEW');
+        Observer.Expect('variable', '<none>;<none>;<none>;');
+        Observer.Expect('variable after CalcFields', 'XA inserted;XB inserted;M inserted;');
+        Observer.Expect('get NEW', 'Yes');
+        Observer.Expect('database', 'XA inserted;XB inserted;M inserted;');
+        Observer.Expect('database description', 'old row');
+        Observer.Expect('get OLD', 'No');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure Rename_UnsavedOverwriteOfInsertedBlobs_OwnFieldAndTwoExtensionFields()
+    var
+        Row: Record "LT QY XA Rename Blobs";
+    begin
+        Initialize();
+        QyInitialize();
+        Row."No." := 'OLD';
+        Row.Description := 'old row';
+        QySetBlobs(Row, 'inserted');
+        Row.Insert();
+        QySetBlobs(Row, 'overwritten');
+        Row.Rename('NEW');
+        QyObserveAfterRename(Row);
+        Observer.Expect('No. in variable', 'NEW');
+        Observer.Expect('variable', '<none>;<none>;<none>;');
+        Observer.Expect('variable after CalcFields', 'XA overwritten;XB overwritten;M overwritten;');
+        Observer.Expect('get NEW', 'Yes');
+        Observer.Expect('database', 'XA overwritten;XB overwritten;M overwritten;');
+        Observer.Expect('database description', 'old row');
+        Observer.Expect('get OLD', 'No');
+        Observer.Expect('rows', '1');
+        Observer.Verify();
+    end;
+
+    // Item 4, second half: the record variable's Blob after Rename for a table of this app with its own Blob field (same app as the caller).
+    // Observed: same as above, the variable's Blob has no value right after Rename; CalcFields and the database have the content.
+    [Test]
+    procedure Rename_BlobOfTableOfThisApp_VariableAfterRename()
+    var
+        Row: Record "LT QY Own Blob";
+        Fresh: Record "LT QY Own Blob";
+    begin
+        Initialize();
+        QyInitialize();
+        Row."No." := 'S-OLD';
+        QySetOwnBlob(Row, 'inserted');
+        Row.Insert();
+        Row.Rename('S-NEW');
+        Observer.Observe('inserted: variable', QyOwnBlobText(Row));
+        Row.CalcFields(Data);
+        Observer.Observe('inserted: variable after CalcFields', QyOwnBlobText(Row));
+        Fresh.Get('S-NEW');
+        Fresh.CalcFields(Data);
+        Observer.Observe('inserted: database', QyOwnBlobText(Fresh));
+
+        Clear(Row);
+        Row."No." := 'U-OLD';
+        Row.Insert();
+        QySetOwnBlob(Row, 'unsaved');
+        Row.Rename('U-NEW');
+        Observer.Observe('unsaved: variable', QyOwnBlobText(Row));
+        Row.CalcFields(Data);
+        Observer.Observe('unsaved: variable after CalcFields', QyOwnBlobText(Row));
+        Clear(Fresh);
+        Fresh.Get('U-NEW');
+        Fresh.CalcFields(Data);
+        Observer.Observe('unsaved: database', QyOwnBlobText(Fresh));
+        Observer.Expect('inserted: variable', '<none>');
+        Observer.Expect('inserted: variable after CalcFields', 'own inserted');
+        Observer.Expect('inserted: database', 'own inserted');
+        Observer.Expect('unsaved: variable', '<none>');
+        Observer.Expect('unsaved: variable after CalcFields', 'own unsaved');
+        Observer.Expect('unsaved: database', 'own unsaved');
+        Observer.Verify();
+    end;
+
+    local procedure QyInitialize()
+    var
+        RenameBlobs: Record "LT QY XA Rename Blobs";
+        OwnBlob: Record "LT QY Own Blob";
+    begin
+        RenameBlobs.DeleteAll();
+        OwnBlob.DeleteAll();
+    end;
+
+    local procedure QySetBlobs(var Row: Record "LT QY XA Rename Blobs"; Tag: Text)
+    var
+        OutS: OutStream;
+    begin
+        Row."XA Blob".CreateOutStream(OutS);
+        OutS.WriteText('XA ' + Tag);
+        Row."QY XB Blob".CreateOutStream(OutS);
+        OutS.WriteText('XB ' + Tag);
+        Row."QY M Blob".CreateOutStream(OutS);
+        OutS.WriteText('M ' + Tag);
+    end;
+
+    local procedure QyBlobsText(var Row: Record "LT QY XA Rename Blobs"): Text
+    var
+        InS: InStream;
+        Part: Text;
+        Result: Text;
+    begin
+        if Row."XA Blob".HasValue() then begin
+            Row."XA Blob".CreateInStream(InS);
+            InS.ReadText(Part);
+            Result += Part + ';';
+        end else
+            Result += '<none>;';
+        Clear(Part);
+        if Row."QY XB Blob".HasValue() then begin
+            Row."QY XB Blob".CreateInStream(InS);
+            InS.ReadText(Part);
+            Result += Part + ';';
+        end else
+            Result += '<none>;';
+        Clear(Part);
+        if Row."QY M Blob".HasValue() then begin
+            Row."QY M Blob".CreateInStream(InS);
+            InS.ReadText(Part);
+            Result += Part + ';';
+        end else
+            Result += '<none>;';
+        exit(Result);
+    end;
+
+    local procedure QyObserveAfterRename(var Row: Record "LT QY XA Rename Blobs")
+    var
+        Fresh: Record "LT QY XA Rename Blobs";
+    begin
+        Observer.Observe('No. in variable', Row."No.");
+        Observer.Observe('variable', QyBlobsText(Row));
+        Row.CalcFields("XA Blob", "QY XB Blob", "QY M Blob");
+        Observer.Observe('variable after CalcFields', QyBlobsText(Row));
+        Observer.Observe('get NEW', Format(Fresh.Get('NEW')));
+        Fresh.CalcFields("XA Blob", "QY XB Blob", "QY M Blob");
+        Observer.Observe('database', QyBlobsText(Fresh));
+        Observer.Observe('database description', Fresh.Description);
+        Clear(Fresh);
+        Observer.Observe('get OLD', Format(Fresh.Get('OLD')));
+        Observer.Observe('rows', Format(Fresh.Count()));
+    end;
+
+    local procedure QySetOwnBlob(var Row: Record "LT QY Own Blob"; Tag: Text)
+    var
+        OutS: OutStream;
+    begin
+        Row.Data.CreateOutStream(OutS);
+        OutS.WriteText('own ' + Tag);
+    end;
+
+    local procedure QyOwnBlobText(var Row: Record "LT QY Own Blob"): Text
+    var
+        InS: InStream;
+        Result: Text;
+    begin
+        if not Row.Data.HasValue() then
+            exit('<none>');
+        Row.Data.CreateInStream(InS);
+        InS.ReadText(Result);
+        exit(Result);
+    end;
+
     local procedure AddBase(No: Code[20]; Kind: Integer; Note: Text[30])
     var
         Base: Record "LT BW XA Base";
