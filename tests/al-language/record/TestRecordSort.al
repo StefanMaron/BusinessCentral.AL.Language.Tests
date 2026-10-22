@@ -256,4 +256,21 @@ codeunit 60056 "Test Record Sort"
     begin
         Cleanup.Initialize();
     end;
+
+    // Writer BP (corpus issue 664, microsoft/AL issue 1189): Ascending written without parentheses, as a statement (once a C# CS0201 at
+    // publish) and as an expression. The statement reads the sort order and changes nothing.
+    [Test]
+    procedure Record_Ascending_WithoutParentheses_StatementChangesNothing_BP()
+    var
+        Keyed: Record "ALT Keyed";
+    begin
+        Initialize();
+#pragma warning disable AL0606
+        Keyed.Ascending;
+        Assert.IsTrue(Keyed.Ascending, 'the statement Ascending; leaves the default (ascending)');
+        Keyed.Ascending(false);
+        Keyed.Ascending;
+        Assert.IsFalse(Keyed.Ascending, 'the statement Ascending; leaves Ascending(false) in force');
+#pragma warning restore AL0606
+    end;
 }

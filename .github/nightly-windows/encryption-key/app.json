@@ -1,0 +1,25 @@
+{
+  "id": "5d1f7c3a-8b2e-4f60-9a14-c7e2b9d04a81",
+  "name": "AL Language Nightly Encryption Key Setup",
+  "publisher": "AL Language",
+  "version": "1.0.0.0",
+  "brief": "Creates the tenant encryption key on the nightly Windows container (corpus #282). Not a test app.",
+  "description": "Published by nightly-windows.yml before the corpus apps and unpublished again once the key is verified. Never compiled by ci.yml.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "platform": "27.0.0.0",
+  "dependencies": [],
+  "screenshots": [],
+  "idRanges": [
+    {
+      "from": 81846,
+      "to": 81849
+    }
+  ],
+  "features": [],
+  "runtime": "16.0",
+  "target": "OnPrem"
+}

@@ -13,8 +13,8 @@ Thank you for contributing! This repo is an executable specification proving AL 
 - [Out-of-scope features](#out-of-scope-features)
 - [Local development](#local-development)
 - [Running CI locally](#running-ci-locally)
+- [Test selection in CI](#test-selection-in-ci)
 - [Pull request checklist](#pull-request-checklist)
-- [Runner gap path](#runner-gap-path)
 
 ---
 
@@ -23,8 +23,6 @@ Thank you for contributing! This repo is an executable specification proving AL 
 **Positive tests** — prove an AL language feature works correctly in BC Cloud. This is the primary contribution type. See the in-scope list in [CLAUDE.md](CLAUDE.md#in-scope-and-out-of-scope) for what belongs here.
 
 **Negative tests (out-of-scope)** — prove that Cloud-restricted features throw the expected error. One test per surface area, placed in `tests/al-language/out-of-scope/`. Do not add more than one per feature.
-
-**Runner gap tests** — prove the correct Cloud behavior for something `BusinessCentral.AL.Runner` gets wrong. Write the test here; once the runner is fixed the test is promoted to its regression suite.
 
 If you are unsure whether something is in scope, open an issue first and describe what you want to test.
 
@@ -121,7 +119,7 @@ When there is no special condition, omit it: `Record_Insert_AssignsSystemId`.
 
 The Cloud app (`tests/al-language`) declares two ID ranges: `60000–60999` and `67000–69999`. The first range is nearly full, so **allocate new objects from `67000–69999`**. Check existing files and open pull requests to avoid conflicts — `check-object-ids.py` and `check-cross-pr-object-ids.py` catch duplicates and out-of-range ids.
 
-If you add a third range, add it to `codeunit_range` in `.github/workflows/ci.yml` too. That value decides which test codeunits CI runs, and a test codeunit outside it compiles but never runs, with every leg still green.
+Do not edit `.github/workflows/ci.yml` for a new id block or a new range in `app.json`. The `codeunit_range` of every test job already covers `50000..99999`, every id a test app can use. The runner only runs the `Subtype = Test` codeunits of the job's own test app, so the ids of the other apps in that span cost nothing. The one gap is `75020..75024`, which is left out of the main app's range: those are `Subtype = Test` codeunits without a `[Test]` procedure, read only as metadata. A codeunit like that reports no result and fails the leg, so do not add another one in the range.
 
 ---
 
@@ -164,6 +162,7 @@ The CI matrix defines these symbols per version:
 |--------|---------|
 | `BC27PLUS` | Available from BC 27.0 onwards (always defined) |
 | `BC28PLUS` | Available from BC 28.0 onwards |
+| `BC29PLUS` | Available from BC 29.0 onwards |
 
 The guard comment must explain **why** the guard exists — which API or behavior changed.
 
@@ -225,13 +224,99 @@ python3 run-bc-tests.py --ids "60100..60199"
 
 Default local credentials: `BCRUNNER` / `Admin123!`
 
+To compile with `alc` directly and trust the result, run it through `scripts/check-alc-output.sh`
+(for example `scripts/check-alc-output.sh alc /project:. /packagecachepath:pkgs /out:out.app`).
+`alc | grep ': error'` can call a broken build clean: errors can print at column 0, and an empty
+package cache can fail with no diagnostics. The script requires the start and end lines, exit
+code 0, and no `error ALnnnn` line in either shape.
+
 ---
 
 ## Running CI locally
 
-Push your branch and GitHub Actions runs the full matrix automatically — BC 27.5 and BC 28.1, no self-hosted runner required. Check the [Actions tab](https://github.com/StefanMaron/BusinessCentral.AL.Language.Tests/actions) for results.
+Open a pull request and GitHub Actions runs every BC leg, no self-hosted runner required. A pull request runs only the test codeunits its change can affect, and every merge to master runs all of them (see [Test selection in CI](#test-selection-in-ci)). Check the [Actions tab](https://github.com/StefanMaron/BusinessCentral.AL.Language.Tests/actions) for results.
 
 You can also trigger a single-version run manually via **Actions → AL Language Test Suite → Run workflow** and entering a specific BC version.
+
+---
+
+## Test selection in CI
+
+A full BC leg takes about 26 minutes, and about 21 of them are the "Run AL tests" step. So a pull request runs only the test codeunits that its change can affect. Every app is still compiled and published on every leg, and the job and check names stay the same.
+
+### What runs on a pull request
+
+`.github/scripts/select-tests.py` compares the pull request with its base branch. For each test job in `ci.yml` it selects:
+
+- every test codeunit declared in a changed file;
+- every test codeunit that uses an object the change touches, directly or through other objects. A codeunit uses an object when its source code names the object by name or by id (an object's own id and name in its header do not count). A changed extension object (`tableextension`, `pageextension`, `enumextension`, `reportextension`) also counts as a change to the object it extends;
+- for a changed file that is not AL code (a report layout, an add-in script), the objects that name the file, and the test codeunits that use those objects.
+
+An object the change touches is one whose code changed. An object in a changed file whose code is the same before and after (comments and line breaks do not count) is not one, unless the file's `namespace`, `using` or `#define` lines changed. If only comments changed in a file, the test codeunits that use its objects run.
+
+#### Event subscribers
+
+A subscriber runs when its publisher raises the event. So a test codeunit that uses the publisher also uses the subscriber, and the selection follows that path too:
+
+- An automatic subscriber (the default `EventSubscriberInstance`) to an object of the test apps selects the test codeunits that use that publisher object, directly or through other objects. For example, a subscriber to the `OnAfterModifyEvent` of a table the same change adds selects the tests that use that table.
+- A manual subscriber (`EventSubscriberInstance = Manual`) runs only after `BindSubscription` on an instance of its codeunit. It selects the test codeunits that use the subscriber codeunit, whatever its publisher. A manual subscriber that is also `SingleInstance = true` stays bound into later test codeunits, so it is treated like an automatic one.
+- A subscriber that the change does not touch still counts when the change touches an object it uses: the test codeunits that use its publisher run.
+
+Each leg also runs one small test codeunit that is not inside an `#if` (the summary calls it the sentinel). The test workflow fails a leg that ran no test at all, and a selected codeunit can be compiled out on an older BC version. A codeunit outside the job's `codeunit_range` is never selected, and neither is a `Subtype = Test` codeunit without a `[Test]` procedure.
+
+The summary of the `prepare` job lists every selected codeunit and the reason it was selected, or the reason for a full run.
+
+### When everything runs
+
+Every test codeunit runs when one of these is true:
+
+- The run is a push to master (so every merge gets a full run), or a manual run without `select_base` and without `select_codeunits`.
+- The pull request comes from `al-runtime-rs-staging` (a corpus bump).
+- The pull request has the label `full-run`.
+- The change touches one of these:
+  - a file under `.github/` (workflows and the scripts CI runs). One exception: a change to `ci.yml` that edits only the values of `codeunit_range` lines (a "CI range edit") is selected as usual, plus every test codeunit the edit brings into its job's range. Any other line changed in `ci.yml`, a comment included, means a full run;
+  - an `app.json`, the symbols in an app's `.alpackages/` folder, or an app's resource folder (`NavApp.ListResources` sees every resource);
+  - the fixture app `tests/al-language-internals-fixture`, which the other apps depend on;
+  - an event subscriber that can run during any test, when the change touches it, removes it, or touches an object it uses. That is an automatic subscriber whose publisher is:
+    - not an object of the test apps (a platform, System Application or Base Application object, for example `Global Triggers`, `Company Triggers`, `Caption Class`, or a table event of `Customer`);
+    - an install or upgrade event (the event name contains `Install` or `Upgrade`);
+    - an object of the test apps that more than 40 test codeunits use. Shared fixture publishers such as `ALT Triggered` or `ALT Event Publisher` are used by more than 250; a subscriber there changes the behavior of many unrelated tests;
+    - named the same as a Microsoft object in the symbol packages, so the scan cannot tell which one is meant;
+    - written in a way the scan cannot read;
+  - an `Install` or `Upgrade` codeunit that uses an object the change touches;
+  - a codeunit with `Subtype = Install`, `Upgrade` or `TestRunner`;
+  - a permission set, permission set extension or entitlement;
+  - more than 50 files in the test apps;
+  - a file outside the test apps that CI may read. These paths are known to be unused by CI and do not count: `docs/`, `scripts/`, `.claude/`, `tests/must-not-compile/`, Markdown files, `tests/al-surface*.json`, `v2-classification.json`, `.gitignore`, and apps under `tests/` that no CI job builds (the isolation probe).
+- The selection is uncertain: a changed object that no test codeunit uses (a test can still reach it through metadata, for example `AllObj` filtered on an id range), an AL file with no object the script can read, or a changed non-AL file that no object names.
+- Nothing is selected, for example when a pull request changes only documentation.
+- The selection script fails. It never fails the build.
+
+To force a full run on a pull request, add the label `full-run` and then push a commit or use **Re-run all jobs**. **Re-run failed jobs** reuses the earlier selection.
+
+### What a subset run can miss
+
+- A test that depends on data an earlier codeunit left in the database. A full run executes all codeunits one after the other on one database; a subset run skips most of them.
+- A reference the scan cannot see, for example an object id computed at run time.
+
+The full run on master after the merge covers both.
+
+### Running a selection by hand
+
+A manual run (**Actions → AL Language Test Suite → Run workflow**) takes `select_base`, a commit or a branch. The run then selects the tests affected by what the branch changed since it left `select_base`: the diff from the merge base of the two to the branch (three dots, `select_base...branch`). Later commits on `select_base` do not count, so a branch cut from master stays a subset run after master and staging move on. To see a selection without running CI:
+
+```bash
+python3 .github/scripts/select-tests.py --base origin/master --head HEAD
+python3 .github/scripts/select-tests.py --base origin/al-runtime-rs-staging --head my-branch
+```
+
+A manual run can also take `select_codeunits`: the test codeunits to run, as a JSON object with one entry per test app, for example `{"tests/al-language":"50010,50012..50015","tests/al-language-onprem":"60011"}`. The run then uses this list as it is and reads no diff; `select_base` is ignored. Ids are separated by `,` or `|`, and `lo..hi` is a range. The `prepare` job keeps only the runnable test codeunits of the job's `codeunit_range` (a range never adds a `Subtype = Test` codeunit without a `[Test]` procedure), lists the ids it dropped, and adds each app's sentinel. An app the input leaves out runs only its sentinel. An input that cannot be read, or that names an app no test job reads, means a full run. GitHub limits all inputs of one dispatch to 65,535 characters together; every test codeunit of the corpus written out one by one is about 20,000.
+
+The corpus CI batcher of al-runtime-rs uses `select_codeunits`. It merges many branches into one run, and the merged diff usually has more than 50 files, so `select_base` would mean a full run. The batcher passes the union of the selections of each branch alone instead. To check an input by hand:
+
+```bash
+python3 .github/scripts/select-tests.py --head HEAD --codeunits '{"tests/al-language":"50010,50012..50015"}'
+```
 
 ---
 
@@ -247,16 +332,4 @@ Before opening a PR, verify:
 - [ ] Out-of-scope tests are in `out-of-scope/` and confirm the error only
 - [ ] Version-gated code uses `#if BC28PLUS` (or equivalent) with an explanatory comment
 - [ ] The test fails for the right reason (remove the assertion and confirm it passes; restore it and confirm it fails)
-- [ ] CI passes on your branch
-
----
-
-## Runner gap path
-
-If `BusinessCentral.AL.Runner` handles a feature incorrectly:
-
-1. Write a test here that **passes** against BC Cloud and documents the correct behavior
-2. Open a PR referencing the AL Runner issue (link it in the PR description)
-3. Once [BusinessCentral.AL.Runner](https://github.com/StefanMaron/BusinessCentral.AL.Runner) is fixed, the test is promoted to its regression suite
-
-A test that passes here but fails on the runner is a runner bug to fix, not a test to delete.
+- [ ] CI passes on your pull request (all required checks)

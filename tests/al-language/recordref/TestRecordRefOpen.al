@@ -92,6 +92,41 @@ codeunit 60067 "Test RecordRef Open"
         RecRef.Close();
     end;
 
+    // Corpus issue 668 item 53 (writer br): RecordRef.Number and RecordId.TableNo of a temporary record are the table's own number.
+    [Test]
+    procedure RecordRef_Temporary_NumberAndRecordIdTableNo()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempRec: Record "ALT Universal" temporary;
+        RecRef: RecordRef;
+        TempRef: RecordRef;
+        Rid: RecordId;
+    begin
+        Initialize();
+        TempRec."Entry No." := 7;
+        TempRec.Insert();
+        RecRef.GetTable(TempRec);
+        Observer.Observe('gettable istemporary', Format(RecRef.IsTemporary()));
+        Observer.Observe('gettable number', Format(RecRef.Number()));
+        Rid := TempRec.RecordId();
+        Observer.Observe('record recordid tableno', Format(Rid.TableNo()));
+        Observer.Observe('record recordid text', Format(Rid));
+        Observer.Observe('recordref recordid tableno', Format(RecRef.RecordId().TableNo()));
+        Observer.Observe('record tablecaption', TempRec.TableName());
+        TempRef.Open(Database::"ALT Universal", true);
+        Observer.Observe('open temp number', Format(TempRef.Number()));
+        Observer.Observe('open temp name', TempRef.Name());
+        Observer.Expect('gettable istemporary', 'Yes');
+        Observer.Expect('gettable number', '60000');
+        Observer.Expect('record recordid tableno', '60000');
+        Observer.Expect('record recordid text', 'ALT Universal: 7');
+        Observer.Expect('recordref recordid tableno', '60000');
+        Observer.Expect('record tablecaption', 'ALT Universal');
+        Observer.Expect('open temp number', '60000');
+        Observer.Expect('open temp name', 'ALT Universal');
+        Observer.Verify();
+    end;
+
     local procedure Initialize()
     begin
         Cleanup.Initialize();

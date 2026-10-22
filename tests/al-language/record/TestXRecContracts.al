@@ -35,6 +35,36 @@
 //     TestPage just can't be used to write an automated regression test proving it for the
 //     page-driven half.
 
+// Writer BP (corpus issue 664): xRec and CurrFieldNo inside a table procedure, called from another object (the test) and from the
+// table's own OnValidate trigger (rows "User-Defined Function" of the NAV 2018 page "xRec and CurrFieldNo"; the trigger rows of that page
+// are pinned by the tests above and by misc/lt-inferred-behaviors/P69CurrFieldNo.al).
+table 82563 "LT BP xRec Proc Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Code[10]) { }
+        field(2; Name; Text[30])
+        {
+            trigger OnValidate()
+            begin
+                Seen := CopyStr('internal ' + ReadXRec(), 1, MaxStrLen(Seen));
+            end;
+        }
+        field(3; Seen; Text[250]) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+
+    procedure ReadXRec(): Text
+    begin
+        exit('xRec=' + xRec.Id + '/' + xRec.Name + ' Rec=' + Id + '/' + Name + ' CurrFieldNo=' + Format(CurrFieldNo));
+    end;
+}
 codeunit 60179 "Test xRec Contracts"
 {
     Subtype = Test;
@@ -194,5 +224,36 @@ codeunit 60179 "Test xRec Contracts"
     begin
         TrigLog.SetRange("TriggerName", TriggerName);
         Assert.IsTrue(TrigLog.FindFirst(), StrSubstNo('%1 trigger must fire', TriggerName));
+    end;
+
+    // Writer BP (corpus issue 664): xRec and CurrFieldNo in a table procedure called from outside and from the table's own trigger.
+    [Test]
+    procedure TableProcedure_xRecAndCurrFieldNo_ExternalAndInternalCall_BP()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT BP xRec Proc Row";
+    begin
+        Initialize();
+        Row.DeleteAll();
+        Row.Id := 'A';
+        Row.Name := 'stored';
+        Row.Insert();
+
+        Row.Get('A');
+        Observer.Observe('external after Get', Row.ReadXRec());
+        Row.Name := 'assigned';
+        Observer.Observe('external after assignment', Row.ReadXRec());
+        Row.Get('A');
+        Row.Validate(Name, 'validated');
+        Observer.Observe('internal from OnValidate', Row.Seen);
+        Observer.Observe('external after Validate', Row.ReadXRec());
+        Row.Modify();
+        Observer.Observe('external after Modify', Row.ReadXRec());
+        Observer.Expect('external after Get', 'xRec=/ Rec=A/stored CurrFieldNo=0');
+        Observer.Expect('external after assignment', 'xRec=/ Rec=A/assigned CurrFieldNo=0');
+        Observer.Expect('internal from OnValidate', 'internal xRec=A/stored Rec=A/validated CurrFieldNo=0');
+        Observer.Expect('external after Validate', 'xRec=/ Rec=A/validated CurrFieldNo=0');
+        Observer.Expect('external after Modify', 'xRec=/ Rec=A/validated CurrFieldNo=0');
+        Observer.Verify();
     end;
 }

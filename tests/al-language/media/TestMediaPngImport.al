@@ -3,6 +3,9 @@
 //   https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/media/media-exportstream-method
 // Scope: in-scope
 // Fixtures used: ALT Media (60980)
+//   and table "LT QE Media Other" (86580, end of file; writer QE 2026-10-20, QE_* tests: a media held by a row of ANOTHER
+//   table or by another field is removed from Tenant Media when one holder lets it go by Modify or Delete; the other holder
+//   keeps the MediaId, HasValue is false, ExportStream returns false and writes nothing)
 //
 // Companion of StefanMaron/BusinessCentral.AL.Runner#2570, which reports that AL Runner
 // refuses to import ANY recognized image format into a Media field (it needs
@@ -278,4 +281,410 @@ codeunit 60130 "Test Media Png Import"
     begin
         Cleanup.Initialize();
     end;
+
+    // ── Added by writer bs (corpus issue #668, item 75): orphan deletion when media is replaced, MediaSet.Remove ──
+    // record/lt-ar-records/ArRecordProbes.al (writer ar, Media_ImportStream_OnFilledField) pins that a replaced Media is deleted from Tenant Media on Modify.
+
+    local procedure BsPngIn(var TempBlob: Codeunit "Temp Blob"; var InStr: InStream)
+    var
+        Base64Convert: Codeunit "Base64 Convert";
+        OutStr: OutStream;
+    begin
+        Clear(TempBlob);
+        TempBlob.CreateOutStream(OutStr);
+        Base64Convert.FromBase64(ValidPngBase64, OutStr);
+        TempBlob.CreateInStream(InStr);
+    end;
+
+    [Test]
+    procedure Media_Replace_WhileAnotherRowSharesTheMedia()
+    // CLAIM (issue #668 item 75): row 2 gets row 1's Media by assignment (same MediaId). Row 1 then imports a new picture and is modified:
+    // is the old media object kept in Tenant Media because row 2 still references it, and what does row 2 read?
+    var
+        Observer: Codeunit "Probe Observer";
+        Row1: Record "ALT Media";
+        Row2: Record "ALT Media";
+        TenantMedia: Record "Tenant Media";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        First: Guid;
+    begin
+        Initialize();
+        ImportBase64(Row1, 'BS1', ValidPngBase64);
+        Row1.Get('BS1');
+        First := Row1.Picture.MediaId();
+        Row2.Init();
+        Row2.Code := 'BS2';
+        Row2.Picture := Row1.Picture;
+        Row2.Insert();
+        Row2.Get('BS2');
+        Observer.Observe('row2_shares_id', Format(Row2.Picture.MediaId() = First));
+        BsPngIn(TempBlob, InStr);
+        Row1.Picture.ImportStream(InStr, 'replacement');
+        Row1.Modify();
+        Observer.Observe('old_media_after_replace', Format(TenantMedia.Get(First)));
+        Row2.Get('BS2');
+        Observer.Observe('row2_still_same_id', Format(Row2.Picture.MediaId() = First));
+        Observer.Observe('row2_has_value', Format(Row2.Picture.HasValue()));
+        Row2.Delete();
+        Observer.Observe('old_media_after_row2_delete', Format(TenantMedia.Get(First)));
+        Observer.Expect('row2_shares_id', 'Yes');
+        Observer.Expect('old_media_after_replace', 'Yes');
+        Observer.Expect('row2_still_same_id', 'Yes');
+        Observer.Expect('row2_has_value', 'Yes');
+        Observer.Expect('old_media_after_row2_delete', 'No');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure MediaSet_Remove_KeepsTheTenantMediaRow()
+    // CLAIM (issue #668 item 75): the docs say MediaSet.Remove only removes the association. After Remove and Modify, is the removed item's
+    // row still in Tenant Media? And after the record is deleted?
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "ALT Media";
+        TenantMedia: Record "Tenant Media";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        Item1: Guid;
+        Item2: Guid;
+    begin
+        Initialize();
+        Row.Init();
+        Row.Code := 'BS3';
+        Row.Insert();
+        BsPngIn(TempBlob, InStr);
+        Row.Images.ImportStream(InStr, 'one');
+        BsPngIn(TempBlob, InStr);
+        Row.Images.ImportStream(InStr, 'two');
+        Row.Modify();
+        Row.Get('BS3');
+        Item1 := Row.Images.Item(1);
+        Item2 := Row.Images.Item(2);
+        Observer.Observe('remove_result', Format(Row.Images.Remove(Item1)));
+        Row.Modify();
+        Row.Get('BS3');
+        Observer.Observe('count_after_remove', Format(Row.Images.Count()));
+        Observer.Observe('removed_item_in_tenant_media', Format(TenantMedia.Get(Item1)));
+        Observer.Observe('kept_item_in_tenant_media', Format(TenantMedia.Get(Item2)));
+        Row.Delete();
+        Observer.Observe('removed_item_after_delete', Format(TenantMedia.Get(Item1)));
+        Observer.Observe('kept_item_after_delete', Format(TenantMedia.Get(Item2)));
+        Observer.Expect('remove_result', 'Yes');
+        Observer.Expect('count_after_remove', '1');
+        Observer.Expect('removed_item_in_tenant_media', 'Yes');
+        Observer.Expect('kept_item_in_tenant_media', 'Yes');
+        Observer.Expect('removed_item_after_delete', 'Yes');
+        Observer.Expect('kept_item_after_delete', 'No');
+        Observer.Verify();
+    end;
+
+    // ── Added by writer QE (2026-10-20): one media held by rows of TWO tables (or two fields), copied by assignment or by
+    // TransferFields. After a Modify that replaces it, or a Delete, in one holder: what does the other holder still read,
+    // and is the media still in Tenant Media? Table "LT QE Media Other" (86580) is at the end of this file.
+
+    local procedure QeInitialize()
+    var
+        Other: Record "LT QE Media Other";
+    begin
+        Initialize();
+        Other.DeleteAll();
+    end;
+
+    local procedure QeObserveOther(var Observer: Codeunit "Probe Observer"; Prefix: Text; Code: Code[20]; Id: Guid)
+    var
+        Other: Record "LT QE Media Other";
+        TenantMedia: Record "Tenant Media";
+        TempBlob: Codeunit "Temp Blob";
+        OutStr: OutStream;
+    begin
+        Other.Get(Code);
+        Observer.Observe(Prefix + ' has_value', Format(Other.Picture.HasValue()));
+        Observer.Observe(Prefix + ' same_id', Format(Other.Picture.MediaId() = Id));
+        Observer.Observe(Prefix + ' null_id', Format(IsNullGuid(Other.Picture.MediaId())));
+        Observer.Observe(Prefix + ' in_tenant_media', Format(TenantMedia.Get(Id)));
+        TempBlob.CreateOutStream(OutStr);
+        Observer.Observe(Prefix + ' export_result', Format(Other.Picture.ExportStream(OutStr)));
+        Observer.Observe(Prefix + ' export_nonempty', Format(TempBlob.Length() > 0));
+    end;
+
+    local procedure QeObserveAlt(var Observer: Codeunit "Probe Observer"; Prefix: Text; Code: Code[20]; Id: Guid)
+    var
+        Row: Record "ALT Media";
+        TenantMedia: Record "Tenant Media";
+        TempBlob: Codeunit "Temp Blob";
+        OutStr: OutStream;
+    begin
+        Row.Get(Code);
+        Observer.Observe(Prefix + ' has_value', Format(Row.Picture.HasValue()));
+        Observer.Observe(Prefix + ' same_id', Format(Row.Picture.MediaId() = Id));
+        Observer.Observe(Prefix + ' in_tenant_media', Format(TenantMedia.Get(Id)));
+        TempBlob.CreateOutStream(OutStr);
+        Observer.Observe(Prefix + ' export_result', Format(Row.Picture.ExportStream(OutStr)));
+        Observer.Observe(Prefix + ' export_nonempty', Format(TempBlob.Length() > 0));
+    end;
+
+    local procedure QeSharedByAssignment(Code: Code[20]) Id: Guid
+    var
+        Row: Record "ALT Media";
+        Other: Record "LT QE Media Other";
+    begin
+        ImportBase64(Row, Code, ValidPngBase64);
+        Row.Get(Code);
+        Id := Row.Picture.MediaId();
+        Other.Init();
+        Other.Code := Code;
+        Other.Picture := Row.Picture;
+        Other.Insert();
+    end;
+
+    [Test]
+    procedure QE_Media_OtherTable_Assigned_SourceRowDeleted()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "ALT Media";
+        TenantMedia: Record "Tenant Media";
+        Id: Guid;
+    begin
+        QeInitialize();
+        Id := QeSharedByAssignment('QE1');
+        QeObserveOther(Observer, 'before', 'QE1', Id);
+        Row.Get('QE1');
+        Row.Delete();
+        QeObserveOther(Observer, 'after delete', 'QE1', Id);
+        Observer.Observe('tenant media still there', Format(TenantMedia.Get(Id)));
+        Observer.Expect('before has_value', 'Yes');
+        Observer.Expect('before same_id', 'Yes');
+        Observer.Expect('before null_id', 'No');
+        Observer.Expect('before in_tenant_media', 'Yes');
+        Observer.Expect('before export_result', 'Yes');
+        Observer.Expect('before export_nonempty', 'Yes');
+        Observer.Expect('after delete has_value', 'No');
+        Observer.Expect('after delete same_id', 'Yes');
+        Observer.Expect('after delete null_id', 'No');
+        Observer.Expect('after delete in_tenant_media', 'No');
+        Observer.Expect('after delete export_result', 'No');
+        Observer.Expect('after delete export_nonempty', 'No');
+        Observer.Expect('tenant media still there', 'No');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_Media_OtherTable_Assigned_SourceRowReplaced()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "ALT Media";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        Id: Guid;
+    begin
+        QeInitialize();
+        Id := QeSharedByAssignment('QE2');
+        Row.Get('QE2');
+        BsPngIn(TempBlob, InStr);
+        Row.Picture.ImportStream(InStr, 'replacement');
+        Row.Modify();
+        Row.Get('QE2');
+        Observer.Observe('source has new id', Format(Row.Picture.MediaId() <> Id));
+        QeObserveOther(Observer, 'after replace', 'QE2', Id);
+        Observer.Expect('source has new id', 'Yes');
+        Observer.Expect('after replace has_value', 'No');
+        Observer.Expect('after replace same_id', 'Yes');
+        Observer.Expect('after replace null_id', 'No');
+        Observer.Expect('after replace in_tenant_media', 'No');
+        Observer.Expect('after replace export_result', 'No');
+        Observer.Expect('after replace export_nonempty', 'No');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_Media_OtherTable_TransferFields_SourceRowDeleted()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "ALT Media";
+        Other: Record "LT QE Media Other";
+        Id: Guid;
+    begin
+        QeInitialize();
+        ImportBase64(Row, 'QE3', ValidPngBase64);
+        Row.Get('QE3');
+        Id := Row.Picture.MediaId();
+        Other.Init();
+        Other.TransferFields(Row);
+        Observer.Observe('transferred same id', Format(Other.Picture.MediaId() = Id));
+        Other.Insert();
+        Row.Delete();
+        QeObserveOther(Observer, 'after delete', 'QE3', Id);
+        Observer.Expect('transferred same id', 'Yes');
+        Observer.Expect('after delete has_value', 'No');
+        Observer.Expect('after delete same_id', 'Yes');
+        Observer.Expect('after delete null_id', 'No');
+        Observer.Expect('after delete in_tenant_media', 'No');
+        Observer.Expect('after delete export_result', 'No');
+        Observer.Expect('after delete export_nonempty', 'No');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_Media_OtherTable_TransferFields_SourceRowReplaced()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "ALT Media";
+        Other: Record "LT QE Media Other";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        Id: Guid;
+    begin
+        QeInitialize();
+        ImportBase64(Row, 'QE4', ValidPngBase64);
+        Row.Get('QE4');
+        Id := Row.Picture.MediaId();
+        Other.Init();
+        Other.TransferFields(Row);
+        Other.Insert();
+        BsPngIn(TempBlob, InStr);
+        Row.Picture.ImportStream(InStr, 'replacement');
+        Row.Modify();
+        QeObserveOther(Observer, 'after replace', 'QE4', Id);
+        Observer.Expect('after replace has_value', 'No');
+        Observer.Expect('after replace same_id', 'Yes');
+        Observer.Expect('after replace null_id', 'No');
+        Observer.Expect('after replace in_tenant_media', 'No');
+        Observer.Expect('after replace export_result', 'No');
+        Observer.Expect('after replace export_nonempty', 'No');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_Media_OtherTable_HolderDeleted_ThenSourceDeleted()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "ALT Media";
+        Other: Record "LT QE Media Other";
+        TenantMedia: Record "Tenant Media";
+        Id: Guid;
+    begin
+        QeInitialize();
+        Id := QeSharedByAssignment('QE5');
+        Other.Get('QE5');
+        Other.Delete();
+        QeObserveAlt(Observer, 'after other delete', 'QE5', Id);
+        Row.Get('QE5');
+        Row.Delete();
+        Observer.Observe('after both deleted in_tenant_media', Format(TenantMedia.Get(Id)));
+        Observer.Expect('after other delete has_value', 'No');
+        Observer.Expect('after other delete same_id', 'Yes');
+        Observer.Expect('after other delete in_tenant_media', 'No');
+        Observer.Expect('after other delete export_result', 'No');
+        Observer.Expect('after other delete export_nonempty', 'No');
+        Observer.Expect('after both deleted in_tenant_media', 'No');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_Media_OtherTable_HolderReplaced()
+    var
+        Observer: Codeunit "Probe Observer";
+        Other: Record "LT QE Media Other";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        Id: Guid;
+    begin
+        QeInitialize();
+        Id := QeSharedByAssignment('QE6');
+        Other.Get('QE6');
+        BsPngIn(TempBlob, InStr);
+        Other.Picture.ImportStream(InStr, 'replacement');
+        Other.Modify();
+        Other.Get('QE6');
+        Observer.Observe('other has new id', Format(Other.Picture.MediaId() <> Id));
+        QeObserveAlt(Observer, 'after other replace', 'QE6', Id);
+        Observer.Expect('other has new id', 'Yes');
+        Observer.Expect('after other replace has_value', 'No');
+        Observer.Expect('after other replace same_id', 'Yes');
+        Observer.Expect('after other replace in_tenant_media', 'No');
+        Observer.Expect('after other replace export_result', 'No');
+        Observer.Expect('after other replace export_nonempty', 'No');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_Media_SameRow_OtherField_Replaced()
+    var
+        Observer: Codeunit "Probe Observer";
+        Other: Record "LT QE Media Other";
+        TenantMedia: Record "Tenant Media";
+        TempBlob: Codeunit "Temp Blob";
+        InStr: InStream;
+        Id: Guid;
+    begin
+        QeInitialize();
+        Other.Init();
+        Other.Code := 'QE7';
+        Other.Insert();
+        BsPngIn(TempBlob, InStr);
+        Other.Picture.ImportStream(InStr, 'first');
+        Other.Modify();
+        Other.Get('QE7');
+        Id := Other.Picture.MediaId();
+        Other.Picture2 := Other.Picture;
+        Other.Modify();
+        BsPngIn(TempBlob, InStr);
+        Other.Picture.ImportStream(InStr, 'second');
+        Other.Modify();
+        Other.Get('QE7');
+        Observer.Observe('picture new id', Format(Other.Picture.MediaId() <> Id));
+        Observer.Observe('picture2 same id', Format(Other.Picture2.MediaId() = Id));
+        Observer.Observe('picture2 has_value', Format(Other.Picture2.HasValue()));
+        Observer.Observe('old in_tenant_media', Format(TenantMedia.Get(Id)));
+        Other.Delete();
+        Observer.Observe('after delete old in_tenant_media', Format(TenantMedia.Get(Id)));
+        Observer.Expect('picture new id', 'Yes');
+        Observer.Expect('picture2 same id', 'Yes');
+        Observer.Expect('picture2 has_value', 'No');
+        Observer.Expect('old in_tenant_media', 'No');
+        Observer.Expect('after delete old in_tenant_media', 'No');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QE_Media_OtherTable_Assigned_SourceRowDeleted_Committed()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "ALT Media";
+        Id: Guid;
+    begin
+        QeInitialize();
+        Id := QeSharedByAssignment('QE8');
+        Commit();
+        Row.Get('QE8');
+        Row.Delete();
+        Commit();
+        QeObserveOther(Observer, 'after committed delete', 'QE8', Id);
+        Observer.Expect('after committed delete has_value', 'No');
+        Observer.Expect('after committed delete same_id', 'Yes');
+        Observer.Expect('after committed delete null_id', 'No');
+        Observer.Expect('after committed delete in_tenant_media', 'No');
+        Observer.Expect('after committed delete export_result', 'No');
+        Observer.Expect('after committed delete export_nonempty', 'No');
+        Observer.Verify();
+    end;
+}
+
+table 86580 "LT QE Media Other"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Code"; Code[20]) { }
+        field(2; "Description"; Text[100]) { }
+        field(3; "Picture"; Media) { }
+        field(5; "Picture2"; Media) { }
+    }
+
+    keys
+    {
+        key(PK; "Code") { Clustered = true; }
+    }
 }
