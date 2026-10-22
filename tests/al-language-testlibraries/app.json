@@ -1,0 +1,50 @@
+{
+  "id": "a93b8636-cd55-4966-b98c-98f1e70e13f9",
+  "name": "AL Language Coverage Tests (Test Libraries)",
+  "publisher": "AL Language",
+  "version": "1.0.0.0",
+  "brief": "Tests whose result depends on Microsoft's Tests-TestLibraries and Data Archive apps being installed.",
+  "description": "A Windows container made with BcContainerHelper has Tests-TestLibraries and Data Archive installed. Those apps change observable results: Tests-TestLibraries codeunit 130011 Backup Management sets the database trigger flags of GetDatabaseTableTriggerSetup, and codeunits 130301 and 130302 change the permissions of a test whose TestPermissions is not Disabled. The main coverage app runs without them. This app runs in its own CI job that installs them, and it holds only the tests that need them.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "platform": "27.0.0.0",
+  "application": "27.0.0.0",
+  "dependencies": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "AL Language Coverage Tests",
+      "publisher": "AL Language",
+      "version": "1.0.0.0"
+    },
+    {
+      "id": "63ca2fa4-4f03-4f2b-a480-172fef340d3f",
+      "name": "System Application",
+      "publisher": "Microsoft",
+      "version": "27.0.0.0"
+    },
+    {
+      "id": "437dbf0e-84ff-417a-965d-ed2bb9650972",
+      "name": "Base Application",
+      "publisher": "Microsoft",
+      "version": "27.0.0.0"
+    }
+  ],
+  "screenshots": [],
+  "idRanges": [
+    {
+      "from": 81550,
+      "to": 81649
+    }
+  ],
+  "features": [],
+  "runtime": "18.0",
+  "target": "Cloud",
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  }
+}

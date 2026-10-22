@@ -486,6 +486,10 @@ def main():
     for j in real:
         check('real ci.yml job %s reads the selection for its test app' % j['job'],
               j['key'] is not None and j['test_app_dirs'] == [j['key']] and st.spans(j['range']), j)
+    # test-testlibraries (the job that installs Tests-TestLibraries and Data Archive) keeps its own id block as full range
+    tl = [j for j in real if j['job'] == 'test-testlibraries']
+    check('real ci.yml job test-testlibraries runs 81550..81649 in full', len(tl) == 1
+          and tl[0]['key'] == 'tests/al-language-testlibraries' and st.spans(tl[0]['range']) == [(81550, 81649)], tl)
 
     if FAILED:
         print('%d failed: %s' % (len(FAILED), ', '.join(FAILED)))
