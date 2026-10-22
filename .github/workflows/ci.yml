@@ -455,14 +455,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    uses: StefanMaron/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@master
+    # Same bc-linux pin as the jobs above (bcc60c1c has the extra_apps input).
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@bcc60c1c74c72098cfc368de89034051238f4592
     with:
+      bc_linux_ref:         "bcc60c1c74c72098cfc368de89034051238f4592"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-bcc60c1c74c72098cfc368de89034051238f4592"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       # al-language is published only because the test app depends on it (Probe Observer). Its own tests run in the
       # test job above.
       app_dirs: |
         tests/al-language-internals-fixture
+        tests/al-language-xapp-a
+        tests/al-language-xapp-b
+        tests/al-language-xapp-c
         tests/al-language
       test_app_dirs:        "tests/al-language-testlibraries"
       codeunit_range:       ${{ fromJson(needs.prepare.outputs.subset)['tests/al-language-testlibraries'] || '81550..81649' }}
@@ -474,4 +480,7 @@ jobs:
       runtime_version:      ${{ matrix.runtime }}
       bc_artifact_url: ${{ startsWith(matrix.bc_version, '29.') && 'https://bcartifacts-exdbf9fwegejdqak.b02.azurefd.net/sandbox/29.0.54011.55816/w1' || '' }}
       # Full-text search: al-language has tables with OptimizeForTextSearch = true (corpus #633).
-      sql_image:            "ghcr.io/stefanmaron/msdyn365bc.on.linux/mssql:2022-fts"
+      sql_image:            "ghcr.io/aldevtools/msdyn365bc.on.linux/mssql:2022-fts"
+      # RDLC rendering: see the test job above (al-language holds RDLC reports).
+      rdlc_renderer:        true
+      rdlc_trust_layouts:   true
