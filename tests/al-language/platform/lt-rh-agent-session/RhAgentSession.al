@@ -44,7 +44,10 @@ codeunit 88003 "LT RH Agent Session"
         Observer.Observe('task id', Format(TaskId));
         Observer.Observe('is agent session', Format(AgentSession.IsAgentSession(Provider)));
         Observer.Observe('provider after', Format(Provider.AsInteger()));
-        Observer.Finish();
+        Observer.Expect('task id', '0');
+        Observer.Expect('is agent session', 'No');
+        Observer.Expect('provider after', '0');
+        Observer.Verify();
     end;
 
     // al-runner issue 5686: Initialize and SetExternalId called directly (an error would end the test) and inside a TryFunction.
@@ -60,7 +63,11 @@ codeunit 88003 "LT RH Agent Session"
         ClearLastError();
         Observer.Observe('try', Format(TryBuilder()));
         Observer.ObserveError('try error');
-        Observer.Finish();
+        Observer.Expect('direct', 'returned');
+        Observer.Expect('try', 'Yes');
+        Observer.Expect('try error|text', '');
+        Observer.Expect('try error|code', '');
+        Observer.Verify();
     end;
 
     // al-runner issue 5686, second shape: TaskExists for an unknown agent.
@@ -74,6 +81,10 @@ codeunit 88003 "LT RH Agent Session"
         Observer.Observe('try', Format(TryTaskExists(Exists)));
         Observer.Observe('exists', Format(Exists));
         Observer.ObserveError('error');
-        Observer.Finish();
+        Observer.Expect('try', 'No');
+        Observer.Expect('exists', 'No');
+        Observer.Expect('error|text', 'Agents are temporarily unavailable. Please try again later. You can check the Business Central Admin Center and Microsoft 365 Service Health dashboard for updates.');
+        Observer.Expect('error|code', 'DB:Ok');
+        Observer.Verify();
     end;
 }

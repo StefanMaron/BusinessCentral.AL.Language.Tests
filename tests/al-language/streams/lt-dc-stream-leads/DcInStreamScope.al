@@ -159,7 +159,11 @@ codeunit 85782 "LT DC InStream Scope"
         Observer.Observe('direct empty', Format(InS3.Length()) + '|' + Format(InS3.EOS()) + '|' + ReadAll(InS3) + '|' + Format(InS3.EOS()));
         Source.FilledInstream('hello direct', InS4);
         Observer.Observe('direct text', Format(InS4.Length()) + '|' + Format(InS4.EOS()) + '|' + ReadAll(InS4) + '|' + Format(InS4.EOS()));
-        Observer.Finish();
+        Observer.Expect('two levels empty', '0|Yes||Yes');
+        Observer.Expect('two levels text', '0|Yes||Yes');
+        Observer.Expect('direct empty', '0|Yes||Yes');
+        Observer.Expect('direct text', '0|Yes||Yes');
+        Observer.Verify();
     end;
 }
 

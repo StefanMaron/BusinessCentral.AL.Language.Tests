@@ -502,6 +502,18 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Verify();
     end;
 
+    [TryFunction]
+    local procedure TryInsertTimeKey(var K: Record "LT RH Time Key Row")
+    begin
+        K.Insert();
+    end;
+
+    [TryFunction]
+    local procedure TryInsertDateTimeKey(var K: Record "LT RH DateTime Key Row")
+    begin
+        K.Insert();
+    end;
+
     local procedure KeyTime(var K: Record "LT RH Time Key Row"): Text
     begin
         exit(K."Entry Code" + '|' + Format(K."Entry Time", 0, 9) + '|' + Format(K."Entry Time" - 000000T) + '|' + K.Note);
@@ -554,10 +566,14 @@ codeunit 73549 "LT P130 Date Filters"
         K."Entry Code" := 'A';
         K."Entry Time" := 100000T;
         K.Note := 'third';
-        asserterror K.Insert();
+        Observer.Observe('insert .000 try', Format(TryInsertTimeKey(K)));
         Observer.ObserveError('insert .000 error');
         K.Reset();
         Observer.Observe('count after duplicate', Format(K.Count()));
+        if K.FindSet() then
+            repeat
+                Observer.Observe('row after duplicate', KeyTime(K));
+            until K.Next() = 0;
 
         K.Init();
         K."Entry Code" := 'A';
@@ -607,7 +623,15 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Observe('delete unrounded', Format(K.Delete()));
         K.Reset();
         Observer.Observe('count after delete', Format(K.Count()));
-        Observer.Finish();
+        Observer.Expect('modify var', 'Yes');
+        Observer.Expect('after modify', 'found|A|10:00:00|36000000|modified');
+        Observer.Expect('rename', 'Yes');
+        Observer.Expect('var after rename', 'A|12:00:00.001|43200001|modified');
+        Observer.Expect('get renamed .000', 'found|A|12:00:00|43200000|modified');
+        Observer.Expect('get old .000', 'not found');
+        Observer.Expect('delete unrounded', 'Yes');
+        Observer.Expect('count after delete', '0');
+        Observer.Verify();
     end;
 
     // The same for a DateTime primary key field.
@@ -636,8 +660,10 @@ codeunit 73549 "LT P130 Date Filters"
         K."At" := Base;
         K.Note := 'second';
         ClearLastError();
-        asserterror K.Insert();
+        Observer.Observe('insert .000 try', Format(TryInsertDateTimeKey(K)));
         Observer.ObserveError('insert .000 error');
+        K.Reset();
+        Observer.Observe('count after duplicate', Format(K.Count()));
         K.Init();
         K."At" := CreateDateTime(20240325D, 235959.999T);
         K.Note := 'late';

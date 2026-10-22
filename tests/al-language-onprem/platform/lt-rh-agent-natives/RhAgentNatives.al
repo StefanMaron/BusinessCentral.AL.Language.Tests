@@ -5,7 +5,9 @@
 //   in a test session that is not an agent session, on the corpus CI container: Agent Utilities GetCurrentSessionAgentTaskId,
 //   GetCurrentSessionAgentMetadataProviderType, IsAgentSession; Feature Access Management AgentTaskManagementPreviewEnabled, AgentManagementAllowed (BC 28+),
 //   IsSandboxEnvironment, IsEnvironmentPositiveListed, IsSandboxEnvironmentOrFirstPartyCode, IsTestSession (BC 28+), each with ThrowError false and true
-//   (an error is caught by a TryFunction and its text and code observed).
+//   (an error is caught by a TryFunction and its text and code observed). Called from this (non-Microsoft) app the Feature Access Management checks raise
+//   "Feature availability can only be checked by Microsoft applications." (InvalidOperation) whatever ThrowError says; called by the System Application
+//   (al-language/platform/lt-rh-agent-session/RhAgentSession.al) the same access check passes without an error.
 //   Not probed: Agent Utilities SetInstructions/GetInstructions. Issue 5684 reports that a reached SetInstructions stops the test with an uncatchable CLR exception
 //   (No service for type 'IAgentInstructionsProvider'), which is not an AL error a test can assert.
 // BC versions: 27, 28, 29. Object id 98200.
@@ -44,6 +46,23 @@ codeunit 98200 "LT RH Agent Natives"
     end;
 #endif
 
+    [TryFunction]
+    local procedure TryEnvironment(Which: Integer; var Answer: Boolean)
+    var
+        Fam: Codeunit "Feature Access Management";
+    begin
+        case Which of
+            1:
+                Answer := Fam.IsSandboxEnvironment();
+            2:
+                Answer := Fam.IsEnvironmentPositiveListed();
+#if BC28PLUS
+            3:
+                Answer := Fam.IsTestSession();
+#endif
+        end;
+    end;
+
     local procedure ObserveTry(Name: Text; Ok: Boolean; Answer: Boolean)
     begin
         Observer.Observe(Name, Format(Ok) + '|' + Format(Answer));
@@ -60,7 +79,11 @@ codeunit 98200 "LT RH Agent Natives"
         Observer.Observe('provider type', Format(AgentUtilities.GetCurrentSessionAgentMetadataProviderType()));
         Observer.Observe('is agent session', Format(AgentUtilities.IsAgentSession(Provider)));
         Observer.Observe('provider after', Format(Provider.AsInteger()));
-        Observer.Finish();
+        Observer.Expect('task id', '0');
+        Observer.Expect('provider type', '-1');
+        Observer.Expect('is agent session', 'No');
+        Observer.Expect('provider after', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -75,7 +98,13 @@ codeunit 98200 "LT RH Agent Natives"
         Answer := false;
         Ok := TryPreview(true, Answer);
         ObserveTry('preview true', Ok, Answer);
-        Observer.Finish();
+        Observer.Expect('preview false', 'No|No');
+        Observer.Expect('preview false error|text', 'Feature availability can only be checked by Microsoft applications.');
+        Observer.Expect('preview false error|code', 'InvalidOperation');
+        Observer.Expect('preview true', 'No|No');
+        Observer.Expect('preview true error|text', 'Feature availability can only be checked by Microsoft applications.');
+        Observer.Expect('preview true error|code', 'InvalidOperation');
+        Observer.Verify();
     end;
 
 #if BC28PLUS
@@ -91,23 +120,34 @@ codeunit 98200 "LT RH Agent Natives"
         Answer := false;
         Ok := TryAllowed(true, Answer);
         ObserveTry('allowed true', Ok, Answer);
-        Observer.Finish();
+        Observer.Expect('allowed false', 'No|No');
+        Observer.Expect('allowed false error|text', 'Feature availability can only be checked by Microsoft applications.');
+        Observer.Expect('allowed false error|code', 'InvalidOperation');
+        Observer.Expect('allowed true', 'No|No');
+        Observer.Expect('allowed true error|text', 'Feature availability can only be checked by Microsoft applications.');
+        Observer.Expect('allowed true error|code', 'InvalidOperation');
+        Observer.Verify();
     end;
 #endif
 
     [Test]
     procedure RH_FeatureAccess_Environment()
     var
-        Fam: Codeunit "Feature Access Management";
         Answer: Boolean;
         Ok: Boolean;
     begin
-        Observer.Observe('sandbox', Format(Fam.IsSandboxEnvironment()));
-        Observer.Observe('positive listed', Format(Fam.IsEnvironmentPositiveListed()));
-#if BC28PLUS
-        Observer.Observe('test session', Format(Fam.IsTestSession()));
-#endif
         ClearLastError();
+        Ok := TryEnvironment(1, Answer);
+        ObserveTry('sandbox', Ok, Answer);
+        Answer := false;
+        Ok := TryEnvironment(2, Answer);
+        ObserveTry('positive listed', Ok, Answer);
+#if BC28PLUS
+        Answer := false;
+        Ok := TryEnvironment(3, Answer);
+        ObserveTry('test session', Ok, Answer);
+#endif
+        Answer := false;
         Ok := TrySandboxOrFirstParty(false, Answer);
         ObserveTry('sandbox or first party false', Ok, Answer);
         Answer := false;
