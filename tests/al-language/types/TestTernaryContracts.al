@@ -667,12 +667,16 @@ codeunit 60193 "Test Ternary Contracts"
                 Observer.Observe(Format(T) + ' 300 : Byte 250 into Integer', 'ok|' + Format(I))
             else
                 Observer.ObserveError(Format(T) + ' 300 : Byte 250 into Integer');
-            if TryByteChar(T, C) then
-                Observer.Observe(Format(T) + ' Byte 66 : Char 256 into Char', 'ok|' + Format(C) + '|' + Format(C, 0, 2))
+            if TryByteChar(T, C) then begin
+                I := C;
+                Observer.Observe(Format(T) + ' Byte 66 : Char 256 into Char', 'ok|' + Format(C) + '|' + Format(I))
+            end
             else
                 Observer.ObserveError(Format(T) + ' Byte 66 : Char 256 into Char');
-            if TryCharByte(T, B) then
-                Observer.Observe(Format(T) + ' Char 256 : Byte 66 into Byte', 'ok|' + Format(B))
+            if TryCharByte(T, B) then begin
+                I := B;
+                Observer.Observe(Format(T) + ' Char 256 : Byte 66 into Byte', 'ok|' + Format(B) + '|' + Format(I))
+            end
             else
                 Observer.ObserveError(Format(T) + ' Char 256 : Byte 66 into Byte');
         end;
