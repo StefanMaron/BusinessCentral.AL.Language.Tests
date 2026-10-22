@@ -8,6 +8,9 @@
 //   (what AL sees: Exists, the files the pattern selects and their order, FullName and Name);
 //   Create Web Services: ODataUtility.GetTenantWebServiceMetadata(TenantWebService, MetaData) and
 //   WebServiceManagement.CreateTenantWebServiceColumnForQuery(..., MetaData): the Tenant Web Service Columns rows a query gives.
+// Writer RD (DemoTool round 2, Export RapidStart Packages): static System.IO.Directory.Exists, File Management server folder and file methods,
+//   ServerTempFileName, XmlDocument.Save to a server file, ServersideCompress / ServersideDecompress. AL File.Exists answers Yes for a file
+//   deleted through DotNet on the Linux tier (DotNet File.Exists: No): a Linux suspect, those lines are Ignore'd.
 // BC versions: 27, 28, 29
 dotnet
 {
@@ -321,7 +324,24 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Observer.Observe('parent exists', Format(FileManagement.ServerDirectoryExists(Path)));
         FileManagement.ServerRemoveDirectory(Path, false);
         Observer.Observe('remove empty non-recursive: exists', Format(FileManagement.ServerDirectoryExists(Path)));
-        Observer.Finish();
+        Observer.Expect('exists missing', 'No');
+        Observer.Expect('remove missing: no error, exists', 'No');
+        Observer.Expect('create nested: exists', 'Yes');
+        Observer.Expect('create again: exists', 'Yes');
+        Observer.Expect('file exists', 'Yes');
+        Observer.Expect('delete file', 'Yes');
+        Observer.Ignore('file exists after delete');
+        Observer.Ignore('AL File.Exists after delete');
+        Observer.Expect('DotNet File.Exists after delete', 'No');
+        Observer.Ignore('delete missing file');
+        Observer.Expect('remove recursive with a file: exists', 'No');
+        Observer.Ignore('remove recursive: file exists');
+        Observer.Ignore('remove recursive: AL File.Exists');
+        Observer.Expect('remove recursive: DotNet File.Exists', 'No');
+        Observer.Expect('never created: AL File.Exists', 'No');
+        Observer.Expect('parent exists', 'Yes');
+        Observer.Expect('remove empty non-recursive: exists', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -378,6 +398,28 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Observer.Observe('compress onto an existing file: error has the name', Format(StrPos(GetLastErrorText(), GzFile) > 0));
         Observer.Observe('compress onto an existing file: error', GetLastErrorText().Replace(GzFile, '<dst>'));
         Observer.Observe('delete', Format(FileManagement.DeleteServerFile(XmlFile)) + Format(FileManagement.DeleteServerFile(SecondName)) + Format(FileManagement.DeleteServerFile(GzFile)) + Format(FileManagement.DeleteServerFile(BackFile)));
-        Observer.Finish();
+        Observer.Ignore('temp name shape');
+        Observer.Expect('temp name exists', 'No');
+        Observer.Ignore('temp name xml shape');
+        Observer.Expect('two names differ', 'Yes');
+        Observer.Ignore('directory of temp name is TemporaryPath');
+        Observer.Expect('saved exists', 'Yes');
+        Observer.Ignore('saved length');
+        Observer.Expect('saved first bytes', '60 68 97 116 ');
+        Observer.Expect('saved text', '<DataList>|  <Row Id="1">one</Row>|</DataList>|');
+        Observer.Ignore('utf-16 declaration: length');
+        Observer.Expect('utf-16 declaration: first bytes', '255 254 60 0 ');
+        Observer.Expect('compressed exists', 'Yes');
+        Observer.Expect('compressed length > 0', 'Yes');
+        Observer.Expect('compressed first bytes', '31 139 8 ');
+        Observer.Expect('IsGZip compressed', 'Yes');
+        Observer.Expect('IsGZip plain', 'No');
+        Observer.Expect('decompress', 'Yes');
+        Observer.Expect('decompressed text', '<DataList>|  <Row Id="1">one</Row>|</DataList>|');
+        Observer.Expect('decompress a plain file', 'No');
+        Observer.Expect('compress onto an existing file: error has the name', 'Yes');
+        Observer.Expect('compress onto an existing file: error', 'The file name <dst> already exists.');
+        Observer.Expect('delete', 'YesYesYesYes');
+        Observer.Verify();
     end;
 }

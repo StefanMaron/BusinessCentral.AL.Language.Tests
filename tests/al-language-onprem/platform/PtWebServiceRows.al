@@ -3,6 +3,8 @@
 // Fixtures used: Probe Observer (69160)
 // Probe: the columns and the rows of the Web Service table in a fresh tenant (issue 580 item 7). Object id 61281.
 // Writer QX (Microsoft's DemoTool): System Application Web Service Management.CreateWebService and CreateTenantWebService on page 42.
+// Writer RD (DemoTool round 2): CreateTenantWebService calls of Create Web Services on rows the fresh tenant has (no row changes), Published = false,
+//   an empty name (the object name without spaces, a new row), a new name (a new row); Tenant Web Service Columns / OData counts unchanged.
 
 codeunit 61281 "LT PT Web Service Rows"
 {

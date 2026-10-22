@@ -15,6 +15,9 @@
 //   (Import and Export, static and instance, all succeed). SourceTableView = sorting(B) orders the exported temporary rows by B, order(descending)
 //   reverses it, without a view the order is the primary key; SetTableView with another key does not change that order (sorting(B) stays), a
 //   filter from SetTableView applies; a linked temporary child element keeps sorting(B) within each parent row.
+// Writer RD (DemoTool round 2, export half of "Imp / Exp Data Exch Def & Map"): a linked non-temporary child tableelement exports in the order of
+//   its SourceTableView key within each parent; a where(...) part filters it; a where on the link field keeps only the matching parent's rows;
+//   Xmlport.Export with a record filters the top element; a parent with no rows gives an empty element (MinOccurs = Zero).
 // BC versions: 27, 28, 29
 
 table 87740 "LT RA XP Occ Row"
