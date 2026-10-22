@@ -10,6 +10,11 @@
 //   3. Export of a temporary tableelement with SourceTableView = sorting(B) (no where) over three rows whose B order differs from the primary key
 //      order; the same with order(descending); no SourceTableView (control); SetTableView with another key on the port (which wins); and the
 //      same view on a temporary child element linked to a parent element. AgXmlPortImport.al TableElement_SourceTableView_Export exports one row only.
+// Facts (CI 27.5, 28.5, 29.0, the same): an Optional fieldattribute is left out when its value is an empty Text, Code or Date, but written for
+//   Integer 0 ("0") and Boolean false ("No"); a Required one is always written (attr=""). A Caption in the requestpage changes nothing
+//   (Import and Export, static and instance, all succeed). SourceTableView = sorting(B) orders the exported temporary rows by B, order(descending)
+//   reverses it, without a view the order is the primary key; SetTableView with another key does not change that order (sorting(B) stays), a
+//   filter from SetTableView applies; a linked temporary child element keeps sorting(B) within each parent row.
 // BC versions: 27, 28, 29
 
 table 87740 "LT RA XP Occ Row"
@@ -343,7 +348,8 @@ codeunit 87750 "LT RA XP Export Tests"
     begin
         SeedOcc();
         Observer.Observe('export', StaticExport(Xmlport::"LT RA XP Occ Export"));
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row Id="1" ReqTxt="" ReqCd="" OptNum="0" ReqNum="0" ReqDt="" OptFlag="No" ReqFlag="No" />|  <Row Id="2" OptTxt="two" ReqTxt="two" OptCd="C2" ReqCd="C2" OptNum="7" ReqNum="7" OptDt="04/03/25" ReqDt="04/03/25" OptFlag="Yes" ReqFlag="Yes" />|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -381,7 +387,15 @@ codeunit 87750 "LT RA XP Export Tests"
         Observer.Observe('import instance ok', Format(Port.Import()));
         Observer.Observe('import instance rows', OccRows());
         Row.DeleteAll();
-        Observer.Finish();
+        Observer.Expect('export static', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row>|    <Id>1</Id>|    <Txt />|  </Row>|  <Row>|    <Id>2</Id>|    <Txt>two</Txt>|  </Row>|</Root>|');
+        Observer.Expect('export instance ok', 'Yes');
+        Observer.Expect('export instance', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Row>|    <Id>1</Id>|    <Txt />|  </Row>|  <Row>|    <Id>2</Id>|    <Txt>two</Txt>|  </Row>|</Root>|');
+        Observer.Expect('import static ok', 'Yes');
+        Observer.Expect('import static error', '');
+        Observer.Expect('import static rows', '1:,2:two,10:ten,');
+        Observer.Expect('import instance ok', 'Yes');
+        Observer.Expect('import instance rows', '1:,2:two,10:ten,11:eleven,');
+        Observer.Verify();
     end;
 
     local procedure ExportSorting(var Port: XmlPort "LT RA XP View Sorting"): Text
@@ -424,7 +438,10 @@ codeunit 87750 "LT RA XP Export Tests"
         NoView.SetDestination(OutS);
         NoView.Export();
         Observer.Observe('no SourceTableView', ReadAll(TempBlob));
-        Observer.Finish();
+        Observer.Expect('sorting(B)', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Line Id="2" B="A" />|  <Line Id="3" B="B" />|  <Line Id="1" B="C" />|</Root>|');
+        Observer.Expect('sorting(B) order(descending)', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Line Id="1" B="C" />|  <Line Id="3" B="B" />|  <Line Id="2" B="A" />|</Root>|');
+        Observer.Expect('no SourceTableView', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Line Id="1" B="C" />|  <Line Id="2" B="A" />|  <Line Id="3" B="B" />|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -447,7 +464,10 @@ codeunit 87750 "LT RA XP Export Tests"
         ViewFilter.SetRange(B, 'B', 'C');
         SortingFilter.SetTableView(ViewFilter);
         Observer.Observe('SetTableView filter only', ExportSorting(SortingFilter));
-        Observer.Finish();
+        Observer.Expect('SetTableView sorting(Seq)', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Line Id="2" B="A" />|  <Line Id="3" B="B" />|  <Line Id="1" B="C" />|</Root>|');
+        Observer.Expect('SetTableView sorting(Seq) descending', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Line Id="2" B="A" />|  <Line Id="3" B="B" />|  <Line Id="1" B="C" />|</Root>|');
+        Observer.Expect('SetTableView filter only', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Line Id="3" B="B" />|  <Line Id="1" B="C" />|</Root>|');
+        Observer.Verify();
     end;
 
     [Test]
@@ -468,6 +488,7 @@ codeunit 87750 "LT RA XP Export Tests"
         Port.SetDestination(OutS);
         Port.Export();
         Observer.Observe('linked sorting(B)', ReadAll(TempBlob));
-        Observer.Finish();
+        Observer.Expect('linked sorting(B)', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Head Id="1">|    <Line Id="3" B="A" />|    <Line Id="5" B="B" />|    <Line Id="1" B="C" />|  </Head>|  <Head Id="2">|    <Line Id="4" B="A" />|    <Line Id="2" B="B" />|  </Head>|</Root>|');
+        Observer.Verify();
     end;
 }

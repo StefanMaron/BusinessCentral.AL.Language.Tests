@@ -609,20 +609,41 @@ codeunit 79013 "LT AJ Misc"
     procedure RA_FieldTable_ScanByTableNo_OwnKeyOnRowVersion()
     begin
         RaObserveScans(Database::"KRV Row");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('TableNo only', 'count=13|rows=13|timestamp at=0|ascending=Yes|1:Code:No;2:Live Value:No;3:Pending Value:Pending;4:Removed Value:Removed;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=12|rows=12|timestamp at=0|ascending=Yes|1:Code:No;2:Live Value:No;3:Pending Value:Pending;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+#else
+        Observer.Expect('TableNo only', 'count=9|rows=9|timestamp at=0|ascending=Yes|1:Code:No;2:Live Value:No;3:Pending Value:Pending;4:Removed Value:Removed;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=8|rows=8|timestamp at=0|ascending=Yes|1:Code:No;2:Live Value:No;3:Pending Value:Pending;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
     procedure RA_FieldTable_ScanByTableNo_KeyOnRowVersionFromTableExtension()
     begin
         RaObserveScans(Database::"Customer Bank Account");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('TableNo only', 'count=35|rows=35|timestamp at=0|ascending=Yes|1:Customer No.:No;2:Code:No;3:Name:No;...;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=35|rows=35|timestamp at=0|ascending=Yes|1:Customer No.:No;2:Code:No;3:Name:No;...;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+#else
+        Observer.Expect('TableNo only', 'count=31|rows=31|timestamp at=0|ascending=Yes|1:Customer No.:No;2:Code:No;3:Name:No;...;25:SWIFT Code:No;1211:Bank Clearing Code:No;1212:Bank Clearing Standard:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=31|rows=31|timestamp at=0|ascending=Yes|1:Customer No.:No;2:Code:No;3:Name:No;...;25:SWIFT Code:No;1211:Bank Clearing Code:No;1212:Bank Clearing Standard:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
     procedure RA_FieldTable_ScanByTableNo_NoKeyOnRowVersion_Control()
     begin
         RaObserveScans(Database::"LT AJ Ts");
-        Observer.Finish();
+#if BC29PLUS
+        Observer.Expect('TableNo only', 'count=11|rows=11|timestamp at=0|ascending=Yes|1:Id:No;2:Txt:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=11|rows=11|timestamp at=0|ascending=Yes|1:Id:No;2:Txt:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+#else
+        Observer.Expect('TableNo only', 'count=7|rows=7|timestamp at=0|ascending=Yes|1:Id:No;2:Txt:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=7|rows=7|timestamp at=0|ascending=Yes|1:Id:No;2:Txt:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+#endif
+        Observer.Verify();
     end;
 }

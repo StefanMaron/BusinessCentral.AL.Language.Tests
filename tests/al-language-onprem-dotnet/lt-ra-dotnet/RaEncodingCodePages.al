@@ -5,6 +5,8 @@
 //   and an unknown code page (99999), by number and by name: WebName, CodePage, EncodingName, GetBytes of a fixed text (as hex) and GetString of
 //   fixed bytes (as character codes). The question: does the BC server answer code-page encodings, and with which values.
 //   Also the Base Application wrapper codeunit DotNet_Encoding.Encoding(code page) with a DotNet_StreamWriter / DotNet_StreamReader round trip.
+// Facts (CI 27.5, 28.5, 29.0, the same): BC answers the code-page encodings 1252, 850, 437 and 28591, by number and by name, with the Windows
+//   values (characters that do not map become 0x3F '?'); 99999 and an unknown name raise a DotNetInvoke error (texts asserted).
 // BC versions: 27, 28, 29
 dotnet
 {
@@ -114,7 +116,15 @@ codeunit 99445 "LT RA Encoding Code Pages"
     begin
         ObserveByNumber(1252);
         ObserveByName('windows-1252');
-        Observer.Finish();
+        Observer.Expect('cp 1252 ok', 'Yes');
+        Observer.Expect('cp 1252 identity', 'windows-1252|1252|Western European (Windows)');
+        Observer.Expect('cp 1252 GetBytes', 'C6-D8-C5-80-E6-F8-E5');
+        Observer.Expect('cp 1252 GetString', '8364,352,8211,376,200,230,');
+        Observer.Expect('name windows-1252 ok', 'Yes');
+        Observer.Expect('name windows-1252 identity', 'windows-1252|1252|Western European (Windows)');
+        Observer.Expect('name windows-1252 GetBytes', 'C6-D8-C5-80-E6-F8-E5');
+        Observer.Expect('name windows-1252 GetString', '8364,352,8211,376,200,230,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -123,7 +133,19 @@ codeunit 99445 "LT RA Encoding Code Pages"
         ObserveByNumber(850);
         ObserveByNumber(437);
         ObserveByName('ibm850');
-        Observer.Finish();
+        Observer.Expect('cp 850 ok', 'Yes');
+        Observer.Expect('cp 850 identity', 'ibm850|850|Western European (DOS)');
+        Observer.Expect('cp 850 GetBytes', '92-9D-8F-3F-91-9B-86');
+        Observer.Expect('cp 850 GetString', '199,232,251,402,9562,181,');
+        Observer.Expect('cp 437 ok', 'Yes');
+        Observer.Expect('cp 437 identity', 'ibm437|437|OEM United States');
+        Observer.Expect('cp 437 GetBytes', '92-4F-8F-3F-91-6F-86');
+        Observer.Expect('cp 437 GetString', '199,232,251,402,9562,181,');
+        Observer.Expect('name ibm850 ok', 'Yes');
+        Observer.Expect('name ibm850 identity', 'ibm850|850|Western European (DOS)');
+        Observer.Expect('name ibm850 GetBytes', '92-9D-8F-3F-91-9B-86');
+        Observer.Expect('name ibm850 GetString', '199,232,251,402,9562,181,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -131,7 +153,15 @@ codeunit 99445 "LT RA Encoding Code Pages"
     begin
         ObserveByNumber(28591);
         ObserveByName('iso-8859-1');
-        Observer.Finish();
+        Observer.Expect('cp 28591 ok', 'Yes');
+        Observer.Expect('cp 28591 identity', 'iso-8859-1|28591|Western European (ISO)');
+        Observer.Expect('cp 28591 GetBytes', 'C6-D8-C5-3F-E6-F8-E5');
+        Observer.Expect('cp 28591 GetString', '128,138,150,159,200,230,');
+        Observer.Expect('name iso-8859-1 ok', 'Yes');
+        Observer.Expect('name iso-8859-1 identity', 'iso-8859-1|28591|Western European (ISO)');
+        Observer.Expect('name iso-8859-1 GetBytes', 'C6-D8-C5-3F-E6-F8-E5');
+        Observer.Expect('name iso-8859-1 GetString', '128,138,150,159,200,230,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -139,7 +169,11 @@ codeunit 99445 "LT RA Encoding Code Pages"
     begin
         ObserveByNumber(99999);
         ObserveByName('no-such-encoding');
-        Observer.Finish();
+        Observer.Expect('cp 99999|text', 'A call to System.Text.Encoding.GetEncoding failed with this message: Valid values are between 0 and 65535, inclusive. (Parameter ''codepage'')');
+        Observer.Expect('cp 99999|code', 'DotNetInvoke:ArgumentOutOfRange');
+        Observer.Expect('name no-such-encoding|text', 'A call to System.Text.Encoding.GetEncoding failed with this message: ''no-such-encoding'' is not a supported encoding name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method. (Parameter ''name'')');
+        Observer.Expect('name no-such-encoding|code', 'DotNetInvoke:Argument');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -157,6 +191,7 @@ codeunit 99445 "LT RA Encoding Code Pages"
         OutS: OutStream;
         InS: InStream;
         B: Byte;
+        ByteValue: Integer;
         Decoded: Text;
         CharCode: Integer;
         i: Integer;
@@ -170,7 +205,8 @@ codeunit 99445 "LT RA Encoding Code Pages"
         Hex := '';
         while not InS.EOS() do begin
             InS.Read(B);
-            Hex += Format(B) + ',';
+            ByteValue := B;
+            Hex += Format(ByteValue) + ',';
         end;
         TempBlob.CreateInStream(InS);
         Reader.StreamReader(InS, DotNetEnc);
