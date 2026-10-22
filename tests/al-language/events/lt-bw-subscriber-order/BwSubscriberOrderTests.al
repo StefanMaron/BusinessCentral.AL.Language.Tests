@@ -159,6 +159,21 @@ codeunit 83950 "LT BW Subscriber Order Tests"
         Observer.Verify();
     end;
 
+    // Writer QY (al-runtime-rs backlog "PROBES from multiapp-runtime", item 2): apps that do not depend on each other. Cross-app fixture D
+    // (tests/al-language-xapp-d, depends on A only) subscribes to "LT QY XA Order Publisher".OnQyIndep, as do A (61138), B (61117, 61147),
+    // C (61127) and this app (87620). D and B, C and this app do not depend on each other. Needs D in app_dirs (publish order fixture, A, D, B, C).
+    //   Predictions: publish order A;D;B1;B2;C;M; | lowest subscriber id B1;B2;C;A;D;M; | app name M A B C D | publisher, then name M A C D B
+    [Test]
+    procedure SubscriberOrder_AppsThatDoNotDependOnEachOther_FiveApps()
+    var
+        Publisher: Codeunit "LT QY XA Order Publisher";
+    begin
+        Initialize();
+        Observer.Observe('order', Publisher.RaiseIndep());
+        Observer.Observe('order again', Publisher.RaiseIndep());
+        Observer.Finish();
+    end;
+
     local procedure Initialize()
     begin
         // The install logs hold rows written at install time; nothing to delete.
