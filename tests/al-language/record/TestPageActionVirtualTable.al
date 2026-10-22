@@ -220,4 +220,35 @@ codeunit 60911 "Test Page Action Virtual Table"
         Assert.IsTrue(WithoutRun.FindFirst(), 'The action with no RunObject is reported.');
         Assert.AreEqual(0, WithoutRun."RunObjectID", 'An action that declares no RunObject reports 0, not the neighbouring action''s target.');
     end;
+
+    // Writer QZ: column 9 (Caption) and column 10 (ToolTip1) of the rows of two pages (fixture page 87691 in QzPageActionCaption.al).
+    local procedure QzCaptions(PageId: Integer): Text
+    var
+        RecRef: RecordRef;
+        Result: Text;
+    begin
+        RecRef.Open(Database::"Page Action");
+        RecRef.Field(1).SetRange(PageId);
+        if RecRef.FindSet() then
+            repeat
+                Result += Format(RecRef.Field(8).Value()) + '=[' + Format(RecRef.Field(9).Value()) + '|' + Format(RecRef.Field(10).Value()) + '];';
+            until RecRef.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure QZ_PageAction_CaptionColumn()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+    begin
+        RecRef.Open(Database::"Page Action");
+        Observer.Observe('column 9', RecRef.Field(9).Name() + '|' + Format(RecRef.Field(9).Type()) + '|' + Format(RecRef.Field(9).Length()));
+        Observer.Observe('probe page', QzCaptions(ProbePage()));
+        Observer.Observe('captions page', QzCaptions(Page::"LT QZ PA Captions"));
+        Observer.Expect('column 9', 'Caption|Text|80');
+        Observer.Expect('probe page', '=[|];ProbeGroup=[Probe Group|];ProbePlainAction=[Probe Plain Action|A plain action with no RunObject.];ProbeRunObjectAction=[Probe Run Object Action|];=[|];=[|];=[|];Category_New=[|];Category_Process=[|];Category_Report=[|];Category_Category4=[|];Category_Category5=[|];Category_Category6=[|];Category_Category7=[|];Category_Category8=[|];Category_Category9=[|];Category_Category10=[|];Category_Category11=[|];Category_Category12=[|];Category_Category13=[|];Category_Category14=[|];Category_Category15=[|];Category_Category16=[|];Category_Category17=[|];Category_Category18=[|];Category_Category19=[|];Category_Category20=[|];=[|];=[|];');
+        Observer.Expect('captions page', '=[|];NoCaption=[|];QuoteCaption=[With ''quote'' caption|Tip of the quote action];CommentCaption=[Commented caption|];LockedCaption=[Locked caption|];NoCaptionGroup=[|];InnerAction=[Inner caption|];=[|];NavAction=[Navigate caption|];=[|];Category_New=[|];Category_Process=[|];Category_Report=[|];Category_Category4=[|];Category_Category5=[|];Category_Category6=[|];Category_Category7=[|];Category_Category8=[|];Category_Category9=[|];Category_Category10=[|];Category_Category11=[|];Category_Category12=[|];Category_Category13=[|];Category_Category14=[|];Category_Category15=[|];Category_Category16=[|];Category_Category17=[|];Category_Category18=[|];Category_Category19=[|];Category_Category20=[|];=[|];=[|];=[|];');
+        Observer.Verify();
+    end;
 }

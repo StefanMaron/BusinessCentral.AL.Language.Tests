@@ -293,4 +293,63 @@ codeunit 74808 "LT P97 Doc WriteTo"
         Observer.Expect('same4', 'No');
         Observer.Verify();
     end;
+
+    // Writer QZ: WriteTo(OutStream) of a document read with XmlDocument.ReadFrom from text that has no declaration (the form of System
+    // Application's Xml Validation), and of documents with a utf-16 and a utf-8 declaration and a root, read back line by line from a Temp Blob.
+    local procedure QzWriteAndRead(Source: Text; var Observer: Codeunit "Probe Observer"; Name: Text)
+    var
+        TempBlob: Codeunit "Temp Blob";
+        Doc: XmlDocument;
+        OutS: OutStream;
+        InS: InStream;
+        Line: Text;
+        Lines: Text;
+        Bytes: Text;
+        B: Byte;
+        Code: Integer;
+        Index: Integer;
+    begin
+        XmlDocument.ReadFrom(Source, Doc);
+        TempBlob.CreateOutStream(OutS);
+        Doc.WriteTo(OutS);
+        Observer.Observe(Name + ' length', Format(TempBlob.Length()));
+        TempBlob.CreateInStream(InS);
+        for Index := 1 to 3 do begin
+            InS.Read(B);
+            Code := B;
+            Bytes += Format(Code) + ' ';
+        end;
+        Observer.Observe(Name + ' first bytes', Bytes);
+        if Name = 'utf-16 declaration' then
+            exit;
+        TempBlob.CreateInStream(InS);
+        while not InS.EOS() do begin
+            InS.ReadText(Line);
+            Lines += Line + '|';
+        end;
+        Observer.Observe(Name + ' lines', Lines);
+    end;
+
+    [Test]
+    procedure QZ_WriteTo_OutStream_ReadFromText()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QzWriteAndRead('<a xmlns="urn:p">x</a>', Observer, 'no declaration');
+        QzWriteAndRead('<?xml version="1.0" encoding="utf-16"?><a>x</a>', Observer, 'utf-16 declaration');
+        QzWriteAndRead('<?xml version="1.0"?><a>x</a>', Observer, 'declaration without encoding');
+        QzWriteAndRead('<?xml version="1.0" encoding="UTF-8"?><a><b>y</b></a>', Observer, 'upper-case utf-8 declaration');
+        Observer.Expect('no declaration length', '65');
+        Observer.Expect('no declaration first bytes', '239 187 191 ');
+        Observer.Expect('no declaration lines', 'Ù‹<?xml version="1.0" encoding="utf-8"?>|<a xmlns="urn:p">x</a>|');
+        Observer.Expect('utf-16 declaration length', '100');
+        Observer.Expect('utf-16 declaration first bytes', '255 254 60 ');
+        Observer.Expect('declaration without encoding length', '51');
+        Observer.Expect('declaration without encoding first bytes', '239 187 191 ');
+        Observer.Expect('declaration without encoding lines', 'Ù‹<?xml version="1.0" encoding="utf-8"?>|<a>x</a>|');
+        Observer.Expect('upper-case utf-8 declaration length', '64');
+        Observer.Expect('upper-case utf-8 declaration first bytes', '239 187 191 ');
+        Observer.Expect('upper-case utf-8 declaration lines', 'Ù‹<?xml version="1.0" encoding="UTF-8"?>|<a>|  <b>y</b>|</a>|');
+        Observer.Verify();
+    end;
 }

@@ -233,6 +233,48 @@ codeunit 61229 "LT PT OnPrem Tables"
         Observer.Expect('count_after_delete_all', 'ok:0');
         Observer.Verify();
     end;
+
+    // Writer QZ: the platform table "Intelligent Cloud" read from an OnPrem app, outside and inside a [TryFunction]
+    // (Microsoft's Permission Manager.IsIntelligentCloud reads it with Get()).
+    [TryFunction]
+    local procedure QzTryReadIntelligentCloud(var Found: Boolean)
+    var
+        IntelligentCloud: Record "Intelligent Cloud";
+    begin
+        Found := IntelligentCloud.Get();
+    end;
+
+    [Test]
+    procedure QZ_IntelligentCloud_Read()
+    var
+        Observer: Codeunit "Probe Observer";
+        IntelligentCloud: Record "Intelligent Cloud";
+        RecRef: RecordRef;
+        Columns: Text;
+        Index: Integer;
+        Found: Boolean;
+    begin
+        RecRef.Open(Database::"Intelligent Cloud");
+        for Index := 1 to RecRef.FieldCount() do
+            Columns += Format(RecRef.FieldIndex(Index).Number()) + '=' + RecRef.FieldIndex(Index).Name() + ',';
+        Observer.Observe('columns', Columns);
+        Observer.Observe('is empty', Format(IntelligentCloud.IsEmpty()));
+        Observer.Observe('count', Format(IntelligentCloud.Count()));
+        Observer.Observe('get', Format(IntelligentCloud.Get()));
+        Observer.Observe('find first', Format(IntelligentCloud.FindFirst()));
+        ClearLastError();
+        Observer.Observe('try', Format(QzTryReadIntelligentCloud(Found)) + '|' + Format(Found));
+        Observer.ObserveError('try');
+        Observer.Expect('columns', '1=Primary Key,2=Enabled,');
+        Observer.Expect('is empty', 'Yes');
+        Observer.Expect('count', '0');
+        Observer.Expect('get', 'No');
+        Observer.Expect('find first', 'No');
+        Observer.Expect('try', 'Yes|No');
+        Observer.Expect('try|text', '');
+        Observer.Expect('try|code', '');
+        Observer.Verify();
+    end;
 }
 
 codeunit 61252 "LT PT Cloud Runner OnPrem"

@@ -313,4 +313,130 @@ codeunit 86853 "LT QI EE Tests"
         Observer.Expect('marker-kept', 'No');
         Observer.Verify();
     end;
+
+    // Writer QZ: Error('') from the table field's OnValidate during SetValue (fixtures in QzTableValidateEmptyError.al).
+    local procedure QzSeed(): Record "LT QZ EE Row"
+    var
+        Row: Record "LT QZ EE Row";
+    begin
+        Row.DeleteAll();
+        Row.Init();
+        Row.Id := 5;
+        Row.AutoGen := true;
+        Row.Name := 'seed';
+        Row.Insert();
+        ClearLastError();
+        exit(Row);
+    end;
+
+    local procedure QzStored(): Text
+    var
+        Row: Record "LT QZ EE Row";
+    begin
+        Row.Get(5);
+        exit(Format(Row.AutoGen) + '|' + Row.Name);
+    end;
+
+    [Test]
+    [HandlerFunctions('QzConfirmNo')]
+    procedure QZ_EE_TableValidate_ConfirmNo_List_NoAsserterror()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ EE Row";
+        List: TestPage "LT QZ EE List";
+    begin
+        Row := QzSeed();
+        List.OpenEdit();
+        List.GoToRecord(Row);
+        List.AutoGen.SetValue(false);
+        Observer.Observe('went-on', 'yes');
+        Observer.ObserveError('after-setvalue');
+        Observer.Observe('value-after', List.AutoGen.Value());
+        List.Close();
+        Observer.Observe('stored-after-close', QzStored());
+        Observer.Expect('went-on', 'yes');
+        Observer.Expect('after-setvalue|text', '');
+        Observer.Expect('after-setvalue|code', 'NSValidateField:Dialog');
+        Observer.Expect('value-after', 'Yes');
+        Observer.Expect('stored-after-close', 'Yes|seed');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QzConfirmNo')]
+    procedure QZ_EE_TableValidate_ConfirmNo_List_Asserterror()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ EE Row";
+        List: TestPage "LT QZ EE List";
+    begin
+        Row := QzSeed();
+        List.OpenEdit();
+        List.GoToRecord(Row);
+        asserterror begin
+            List.AutoGen.SetValue(false);
+            Error('no error');
+        end;
+        Observer.ObserveError('setvalue');
+        Observer.Observe('value-after', List.AutoGen.Value());
+        List.Close();
+        Observer.Expect('setvalue|text', 'no error');
+        Observer.Expect('setvalue|code', 'Dialog');
+        Observer.Expect('value-after', 'Yes');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QZ_EE_TableValidate_Direct_List_NoAsserterror()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ EE Row";
+        List: TestPage "LT QZ EE List";
+    begin
+        Row := QzSeed();
+        List.OpenEdit();
+        List.GoToRecord(Row);
+        List.Name.SetValue('empty');
+        Observer.Observe('went-on', 'yes');
+        Observer.ObserveError('after-setvalue');
+        Observer.Observe('value-after', List.Name.Value());
+        List.Close();
+        Observer.Observe('stored-after-close', QzStored());
+        Observer.Expect('went-on', 'yes');
+        Observer.Expect('after-setvalue|text', '');
+        Observer.Expect('after-setvalue|code', 'NSValidateField:Dialog');
+        Observer.Expect('value-after', 'seed');
+        Observer.Expect('stored-after-close', 'Yes|seed');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QZ_EE_TableValidate_Direct_Card_NoAsserterror()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ EE Row";
+        Card: TestPage "LT QZ EE Card";
+    begin
+        Row := QzSeed();
+        Card.OpenEdit();
+        Card.GoToRecord(Row);
+        Card.Name.SetValue('empty');
+        Observer.Observe('went-on', 'yes');
+        Observer.ObserveError('after-setvalue');
+        Observer.Observe('value-after', Card.Name.Value());
+        Card.Close();
+        Observer.Observe('stored-after-close', QzStored());
+        Observer.Expect('went-on', 'yes');
+        Observer.Expect('after-setvalue|text', '');
+        Observer.Expect('after-setvalue|code', 'NSValidateField:Dialog');
+        Observer.Expect('value-after', 'seed');
+        Observer.Expect('stored-after-close', 'Yes|seed');
+        Observer.Verify();
+    end;
+
+    [ConfirmHandler]
+    procedure QzConfirmNo(Question: Text[1024]; var Reply: Boolean)
+    begin
+        Reply := false;
+    end;
 }

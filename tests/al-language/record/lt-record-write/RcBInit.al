@@ -439,6 +439,62 @@ codeunit 72002 "LT RcB Init"
         Observer.Expect('modify', 'Yes');
         Observer.Verify();
     end;
+
+    // Writer QZ: a table procedure Init(A; B) next to the built-in Init() (fixture in QzInitOverload.al).
+    [Test]
+    procedure QZ_TableInitOverload_NextToBuiltin()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ Init Row";
+    begin
+        Row.Id := 1;
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.Init();
+        Observer.Observe('qualified Init()', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.Init(3, 'x');
+        Observer.Observe('qualified Init(3, x)', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.CallBareInit();
+        Observer.Observe('bare Init() in the table', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.CallBareInitWithArguments();
+        Observer.Observe('bare Init(5, inner) in the table', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Observer.Expect('qualified Init()', '1||7');
+        Observer.Expect('qualified Init(3, x)', '1|own x|3');
+        Observer.Expect('bare Init() in the table', '1||7');
+        Observer.Expect('bare Init(5, inner) in the table', '1|own inner|5');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QZ_TableInitSameSignature_HidesBuiltin()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ Init Hide";
+    begin
+        Row.Id := 1;
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.Init();
+        Observer.Observe('qualified Init()', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.CallBareInit();
+        Observer.Observe('bare Init() in the table', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Row.Name := 'set';
+        Row.Num := 1;
+        Row.CallRecInit();
+        Observer.Observe('Rec.Init() in the table', Format(Row.Id) + '|' + Row.Name + '|' + Format(Row.Num));
+        Observer.Expect('qualified Init()', '1|own Init()|1');
+        Observer.Expect('bare Init() in the table', '1|own Init()|1');
+        Observer.Expect('Rec.Init() in the table', '1|own Init()|1');
+        Observer.Verify();
+    end;
 }
 
 table 82965 "LT BR NotBlank Enum"

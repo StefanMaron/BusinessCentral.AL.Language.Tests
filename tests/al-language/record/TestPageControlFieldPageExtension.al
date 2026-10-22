@@ -98,4 +98,65 @@ codeunit 60524 "Test Page Control Fld PageExt"
         // pass if they only checked the base page for its presence.
         Assert.AreEqual(0, PageControlField.Count(), 'Page Control Field must report no rows under a pageextension''s own object id; its controls belong to the page it extends.');
     end;
+
+    // Writer QZ: movefirst / movelast / moveafter / movebefore in a page extension (fixtures in QzPageExtMoves.al).
+    [Test]
+    procedure QZ_PageExtMoves_PageOpensAndControlsWork()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QZ Move Row";
+        Card: TestPage "LT QZ Move Card";
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.A := 'a';
+        Row.B := 'b';
+        Row.C := 'c';
+        Row.D := 'd';
+        Row.E := 'e';
+        Row.Insert();
+        Card.OpenEdit();
+        Card.GoToRecord(Row);
+        Observer.Observe('values', Card.IdCtl.Value() + '|' + Card.ACtl.Value() + '|' + Card.BCtl.Value() + '|' + Card.CCtl.Value() + '|' + Card.DCtl.Value() + '|' + Card.ECtl.Value());
+        Card.ACtl.SetValue('a2');
+        Card.CCtl.SetValue('c2');
+        Card.BCtl.SetValue('b2');
+        Card.ECtl.SetValue('e2');
+        Card.Close();
+        Row.Get(1);
+        Observer.Observe('stored', Row.A + '|' + Row.B + '|' + Row.C + '|' + Row.D + '|' + Row.E);
+        Observer.Expect('values', '1|a|b|c|d|e');
+        Observer.Expect('stored', 'a2|b2|c2|d|e2');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QZ_PageExtMoves_PageControlFieldRows()
+    var
+        Observer: Codeunit "Probe Observer";
+        PageControlField: Record "Page Control Field";
+        RecRef: RecordRef;
+        Columns: Text;
+        Rows: Text;
+        Name: Text;
+        Index: Integer;
+    begin
+        RecRef.Open(Database::"Page Control Field");
+        for Index := 1 to RecRef.FieldCount() do
+            Columns += Format(RecRef.FieldIndex(Index).Number()) + '=' + RecRef.FieldIndex(Index).Name() + ',';
+        Observer.Observe('columns', Columns);
+        // Sequence of each control (the rows come in ControlId order, an id the compiler derives, so they are read by name).
+        PageControlField.SetRange(PageNo, Page::"LT QZ Move Card");
+        foreach Name in 'IdCtl,ACtl,BCtl,CCtl,DCtl,ECtl'.Split(',') do begin
+            PageControlField.SetRange(ControlName, Name);
+            if PageControlField.FindFirst() then
+                Rows += Name + '=' + Format(PageControlField.Sequence) + ';'
+            else
+                Rows += Name + '=no row;';
+        end;
+        Observer.Observe('rows', Rows);
+        Observer.Expect('columns', '1=PageNo,2=ControlId,3=ControlName,4=TableNo,5=FieldNo,6=Enabled,7=Editable,8=Visible,9=SourceExpression,10=OptionString,11=Sequence,');
+        Observer.Expect('rows', 'IdCtl=1;ACtl=5;BCtl=0;CCtl=2;DCtl=4;ECtl=3;');
+        Observer.Verify();
+    end;
 }
