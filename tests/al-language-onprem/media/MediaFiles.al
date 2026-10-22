@@ -3,6 +3,7 @@
 // Fixtures used: Probe Observer (codeunit 69160), table 61294 "PZ OnPrem Media Row" (session/PZMediaImportFile.al) and codeunit 61286
 // Probe: written against BC 29 (runtime 16); the values are measured on the corpus CI service tiers.
 // Facts: Media.ImportFile / ExportFile, MediaSet.ImportFile / ExportFile: returned Guid, Tenant Media properties, exported file, export of an empty media, a missing file
+// Writer QX: a JPEG file through Media.ImportFile and MediaSet.ImportFile with two arguments (Tenant Media row, File Name form).
 // BC versions: 27, 28, 29
 codeunit 61286 "LT S Media Files"
 {
@@ -248,6 +249,95 @@ codeunit 61286 "LT S Media Files"
         Observer.Expect('item2', 'description=[second set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=Yes width=1 height=1 hascontent=Yes');
         Observer.Expect('export_count', '2');
         Observer.Expect('prefix_itself_exists', 'No');
+        Observer.Verify();
+    end;
+
+    // ---- Writer QX (Microsoft's DemoTool: Picture.ImportFile(Path + 'cronus.jpg', Desc) on Media and MediaSet fields): a 3 x 2 JPEG file,
+    // the Tenant Media row (Mime Type, Description, File Name, Width, Height), HasValue, MediaSet.Count; file name extension .jpg and .JPG. ----
+
+    local procedure QxJpegBase64(): Text
+    begin
+        exit('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2Nj' +
+            'Y2NjY2NjY2P/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVW' +
+            'V1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAEC' +
+            'AxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq' +
+            '8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDAooorgPrT/9k=');
+    end;
+
+    local procedure QxWriteJpeg(Name: Text)
+    var
+        F: File;
+        OutS: OutStream;
+        Base64: Codeunit "Base64 Convert";
+    begin
+        F.Create(Name);
+        F.CreateOutStream(OutS);
+        Base64.FromBase64(QxJpegBase64(), OutS);
+        F.Close();
+    end;
+
+    local procedure QxFileName(Id: Guid; Src: Text): Text
+    var
+        Tenant: Record "Tenant Media";
+        Name: Text;
+    begin
+        if not Tenant.Get(Id) then
+            exit('no tenant media row');
+        Name := Tenant."File Name";
+        Name := Name.Replace(TemporaryPath(), '<tmp>');
+        Name := Name.Replace(BaseOf(Src), '<name>');
+        exit(Name);
+    end;
+
+    [Test]
+    procedure QX_MediaAndMediaSet_ImportFile_Jpeg()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "PZ OnPrem Media Row";
+        Src: Text;
+        SrcUpper: Text;
+        Id: Guid;
+    begin
+        Row.SetFilter(Code, 'LTQX*');
+        Row.DeleteAll();
+        Row.Reset();
+        Src := TempName('.jpg');
+        SrcUpper := TempName('.JPG');
+        QxWriteJpeg(Src);
+        QxWriteJpeg(SrcUpper);
+        Observer.Observe('file length', Format(LenOf(Src)));
+        Row.Code := 'LTQXA';
+        Id := Row.Pic.ImportFile(Src, 'Cronus picture');
+        Row.Insert();
+        Observer.Observe('media hasvalue', Format(Row.Pic.HasValue()));
+        Observer.Observe('media tenant', DescribeTenant(Id, BaseOf(Src)));
+        Observer.Observe('media file name', QxFileName(Id, Src));
+        Row.Code := 'LTQXB';
+        Id := Row.Pic.ImportFile(SrcUpper, 'Upper case extension');
+        Row.Insert();
+        Observer.Observe('media upper tenant', DescribeTenant(Id, BaseOf(SrcUpper)));
+        Row.Code := 'LTQXC';
+        Clear(Row.Pic);
+        Id := Row.Set.ImportFile(Src, 'Item picture');
+        Row.Insert();
+        Observer.Observe('mediaset count', Format(Row.Set.Count()));
+        Observer.Observe('mediaset item 1 tenant', DescribeTenant(Row.Set.Item(1), BaseOf(Src)));
+        Observer.Observe('mediaset file name', QxFileName(Row.Set.Item(1), Src));
+        Row.Get('LTQXC');
+        Observer.Observe('mediaset count after get', Format(Row.Set.Count()));
+        Row.SetFilter(Code, 'LTQX*');
+        Row.DeleteAll();
+        Cleanup(Src);
+        Cleanup(SrcUpper);
+        Observer.Expect('file length', '632');
+        Observer.Expect('media hasvalue', 'Yes');
+        Observer.Expect('media tenant', 'description=[Cronus picture] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
+        Observer.Expect('media file name', '<tmp><name>');
+        Observer.Expect('media upper tenant', 'description=[Upper case extension] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
+        Observer.Expect('mediaset count', '1');
+        Observer.Expect('mediaset item 1 tenant', 'description=[Item picture] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
+        Observer.Ignore('mediaset file name');
+        Observer.Expect('mediaset count after get', '1');
         Observer.Verify();
     end;
 }
