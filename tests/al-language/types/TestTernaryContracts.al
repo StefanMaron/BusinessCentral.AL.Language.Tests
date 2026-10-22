@@ -447,7 +447,9 @@ codeunit 60193 "Test Ternary Contracts"
     begin
         Observer.Observe('true', LabelForms(true));
         Observer.Observe('false', LabelForms(false));
-        Observer.Finish();
+        Observer.Expect('true', '[Label A|7][|0][Label A|7][Locked text][With x][Label A|7]');
+        Observer.Expect('false', '[|0][Label A|7][Label B, longer|15][Label A][Label A][Label B, longer|15]');
+        Observer.Verify();
     end;
 
     local procedure LabelForms(Cond: Boolean): Text
@@ -494,7 +496,12 @@ codeunit 60193 "Test Ternary Contracts"
             Observer.Observe(Format(T) + ' TextConst', TextConstForms(T));
 #endif
         end;
-        Observer.Finish();
+        Observer.Expect('Yes MaxLength 5 : 11-char text into Text', 'ok|Hello|5');
+        Observer.Expect('Yes MaxLength 5 : ab into Text[3]|text', 'The length of the string is 5, but it must be less than or equal to 3 characters. Value: Hello');
+        Observer.Expect('Yes MaxLength 5 : ab into Text[3]|code', 'StringLengthExceeded');
+        Observer.Expect('No MaxLength 5 : 11-char text into Text', 'ok|longer text|11');
+        Observer.Expect('No MaxLength 5 : ab into Text[3]', 'ok|ab');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -558,7 +565,13 @@ codeunit 60193 "Test Ternary Contracts"
         Observer.Observe('plain label', VariantInfo(V));
         V := Tc;
         Observer.Observe('plain textconst', VariantInfo(V));
-        Observer.Finish();
+        Observer.Expect('Yes label:label', 'Label A|IsText=No|IsTextConstant=Yes|IsCode=No|IsChar=No');
+        Observer.Expect('Yes label:empty', 'Label A|IsText=Yes|IsTextConstant=No|IsCode=No|IsChar=No');
+        Observer.Expect('No label:label', 'Label B|IsText=No|IsTextConstant=Yes|IsCode=No|IsChar=No');
+        Observer.Expect('No label:empty', '|IsText=Yes|IsTextConstant=No|IsCode=No|IsChar=No');
+        Observer.Expect('plain label', 'Label A|IsText=No|IsTextConstant=Yes|IsCode=No|IsChar=No');
+        Observer.Expect('plain textconst', 'Text const|IsText=No|IsTextConstant=Yes|IsCode=No|IsChar=No');
+        Observer.Verify();
     end;
 
     local procedure VariantInfo(V: Variant): Text
@@ -590,7 +603,17 @@ codeunit 60193 "Test Ternary Contracts"
             else
                 Observer.ObserveError(Format(T) + ' Guid : abc into Text');
         end;
-        Observer.Finish();
+        Observer.Expect('Yes scalars', '[Yes][No][{00000000-0000-0000-0000-00000000000A}][10:30:00|No][2024-02-01T12:00:00Z|No]');
+        Observer.Expect('Yes Guid : guid text into Guid', 'ok|{00000000-0000-0000-0000-00000000000A}');
+        Observer.Expect('Yes Guid : abc into Guid', 'ok|{00000000-0000-0000-0000-00000000000A}');
+        Observer.Expect('Yes Guid : abc into Text', 'ok|{00000000-0000-0000-0000-00000000000A}');
+        Observer.Expect('No scalars', '[No][Yes][{00000000-0000-0000-0000-000000000000}][|Yes][|Yes]');
+        Observer.Expect('No Guid : guid text into Guid', 'ok|{00000000-0000-0000-0000-00000000000B}');
+        Observer.Expect('No Guid : abc into Guid|text', 'Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('No Guid : abc into Guid|code', 'InvalidGuidFormat');
+        Observer.Expect('No Guid : abc into Text|text', 'Invalid format of GUID string. The correct format of the GUID string is: CDEF7890-ABCD-0123-1234-567890ABCDEF where 0-9, A-F symbolizes hexadecimal digits.');
+        Observer.Expect('No Guid : abc into Text|code', 'InvalidGuidFormat');
+        Observer.Verify();
     end;
 
     local procedure ScalarPairs(Cond: Boolean): Text
@@ -680,7 +703,21 @@ codeunit 60193 "Test Ternary Contracts"
             else
                 Observer.ObserveError(Format(T) + ' Char 256 : Byte 66 into Byte');
         end;
-        Observer.Finish();
+        Observer.Expect('Yes Dur : 5 into Duration', 'ok|1 hour|P0DT1H0M0.0S');
+        Observer.Expect('Yes 5 : Dur into Duration', 'ok|5 milliseconds|P0DT0H0M0.005S');
+        Observer.Expect('Yes 5 : Dur into Integer', 'ok|5');
+        Observer.Expect('Yes Byte 250 : 200 into Integer', 'ok|250');
+        Observer.Expect('Yes 300 : Byte 250 into Integer', 'ok|300');
+        Observer.Expect('Yes Byte 66 : Char 256 into Char', 'ok|B|66');
+        Observer.Expect('Yes Char 256 : Byte 66 into Byte', 'ok|A|65');
+        Observer.Expect('No Dur : 5 into Duration', 'ok|5 milliseconds|P0DT0H0M0.005S');
+        Observer.Expect('No 5 : Dur into Duration', 'ok|1 hour|P0DT1H0M0.0S');
+        Observer.Expect('No 5 : Dur into Integer', 'ok|3600000');
+        Observer.Expect('No Byte 250 : 200 into Integer', 'ok|200');
+        Observer.Expect('No 300 : Byte 250 into Integer', 'ok|250');
+        Observer.Expect('No Byte 66 : Char 256 into Char', 'ok|A|65');
+        Observer.Expect('No Char 256 : Byte 66 into Byte', 'ok|B|66');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -759,7 +796,9 @@ codeunit 60193 "Test Ternary Contracts"
     begin
         for T := true downto false do
             Observer.Observe(Format(T), EnumForms(T));
-        Observer.Finish();
+        Observer.Expect('Yes', '[Invoice|2][2][Invoice|2][Gamma|2][2][2][Invoice|Gamma]');
+        Observer.Expect('No', '[6|6][6][Invoice|2][Gamma|2][2][1][6|Beta]');
+        Observer.Verify();
     end;
 
     local procedure EnumForms(Cond: Boolean): Text
@@ -810,7 +849,10 @@ codeunit 60193 "Test Ternary Contracts"
         Observer.Observe('true IsEmpty', Format(R.IsEmpty()));
         R := false ? S1 : S2;
         Observer.Observe('false IsEmpty', Format(R.IsEmpty()));
-        Observer.Finish();
+        Observer.Expect('S2 IsEmpty', 'No');
+        Observer.Expect('true IsEmpty', 'Yes');
+        Observer.Expect('false IsEmpty', 'No');
+        Observer.Verify();
     end;
 
     // Writer QW (corpus issue 685 section 3): Record, RecordRef, interface, codeunit, JsonObject, JsonToken, List and Dictionary values as
@@ -826,7 +868,13 @@ codeunit 60193 "Test Ternary Contracts"
             Observer.Observe(Format(T) + ' objects', ObjectForms(T));
             Observer.Observe(Format(T) + ' collections', CollectionForms(T));
         end;
-        Observer.Finish();
+        Observer.Expect('Yes record', '[1|1|2][2000000026|77]');
+        Observer.Expect('Yes objects', '[10][2|0|2]');
+        Observer.Expect('Yes collections', '[{"a":1,"c":3}|{"b":2}][Yes|No][2|1][2|1]');
+        Observer.Expect('No record', '[2|1|2][2000000007|0]');
+        Observer.Expect('No objects', '[25][0|1|1]');
+        Observer.Expect('No collections', '[{"a":1}|{"b":2,"c":3}][No|Yes][1|2][1|2]');
+        Observer.Verify();
     end;
 
     local procedure RecordForms(Cond: Boolean): Text
@@ -925,7 +973,9 @@ codeunit 60193 "Test Ternary Contracts"
     begin
         for T := true downto false do
             Observer.Observe(Format(T), ContextForms(T));
-        Observer.Finish();
+        Observer.Expect('Yes', '[6][1.5|1.5/x][cc|V(aa;old=aa)V(cc;old=aa)N(1.5)][if-then][case 2][33]');
+        Observer.Expect('No', '[8][2|2/y][dd|V(bb;old=bb)V(dd;old=bb)N(2)][if-else][case 7][48]');
+        Observer.Verify();
     end;
 
     local procedure ContextForms(Cond: Boolean): Text
@@ -1001,7 +1051,20 @@ codeunit 60193 "Test Ternary Contracts"
             else
                 Observer.ObserveError(Format(T) + ' Format(1 : 2.5, 0, 9)');
         end;
-        Observer.Finish();
+        Observer.Expect('Yes Dec 2.5 : 1 into Integer|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32.');
+        Observer.Expect('Yes Dec 2.5 : 1 into Integer|code', 'ConversionCast');
+        Observer.Expect('Yes Dec 4 : 1 into Integer', 'ok|4');
+        Observer.Expect('Yes abc : x into Code10', 'ok|ABC');
+        Observer.Expect('Yes 12 chars : x into Code10|text', 'The length of the string is 12, but it must be less than or equal to 10 characters. Value: abcdefghijkl');
+        Observer.Expect('Yes 12 chars : x into Code10|code', 'StringLengthExceeded');
+        Observer.Expect('Yes Format(1 : 2.5, 0, 9)', 'ok|1');
+        Observer.Expect('No Dec 2.5 : 1 into Integer', 'ok|1');
+        Observer.Expect('No Dec 4 : 1 into Integer', 'ok|1');
+        Observer.Expect('No abc : x into Code10', 'ok|X');
+        Observer.Expect('No 12 chars : x into Code10', 'ok|X');
+        Observer.Expect('No Format(1 : 2.5, 0, 9)|text', 'Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 2.5 to System.Int32.');
+        Observer.Expect('No Format(1 : 2.5, 0, 9)|code', 'ConversionCast');
+        Observer.Verify();
     end;
 
     [TryFunction]
@@ -1042,7 +1105,11 @@ codeunit 60193 "Test Ternary Contracts"
             R := Mark(Trail, 'c1', T) ? (Mark(Trail, 'c2', not T) ? Mark(Trail, 'A', 1) : Mark(Trail, 'B', 2)) : Mark(Trail, 'C', 3);
             Observer.Observe(Format(T) + ' nested', Format(R) + '|' + Trail);
         end;
-        Observer.Finish();
+        Observer.Expect('Yes simple', '1|cond;A;');
+        Observer.Expect('Yes nested', '2|c1;c2;B;');
+        Observer.Expect('No simple', '2|cond;B;');
+        Observer.Expect('No nested', '3|c1;C;');
+        Observer.Verify();
     end;
 
     local procedure Mark(var Trail: Text; Name: Text; Value: Integer): Integer

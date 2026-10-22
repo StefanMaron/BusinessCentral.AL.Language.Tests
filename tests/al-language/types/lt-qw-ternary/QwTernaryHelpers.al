@@ -132,7 +132,12 @@ codeunit 87508 "LT QW Tern Page Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Card(true, Observer);
-        Observer.Finish();
+        Observer.Expect('label', 'Label A');
+        Observer.Expect('empty_label', '[]');
+        Observer.Expect('decimal', '12.50');
+        Observer.Expect('enum', 'Invoice');
+        Observer.Expect('label_editable', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -141,6 +146,11 @@ codeunit 87508 "LT QW Tern Page Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Card(false, Observer);
-        Observer.Finish();
+        Observer.Expect('label', 'Field name');
+        Observer.Expect('empty_label', '[Label A]');
+        Observer.Expect('decimal', '0.00');
+        Observer.Expect('enum', 'Order');
+        Observer.Expect('label_editable', 'No');
+        Observer.Verify();
     end;
 }

@@ -417,7 +417,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern EmptyOrLbl");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="EmptyOrLbl"></Column>][<Column name="EmptyOrLbl">Label A</Column>]');
+        Observer.Verify();
     end;
 #if LTQW_LABEL_EMPTY_COLUMN_PROBE
 
@@ -437,7 +438,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern LblOrLbl");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="LblOrLbl">Label A</Column>][<Column name="LblOrLbl">Label B</Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -446,7 +448,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern LblOrField");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="LblOrField">Label A</Column>][<Column name="LblOrField">Field name</Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -455,7 +458,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern FieldOrLbl");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="FieldOrLbl">Field name</Column>][<Column name="FieldOrLbl">Label A</Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -464,7 +468,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern FieldOrEmpty");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="FieldOrEmpty">Field name</Column>][<Column name="FieldOrEmpty"></Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -473,7 +478,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern TwoLiterals");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="TwoLiterals">yes</Column>][<Column name="TwoLiterals">no</Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -482,7 +488,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern FieldOrField");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="FieldOrField">Field name</Column>][<Column name="FieldOrField">Other field</Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -491,7 +498,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern Numbers");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="DecCol" decimalformatter="#,##0.00">12.5</Column>][<Column name="IntCol">3</Column>][<Column name="DateCol">3/15/2024</Column>][<Column name="DecCol" decimalformatter="#,##0.00">0</Column>][<Column name="IntCol">7</Column>][<Column name="DateCol"></Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -500,7 +508,9 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern IntOrDec");
-        Observer.Finish();
+        Observer.Expect('columns|text', 'The SourceExpr for report control ''IntOrDec'' is not valid. The following error occurred: Overflow under conversion of Microsoft.Dynamics.Nav.Runtime.Decimal18 value 12.5 to System.Int32.');
+        Observer.Expect('columns|code', 'ReportSourceExpression');
+        Observer.Verify();
     end;
 
     [Test]
@@ -509,7 +519,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern BoolOptEnum");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="BoolCol">False</Column>][<Column name="OptCol">Beta</Column>][<Column name="EnumCol">Invoice</Column>][<Column name="BoolCol">True</Column>][<Column name="OptCol">Gamma</Column>][<Column name="EnumCol">Order</Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -518,7 +529,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern Base ExtEmptyOrLbl");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="ExtEmptyOrLbl"></Column>][<Column name="ExtEmptyOrLbl">Ext label</Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -527,7 +539,8 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern Base ExtLblOrField");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="ExtLblOrField">Ext label</Column>][<Column name="ExtLblOrField">Field name</Column>]');
+        Observer.Verify();
     end;
 
     [Test]
@@ -536,6 +549,7 @@ codeunit 87503 "LT QW Tern Column Tests"
         Observer: Codeunit "Probe Observer";
     begin
         Run(Observer, Report::"LT QW Tern Base ExtNumbers");
-        Observer.Finish();
+        Observer.Expect('columns', '[<Column name="ExtDec" decimalformatter="#,##0.00">12.5</Column>][<Column name="ExtEnum">Invoice</Column>][<Column name="ExtDec" decimalformatter="#,##0.00">1</Column>][<Column name="ExtEnum">Quote</Column>]');
+        Observer.Verify();
     end;
 }
