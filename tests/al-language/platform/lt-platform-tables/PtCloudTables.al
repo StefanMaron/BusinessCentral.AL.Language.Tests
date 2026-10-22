@@ -6,6 +6,8 @@
 // as text and code. Object id 67107.
 // Writer QX (Microsoft's DemoTool): Media Resources codes of a fresh tenant, Media Reference.ImportStream and Blob rows by Code; Tenant Report
 //   Layout Selection rows of a fresh tenant and the Insert(true)-else-Modify(true) of a report layout; OData Edm Type keys and the Edm Xml Blob.
+// Writer RE (Microsoft's DemoTool): Description and Edm Xml text of the 6 OData Edm Type rows of a fresh tenant (Edm Xml read line by line with
+//   InStream.ReadText, the lines joined with LF).
 
 codeunit 67107 "LT PT Cloud Tables"
 {
@@ -490,5 +492,186 @@ codeunit 67107 "LT PT Cloud Tables"
         Observer.Ignore('after modify');
         Observer.Expect('delete', 'Yes');
         Observer.Verify();
+    end;
+
+    // ---- Writer RE (Microsoft's DemoTool, Graph Mgt - General Tools.InsertOrUpdateODataType from UpdateAPIData): Description and Edm Xml of the
+    // 6 OData Edm Type rows of a fresh tenant (their keys are pinned in QX_ODataEdmType_RowsAndEdmXml). The Edm Xml text is read in parts of
+    // 1200 characters, one test per part, so that each observation fits the failure message; ReadText drops the line breaks, the lines
+    // are joined with LF. ----
+
+    local procedure ReEdmXml(EdmKey: Code[50]): Text
+    var
+        EdmType: Record "OData Edm Type";
+        InS: InStream;
+        Line: Text;
+        Txt: Text;
+        Lf: Text[1];
+    begin
+        if not EdmType.Get(EdmKey) then
+            exit('<no row>');
+        EdmType.CalcFields("Edm Xml");
+        if not EdmType."Edm Xml".HasValue() then
+            exit('<no value>');
+        Lf[1] := 10;
+        EdmType."Edm Xml".CreateInStream(InS, TextEncoding::UTF8);
+        while not InS.EOS() do begin
+            InS.ReadText(Line);
+            if Txt <> '' then
+                Txt += Lf;
+            Txt += Line;
+        end;
+        exit(Txt);
+    end;
+
+    local procedure ReObserveEdmXmlPart(EdmKey: Code[50]; Part: Integer)
+    var
+        Observer: Codeunit "Probe Observer";
+        Txt: Text;
+    begin
+        Txt := ReEdmXml(EdmKey);
+        Observer.Observe('length', Format(StrLen(Txt)));
+        Observer.Observe('part ' + Format(Part), CopyStr(Txt, (Part - 1) * 1200 + 1, 1200));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_FreshDescriptions()
+    var
+        EdmType: Record "OData Edm Type";
+        Observer: Codeunit "Probe Observer";
+    begin
+        if EdmType.Get('BOOKINGSDATE') then
+            Observer.Observe('BOOKINGSDATE', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('BOOKINGSDATE', '<no row>');
+        if EdmType.Get('DIMENSION') then
+            Observer.Observe('DIMENSION', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('DIMENSION', '<no row>');
+        if EdmType.Get('DOCUMENTLINEOBJECTDETAILS') then
+            Observer.Observe('DOCUMENTLINEOBJECTDETAILS', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('DOCUMENTLINEOBJECTDETAILS', '<no row>');
+        if EdmType.Get('ITEM-UOM') then
+            Observer.Observe('ITEM-UOM', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('ITEM-UOM', '<no row>');
+        if EdmType.Get('ITEM-UOM-CONVERSION') then
+            Observer.Observe('ITEM-UOM-CONVERSION', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('ITEM-UOM-CONVERSION', '<no row>');
+        if EdmType.Get('POSTALADDRESS') then
+            Observer.Observe('POSTALADDRESS', 'description=[' + EdmType.Description + '] edm xml length=' + Format(StrLen(ReEdmXml(EdmType."Key"))))
+        else
+            Observer.Observe('POSTALADDRESS', '<no row>');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_BookingsDate_1()
+    begin
+        ReObserveEdmXmlPart('BOOKINGSDATE', 1);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_BookingsDate_2()
+    begin
+        ReObserveEdmXmlPart('BOOKINGSDATE', 2);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_BookingsDate_3()
+    begin
+        ReObserveEdmXmlPart('BOOKINGSDATE', 3);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_Dimension_1()
+    begin
+        ReObserveEdmXmlPart('DIMENSION', 1);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_Dimension_2()
+    begin
+        ReObserveEdmXmlPart('DIMENSION', 2);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_Dimension_3()
+    begin
+        ReObserveEdmXmlPart('DIMENSION', 3);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_DocumentLineObjectDetails_1()
+    begin
+        ReObserveEdmXmlPart('DOCUMENTLINEOBJECTDETAILS', 1);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_DocumentLineObjectDetails_2()
+    begin
+        ReObserveEdmXmlPart('DOCUMENTLINEOBJECTDETAILS', 2);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_DocumentLineObjectDetails_3()
+    begin
+        ReObserveEdmXmlPart('DOCUMENTLINEOBJECTDETAILS', 3);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_ItemUom_1()
+    begin
+        ReObserveEdmXmlPart('ITEM-UOM', 1);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_ItemUom_2()
+    begin
+        ReObserveEdmXmlPart('ITEM-UOM', 2);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_ItemUom_3()
+    begin
+        ReObserveEdmXmlPart('ITEM-UOM', 3);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_ItemUomConversion_1()
+    begin
+        ReObserveEdmXmlPart('ITEM-UOM-CONVERSION', 1);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_ItemUomConversion_2()
+    begin
+        ReObserveEdmXmlPart('ITEM-UOM-CONVERSION', 2);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_ItemUomConversion_3()
+    begin
+        ReObserveEdmXmlPart('ITEM-UOM-CONVERSION', 3);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_PostalAddress_1()
+    begin
+        ReObserveEdmXmlPart('POSTALADDRESS', 1);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_PostalAddress_2()
+    begin
+        ReObserveEdmXmlPart('POSTALADDRESS', 2);
+    end;
+
+    [Test]
+    procedure RE_ODataEdmType_EdmXml_PostalAddress_3()
+    begin
+        ReObserveEdmXmlPart('POSTALADDRESS', 3);
     end;
 }
