@@ -11,6 +11,9 @@
 //   (B for C with filter A..B). OnAfterGetRecord and OnAfterGetCurrRecord run for that row (a list also reads its window). A temporary source
 //   filled in OnOpenPage opens on the row Rec was left on (D after the inserts). Next past the last row of a list opened by Page.Run or
 //   RunModal answers Yes on a new empty row.
+// Facts (writer QT, QT_Temp* tests): a temporary Worksheet or List filled by a procedure before Run / RunModal / LookupMode opens on the row
+//   Rec was left on (A, B, D); a key between rows (BB) opens on the next row (C); a key past the last row (E) opens on the last row (D);
+//   SetCurrentKey(Name) + Get(B) opens on B in Name order. OnNextRecord / OnFindRecord pages open on the same row (their calls are logged).
 // BC versions: 27, 28, 29
 
 codeunit 87266 "LT QR Moved Tests"
@@ -2233,6 +2236,470 @@ codeunit 87266 "LT QR Moved Tests"
         Observer.Expect('next log', '');
         Observer.Expect('previous', 'Yes|C');
         Observer.Expect('previous log', 'R:C;C:C;');
+        Observer.Verify();
+    end;
+
+    // ---- Writer QT (2026-10-22): a temporary Worksheet (and List) that a procedure fills BEFORE Run / RunModal; objects in
+    // QtTempWorksheetObjects.al. Which row the page opens on (No.|Name), the triggers on the way, Next and Previous from there. ----
+
+    local procedure QtReadWs(var P: TestPage "LT QT Temp Ws")
+    begin
+        Observer.Observe('open', P.NoCtl.Value() + '|' + P.NameCtl.Value());
+        Observer.Observe('open log', Log.Take());
+        Observer.Observe('next', Format(P.Next()) + '|' + P.NoCtl.Value());
+        Observer.Observe('next log', Log.Take());
+        Observer.Observe('previous', Format(P.Previous()) + '|' + P.NoCtl.Value());
+        Observer.Observe('previous log', Log.Take());
+    end;
+
+    [ModalPageHandler]
+    procedure QtModalWs(var P: TestPage "LT QT Temp Ws")
+    begin
+        QtReadWs(P);
+    end;
+
+    local procedure QtRunModalWs(Pos: Text; Lookup: Boolean)
+    var
+        Pg: Page "LT QT Temp Ws";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        if Lookup then
+            Pg.LookupMode(true);
+        Observer.Observe('before run log', Log.Take());
+        Pg.RunModal();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    local procedure QtReadWsNext(var P: TestPage "LT QT Temp Ws Next")
+    begin
+        Observer.Observe('open', P.NoCtl.Value() + '|' + P.NameCtl.Value());
+        Observer.Observe('open log', Log.Take());
+        Observer.Observe('next', Format(P.Next()) + '|' + P.NoCtl.Value());
+        Observer.Observe('next log', Log.Take());
+        Observer.Observe('previous', Format(P.Previous()) + '|' + P.NoCtl.Value());
+        Observer.Observe('previous log', Log.Take());
+    end;
+
+    [ModalPageHandler]
+    procedure QtModalWsNext(var P: TestPage "LT QT Temp Ws Next")
+    begin
+        QtReadWsNext(P);
+    end;
+
+    local procedure QtRunModalWsNext(Pos: Text; Lookup: Boolean)
+    var
+        Pg: Page "LT QT Temp Ws Next";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        if Lookup then
+            Pg.LookupMode(true);
+        Observer.Observe('before run log', Log.Take());
+        Pg.RunModal();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    local procedure QtReadWsFind(var P: TestPage "LT QT Temp Ws Find Next")
+    begin
+        Observer.Observe('open', P.NoCtl.Value() + '|' + P.NameCtl.Value());
+        Observer.Observe('open log', Log.Take());
+        Observer.Observe('next', Format(P.Next()) + '|' + P.NoCtl.Value());
+        Observer.Observe('next log', Log.Take());
+        Observer.Observe('previous', Format(P.Previous()) + '|' + P.NoCtl.Value());
+        Observer.Observe('previous log', Log.Take());
+    end;
+
+    [ModalPageHandler]
+    procedure QtModalWsFind(var P: TestPage "LT QT Temp Ws Find Next")
+    begin
+        QtReadWsFind(P);
+    end;
+
+    local procedure QtRunModalWsFind(Pos: Text; Lookup: Boolean)
+    var
+        Pg: Page "LT QT Temp Ws Find Next";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        if Lookup then
+            Pg.LookupMode(true);
+        Observer.Observe('before run log', Log.Take());
+        Pg.RunModal();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    local procedure QtReadList(var P: TestPage "LT QT Temp List")
+    begin
+        Observer.Observe('open', P.NoCtl.Value() + '|' + P.NameCtl.Value());
+        Observer.Observe('open log', Log.Take());
+        Observer.Observe('next', Format(P.Next()) + '|' + P.NoCtl.Value());
+        Observer.Observe('next log', Log.Take());
+        Observer.Observe('previous', Format(P.Previous()) + '|' + P.NoCtl.Value());
+        Observer.Observe('previous log', Log.Take());
+    end;
+
+    [ModalPageHandler]
+    procedure QtModalList(var P: TestPage "LT QT Temp List")
+    begin
+        QtReadList(P);
+    end;
+
+    local procedure QtRunModalList(Pos: Text; Lookup: Boolean)
+    var
+        Pg: Page "LT QT Temp List";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        if Lookup then
+            Pg.LookupMode(true);
+        Observer.Observe('before run log', Log.Take());
+        Pg.RunModal();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    local procedure QtRunWs(Pos: Text)
+    var
+        Pg: Page "LT QT Temp Ws";
+        P: TestPage "LT QT Temp Ws";
+    begin
+        Log.SetMode(0);
+        Pg.SetRows(Pos);
+        Log.Take();
+        P.Trap();
+        Pg.Run();
+        QtReadWs(P);
+        P.Close();
+        Observer.Observe('after close log', Log.Take());
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_D_NoMove()
+    begin
+        QtRunModalWs('', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:D;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|');
+        Observer.Expect('next log', 'C:;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;C:D;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_A()
+    begin
+        QtRunModalWs('A', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'O:A;R:A;R:B;R:C;R:D;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;C:A;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_B()
+    begin
+        QtRunModalWs('B', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:C;R:D;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_BB_Between()
+    begin
+        QtRunModalWs('BB', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:BB;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_E_PastLast()
+    begin
+        QtRunModalWs('E', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'D|alpha');
+        Observer.Expect('open log', 'O:E;R:D;R:C;R:B;R:A;R:D;R:D;C:D;');
+        Observer.Expect('next', 'Yes|');
+        Observer.Expect('next log', 'C:;');
+        Observer.Expect('previous', 'Yes|D');
+        Observer.Expect('previous log', 'R:D;R:D;C:D;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_RunModal_ByName_B()
+    begin
+        QtRunModalWs('NAME:B', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:B;R:A;R:B;R:C;R:D;R:B;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|A');
+        Observer.Expect('next log', 'R:A;R:A;R:A;C:A;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;R:B;C:B;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_Lookup_A()
+    begin
+        QtRunModalWs('A', true);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'O:A;R:A;R:B;R:C;R:D;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;C:A;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_Lookup_B()
+    begin
+        QtRunModalWs('B', true);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:C;R:D;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWs')]
+    procedure QT_TempWs_Lookup_BB_Between()
+    begin
+        QtRunModalWs('BB', true);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:BB;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsNext')]
+    procedure QT_TempWsNext_RunModal_A()
+    begin
+        QtRunModalWsNext('A', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'O:A;R:A;N:1>B;R:B;N:1>C;R:C;N:1>D;R:D;N:1>D;R:A;N:-1>A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;C:A;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsNext')]
+    procedure QT_TempWsNext_RunModal_B()
+    begin
+        QtRunModalWsNext('B', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;N:1>C;R:C;N:1>D;R:D;N:1>D;R:B;N:-1>A;R:A;N:-1>A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsNext')]
+    procedure QT_TempWsNext_RunModal_BB_Between()
+    begin
+        QtRunModalWsNext('BB', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:BB;R:C;N:1>D;R:D;N:1>D;R:C;N:-1>B;R:B;N:-1>A;R:A;N:-1>A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsNext')]
+    procedure QT_TempWsNext_Lookup_B()
+    begin
+        QtRunModalWsNext('B', true);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;N:1>C;R:C;N:1>D;R:D;N:1>D;R:B;N:-1>A;R:A;N:-1>A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsFind')]
+    procedure QT_TempWsFind_RunModal_B()
+    begin
+        QtRunModalWsFind('B', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;F:=>>B;R:B;N:1>C;R:C;N:1>D;R:D;N:1>D;R:B;N:-1>A;R:A;N:-1>A;R:B;F:=>B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;F:=>C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;F:=>B;R:B;C:B;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalWsFind')]
+    procedure QT_TempWsFind_RunModal_BB_Between()
+    begin
+        QtRunModalWsFind('BB', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:BB;F:=>>C;R:C;N:1>D;R:D;N:1>D;R:C;N:-1>B;R:B;N:-1>A;R:A;N:-1>A;R:C;F:=>C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;F:=>D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;F:=>C;R:C;C:C;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalList')]
+    procedure QT_TempList_RunModal_B()
+    begin
+        QtRunModalList('B', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:C;R:D;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalList')]
+    procedure QT_TempList_RunModal_BB_Between()
+    begin
+        QtRunModalList('BB', false);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:BB;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('QtModalList')]
+    procedure QT_TempList_Lookup_B()
+    begin
+        QtRunModalList('B', true);
+        Observer.Expect('before run log', '');
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:C;R:D;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QT_TempWs_Run_B()
+    begin
+        QtRunWs('B');
+        Observer.Expect('open', 'B|charlie');
+        Observer.Expect('open log', 'O:B;R:B;R:C;R:D;R:B;R:A;R:B;R:B;C:B;');
+        Observer.Expect('next', 'Yes|C');
+        Observer.Expect('next log', 'R:C;R:C;C:C;');
+        Observer.Expect('previous', 'Yes|B');
+        Observer.Expect('previous log', 'R:B;R:B;C:B;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QT_TempWs_Run_BB_Between()
+    begin
+        QtRunWs('BB');
+        Observer.Expect('open', 'C|bravo');
+        Observer.Expect('open log', 'O:BB;R:C;R:D;R:C;R:B;R:A;R:C;R:C;C:C;');
+        Observer.Expect('next', 'Yes|D');
+        Observer.Expect('next log', 'R:D;R:D;C:D;');
+        Observer.Expect('previous', 'Yes|C');
+        Observer.Expect('previous log', 'R:C;R:C;C:C;');
+        Observer.Expect('after close log', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QT_TempWs_Run_A()
+    begin
+        QtRunWs('A');
+        Observer.Expect('open', 'A|delta');
+        Observer.Expect('open log', 'O:A;R:A;R:B;R:C;R:D;R:A;R:A;C:A;');
+        Observer.Expect('next', 'Yes|B');
+        Observer.Expect('next log', 'R:B;R:B;C:B;');
+        Observer.Expect('previous', 'Yes|A');
+        Observer.Expect('previous log', 'R:A;R:A;C:A;');
+        Observer.Expect('after close log', '');
         Observer.Verify();
     end;
 }

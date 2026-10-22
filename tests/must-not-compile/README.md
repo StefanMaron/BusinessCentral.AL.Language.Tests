@@ -583,6 +583,8 @@ is only a reference.
 | 2008 | AL0398 | A Decimal constant as a case label of an Option (writer QS; =, <>, <, > of Option and Decimal compile: types/PROptionInteger.al). |
 | 2009 | AL0398 | Decimal constants in the `in` list of an Option (writer QS). |
 | 2010 | AL0385 | IncludeCaption on a report column whose source is a global variable (writer QS; 0015 is an expression). |
+| 2016 to 2039 | AL0104 / AL0105, AL0107 | A keyword as an unquoted parameter name, by value and after `var` (one file per word, both forms): `begin`, `procedure`, `trigger` give AL0104 ')' expected; `end`, `of`, `true`, `false`, `event`, `key`, `area`, `actions`, `chartpart`, `cuegroup`, `extends`, `fieldattribute`, `fieldelement`, `fieldgroups`, `pageextension`, `profileextension`, `tableelement`, `tableextension`, `textattribute`, `textelement` give AL0105; `var` gives AL0107; after `var` every word gives AL0107 first. The other diagnostics are the compiler's recovery (writer QT, AL Runner PR 5656). |
+| 2040 | AL0224 | A variable named by a keyword (`"If": Integer`) used unquoted in a statement (writer QT, AL Runner PR 5642; quoted use compiles: misc/lt-bn3-identifiers/Bn3Labels.al). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
