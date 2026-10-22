@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-auto/page/devenv-onfindrecord-page-trigger
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73869 (log), table 73870, pages 73871, 73872 and 73873, codeunit 73874; writer QD: pages 86530 to 86533
+// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73869 (log), table 73870, pages 73871, 73872 and 73873, codeunit 73874; writer QD: pages 86530 to 86533; writer QV: enum 87462, table 87461, pages 87460 and 87463 to 87465
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Settles probes-needed row: "Find list" (Page reads after an action, and a list that ends inside its window, corpus bump 7)
 // Facts: log of OnFindRecord (F), OnNextRecord (N), OnAfterGetRecord (R) and OnAfterGetCurrRecord (C) when a TestPage opens a list and moves First, Next, Last and Previous,
@@ -800,6 +800,210 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Expect('08_next_end', 'No|25|');
         Observer.Verify();
     end;
+
+    // Writer QV (AL Runner issue 5682): the moves of a TestPage on the lists 87460, 87463, 87464 and 87465 (descending view, WHERE on the
+    // non-key field Kind; rows 1..6, the view keeps 5, 3, 1). Each step: result|Id shown|trigger log since the step before
+    // (F(which)=found:Id = OnFindRecord, N(steps)=moved:Id = OnNextRecord, C = OnAfterGetCurrRecord, R = OnAfterGetRecord).
+    local procedure QvSeedKinds()
+    var
+        Row: Record "LT QV FL Row";
+        I: Integer;
+    begin
+        Row.DeleteAll();
+        for I := 1 to 6 do begin
+            Row.Init();
+            Row.Id := I;
+            if I mod 2 = 0 then
+                Row.Kind := Row.Kind::B
+            else
+                Row.Kind := Row.Kind::A;
+            Row.Insert();
+        end;
+    end;
+
+    [Test]
+    procedure QV_DescKind_FindOnly_Moves()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnF FL Log";
+        Row: Record "LT QV FL Row";
+        P: TestPage "LT QV FL DescKind Find";
+    begin
+        QvSeedKinds();
+        Log.Take();
+        P.OpenView();
+        Observer.Observe('open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('01_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('02_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('03_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('04_next_end', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('05_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('06_last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('07_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(3);
+        Observer.Observe('08_gotorecord3', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(1);
+        Observer.Observe('09_gotorecord1', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(2);
+        Observer.Observe('10_gotorecord2_out', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('11_gotokey5', Format(P.GoToKey(5)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('12_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Observer.Observe('close', Log.Take());
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('01_first', 'Yes|5|');
+        Observer.Expect('02_next', 'Yes|3|');
+        Observer.Expect('03_next', 'Yes|1|');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_previous', 'Yes|3|');
+        Observer.Expect('06_last', 'Yes|1|');
+        Observer.Expect('07_first', 'Yes|5|');
+        Observer.Expect('08_gotorecord3', 'Yes|3|');
+        Observer.Expect('09_gotorecord1', 'Yes|1|');
+        Observer.Expect('10_gotorecord2_out', 'No|1|');
+        Observer.Expect('11_gotokey5', 'Yes|5|');
+        Observer.Expect('12_previous_top', 'No|5|');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QV_DescKind_FindNext_Moves()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnF FL Log";
+        Row: Record "LT QV FL Row";
+        P: TestPage "LT QV FL DescKind FindNext";
+    begin
+        QvSeedKinds();
+        Log.Take();
+        P.OpenView();
+        Observer.Observe('open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('01_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('02_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('03_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('04_next_end', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('05_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('06_last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('07_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(3);
+        Observer.Observe('08_gotorecord3', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(1);
+        Observer.Observe('09_gotorecord1', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(2);
+        Observer.Observe('10_gotorecord2_out', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('11_gotokey5', Format(P.GoToKey(5)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('12_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Observer.Observe('close', Log.Take());
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=0:5;');
+        Observer.Expect('01_first', 'Yes|5|');
+        Observer.Expect('02_next', 'Yes|3|');
+        Observer.Expect('03_next', 'Yes|1|');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_previous', 'Yes|3|');
+        Observer.Expect('06_last', 'Yes|1|');
+        Observer.Expect('07_first', 'Yes|5|');
+        Observer.Expect('08_gotorecord3', 'Yes|3|');
+        Observer.Expect('09_gotorecord1', 'Yes|1|');
+        Observer.Expect('10_gotorecord2_out', 'No|1|');
+        Observer.Expect('11_gotokey5', 'Yes|5|');
+        Observer.Expect('12_previous_top', 'No|5|');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QV_DescKind_FindCurr_Moves()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnF FL Log";
+        Row: Record "LT QV FL Row";
+        P: TestPage "LT QV FL DescKind FindCurr";
+    begin
+        QvSeedKinds();
+        Log.Take();
+        P.OpenView();
+        Observer.Observe('open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('01_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('02_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('03_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('04_next_end', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('05_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('06_last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('07_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(3);
+        Observer.Observe('08_gotorecord3', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(1);
+        Observer.Observe('09_gotorecord1', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(2);
+        Observer.Observe('10_gotorecord2_out', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('11_gotokey5', Format(P.GoToKey(5)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('12_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Observer.Observe('close', Log.Take());
+        Observer.Expect('open', '1|F(=><)=Yes:1;F(=)=Yes:1;C1;');
+        Observer.Expect('01_first', 'Yes|5|F(=)=Yes:5;C5;');
+        Observer.Expect('02_next', 'Yes|3|F(=)=Yes:3;C3;');
+        Observer.Expect('03_next', 'Yes|1|F(=)=Yes:1;C1;');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_previous', 'Yes|3|F(=)=Yes:3;C3;');
+        Observer.Expect('06_last', 'Yes|1|F(=)=Yes:1;C1;');
+        Observer.Expect('07_first', 'Yes|5|F(=)=Yes:5;C5;');
+        Observer.Expect('08_gotorecord3', 'Yes|3|F(=)=Yes:3;C3;');
+        Observer.Expect('09_gotorecord1', 'Yes|1|F(=)=Yes:5;C5;F(=)=Yes:3;C3;F(=)=Yes:1;C1;');
+        Observer.Expect('10_gotorecord2_out', 'No|1|F(=)=Yes:5;C5;F(=)=Yes:3;C3;F(=)=Yes:1;C1;');
+        Observer.Expect('11_gotokey5', 'Yes|5|F(=)=Yes:5;C5;');
+        Observer.Expect('12_previous_top', 'No|5|');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QV_DescKind_FindGet_Moves()
+    var
+        Observer: Codeunit "Probe Observer";
+        Log: Codeunit "LT PnF FL Log";
+        Row: Record "LT QV FL Row";
+        P: TestPage "LT QV FL DescKind FindGet";
+    begin
+        QvSeedKinds();
+        Log.Take();
+        P.OpenView();
+        Observer.Observe('open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('01_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('02_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('03_next', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('04_next_end', Format(P.Next()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('05_previous', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('06_last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('07_first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(3);
+        Observer.Observe('08_gotorecord3', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(1);
+        Observer.Observe('09_gotorecord1', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Row.Get(2);
+        Observer.Observe('10_gotorecord2_out', Format(P.GoToRecord(Row)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('11_gotokey5', Format(P.GoToKey(5)) + '|' + P.Id.Value() + '|' + Log.Take());
+        Observer.Observe('12_previous_top', Format(P.Previous()) + '|' + P.Id.Value() + '|' + Log.Take());
+        P.Close();
+        Observer.Observe('close', Log.Take());
+        Observer.Expect('open', '1|F(=><)=Yes:1;R1;R3;R5;');
+        Observer.Expect('01_first', 'Yes|5|');
+        Observer.Expect('02_next', 'Yes|3|');
+        Observer.Expect('03_next', 'Yes|1|');
+        Observer.Expect('04_next_end', 'No|1|');
+        Observer.Expect('05_previous', 'Yes|3|');
+        Observer.Expect('06_last', 'Yes|1|');
+        Observer.Expect('07_first', 'Yes|5|');
+        Observer.Expect('08_gotorecord3', 'Yes|3|');
+        Observer.Expect('09_gotorecord1', 'Yes|1|');
+        Observer.Expect('10_gotorecord2_out', 'No|1|');
+        Observer.Expect('11_gotokey5', 'Yes|5|');
+        Observer.Expect('12_previous_top', 'No|5|');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
 }
 
 // Writer PW: an OnFindRecord / OnNextRecord / OnAfterGetRecord list that positions itself on the last row in OnOpenPage (with OnAfterGetCurrRecord).
@@ -1088,5 +1292,180 @@ page 86533 "LT QD FL FindOnly"
         Log: Codeunit "LT PnF FL Log";
     begin
         Log.Add('C');
+    end;
+}
+
+// Writer QV (AL Runner issue 5682): lists over a descending SourceTableView whose WHERE part filters a non-key enum field (Kind = A keeps
+// the odd Ids of 1..6), with OnFindRecord only (the reporter's page) and with OnFindRecord plus one more trigger each, to see which trigger
+// makes BC ask the page on a move.
+enum 87462 "LT QV FL Kind"
+{
+    Extensible = false;
+    value(0; A) { }
+    value(1; B) { }
+}
+
+table 87461 "LT QV FL Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Kind; Enum "LT QV FL Kind") { }
+    }
+
+    keys { key(PK; Id) { Clustered = true; } }
+}
+
+page 87460 "LT QV FL DescKind Find"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(descending) where(Kind = filter(A));
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+}
+
+page 87463 "LT QV FL DescKind FindNext"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(descending) where(Kind = filter(A));
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+
+    trigger OnNextRecord(Steps: Integer): Integer
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Moved: Integer;
+    begin
+        Moved := Rec.Next(Steps);
+        Log.Add('N(' + Format(Steps) + ')=' + Format(Moved) + ':' + Format(Rec.Id));
+        exit(Moved);
+    end;
+}
+
+page 87464 "LT QV FL DescKind FindCurr"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(descending) where(Kind = filter(A));
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('C' + Format(Rec.Id));
+    end;
+}
+
+page 87465 "LT QV FL DescKind FindGet"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(descending) where(Kind = filter(A));
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        Log: Codeunit "LT PnF FL Log";
+    begin
+        Log.Add('R' + Format(Rec.Id));
     end;
 }
