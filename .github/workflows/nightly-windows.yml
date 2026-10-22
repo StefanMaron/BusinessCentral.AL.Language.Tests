@@ -766,7 +766,7 @@ jobs:
       # measured `master`, which then ended at codeunit 69982.)
       #
       # HOW. The list of expected codeunits comes from the compiled .app (SymbolReference.json:
-      # Subtype = Test with at least one [Test] method), read by test-codeunit-coverage.py.
+      # Subtype = Test with at least one [Test] method), read by codeunit-coverage.py.
       # Each call runs the next chunk of not-yet-reported codeunits, selected by
       # -testCodeunitRange (a range filter that never spans another corpus app's test codeunit
       # or one that already reported). When a call reports nothing, the first codeunit of the
@@ -796,7 +796,7 @@ jobs:
 
           $outDir = Join-Path $env:GITHUB_WORKSPACE '.output'
           $allApps = @(Get-ChildItem -Path $outDir -Filter '*.app' -File)
-          $coverage = Join-Path $env:GITHUB_WORKSPACE '.github/scripts/test-codeunit-coverage.py'
+          $coverage = Join-Path $env:GITHUB_WORKSPACE '.github/scripts/codeunit-coverage.py'
           $chunkSize = 100
 
           # "a..b|c..d" over $ids, split wherever a $blocked id lies between two neighbours.
@@ -1029,7 +1029,7 @@ jobs:
           foreach ($line in Get-Content $list) {
             $name, $app = $line -split '=', 2
             $aborted = [Environment]::GetEnvironmentVariable("ABORTED_$($name -replace '-', '_')")
-            & python (Join-Path $env:GITHUB_WORKSPACE '.github/scripts/test-codeunit-coverage.py') check `
+            & python (Join-Path $env:GITHUB_WORKSPACE '.github/scripts/codeunit-coverage.py') check `
               --app $app --xunit (Join-Path $env:GITHUB_WORKSPACE "xunit-$name.xml") --name $name `
               --aborted "$aborted" --summary $env:GITHUB_STEP_SUMMARY
             if ($LASTEXITCODE -ne 0) { $failed++ }
