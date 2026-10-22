@@ -520,6 +520,9 @@ codeunit 73549 "LT P130 Date Filters"
     // al-runner issue 5689: a Time primary key field written with milliseconds the SQL column rounds (.001 -> .000, .002 -> .003, 23:59:59.999 -> midnight):
     // what Insert answers, what the record variable holds after Insert, which values Get finds the row by, what FindFirst reads back, a second Insert whose value
     // rounds to the same key, Modify, Rename and Delete through the unrounded value.
+    // Measured on 27.5, 28.5 and 29.0 (the same): the variable keeps .001 after Insert, Get with .001 or .000 finds the row and reads 10:00:00; Insert with a
+    // return value of a key that rounds to an existing one answers false; without a return value the Insert raises nothing and the duplicate error
+    // (DB:RecordExists) comes at the next read of the table (Count).
     [Test]
     procedure RH_TimeKey_Milliseconds_InsertGet()
     var
@@ -591,7 +594,27 @@ codeunit 73549 "LT P130 Date Filters"
         Observer.Observe('insert .999', Format(K.Insert()));
         GetTime(Observer, 'get .999', 'B', 235959.999T);
         GetTime(Observer, 'get midnight', 'B', 000000T);
-        Observer.Finish();
+        Observer.Expect('insert', 'Yes');
+        Observer.Expect('var after insert', 'A|10:00:00.001|36000001|first');
+        Observer.Expect('get .001', 'found|A|10:00:00|36000000|first');
+        Observer.Expect('get .000', 'found|A|10:00:00|36000000|first');
+        Observer.Expect('get .002', 'not found');
+        Observer.Expect('findfirst', 'A|10:00:00|36000000|first');
+        Observer.Expect('count', '1');
+        Observer.Expect('setrange .001 count', '1');
+        Observer.Expect('insert .000 return', 'No');
+        Observer.Expect('plain insert .000 stage', 'count');
+        Observer.Expect('plain insert .000 error|text', 'The record in table LT RH Time Key Row already exists. Identification fields and values: Entry Code=''A'',Entry Time=''10:00:00 AM''');
+        Observer.Expect('plain insert .000 error|code', 'DB:RecordExists');
+        Observer.Expect('count after duplicate', '0');
+        Observer.Expect('insert .002', 'Yes');
+        Observer.Expect('get .003', 'found|A|10:00:00.003|36000003|two');
+        Observer.Expect('get .002 after', 'found|A|10:00:00.003|36000003|two');
+        Observer.Expect('count after .002', '1');
+        Observer.Expect('insert .999', 'Yes');
+        Observer.Expect('get .999', 'found|B|00:00:00|0|late');
+        Observer.Expect('get midnight', 'found|B|00:00:00|0|late');
+        Observer.Verify();
     end;
 
     [Test]
@@ -689,7 +712,21 @@ codeunit 73549 "LT P130 Date Filters"
             repeat
                 Observer.Observe('row', Format(K."At", 0, 9) + '|' + K.Note);
             until K.Next() = 0;
-        Observer.Finish();
+        Observer.Expect('insert', 'Yes');
+        Observer.Expect('var after insert', '2024-03-25T10:00:00.001Z');
+        Observer.Expect('get .001', 'Yes|2024-03-25T10:00:00Z');
+        Observer.Expect('get .000', 'Yes|2024-03-25T10:00:00Z');
+        Observer.Expect('findfirst', '2024-03-25T10:00:00Z|');
+        Observer.Expect('insert .000 return', 'No');
+        Observer.Expect('plain insert .000 stage', 'count');
+        Observer.Expect('plain insert .000 error|text', 'The record in table LT RH DateTime Key Row already exists. Identification fields and values: At=''03/25/24 10:00 AM''');
+        Observer.Expect('plain insert .000 error|code', 'DB:RecordExists');
+        Observer.Expect('count after duplicate', '0');
+        Observer.Expect('insert .999', 'Yes');
+        Observer.Expect('get next day', 'Yes|2024-03-26T00:00:00Z');
+        Observer.Expect('count', '1');
+        Observer.Expect('row', '2024-03-26T00:00:00Z|late');
+        Observer.Verify();
     end;
 }
 
