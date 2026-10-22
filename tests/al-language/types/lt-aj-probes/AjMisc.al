@@ -4,7 +4,8 @@
 // Facts: Text + Guid concatenation and MaxStrLen of a Guid; an Option compared with a Decimal; the bytes OutStream.Write produces for value types not pinned elsewhere (Code, Option, Enum, DateFormula, RecordId, Variant, Label, BigText, Record, JsonObject); the Field table row of the rowversion field (No. 0, name timestamp) on an own table and on Customer.
 // Facts (writer QT): RecordRef on a table with a key over SystemRowVersion (own key or from a tableextension): the FieldIndex walk never meets
 //   the rowversion field, Field(0) is timestamp (No. 0, BigInteger, Normal), FieldExist(0) is No, the key's FieldIndex(1) is timestamp No. 0.
-//   QT_FieldTable_* record the Field table answers but do not assert them (Linux suspect, Windows check queued).
+//   QT_FieldTable_*: the Field table finds the rowversion row (0:timestamp) only by a FieldName filter (asserted after the Windows check of 2026-10-22).
+// Facts (writer RA): the Field table read filtered only on TableNo (and with ObsoleteState <> Removed added) on those tables: which rows, in what order.
 // BC versions: 27.5+
 
 table 79005 "LT AJ Item"
@@ -467,36 +468,56 @@ codeunit 79013 "LT AJ Misc"
     procedure QT_FieldTable_OwnKeyOnRowVersion()
     begin
         QtFieldTableAnswers(Database::"KRV Row");
-        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
-        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
-        Observer.Discard();
+        // The Field table answers the rowversion row (0:timestamp) only to a FieldName filter, not to Get(table, 0) or a No. filter.
+        // Windows containers 27.5, 28.5 and 29.0 gave the same values as Linux (Windows check, 2026-10-22).
+        Observer.Expect('Get(table, 0)', 'not found');
+        Observer.Expect('by name timestamp', '0:timestamp:BigInteger:Normal:8:Yes;');
+        Observer.Expect('No. = 0 count', '0');
+        Observer.Expect('BigInteger count', '0');
+        Observer.Expect('by name SystemRowVersion count', '0');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QT_FieldTable_OwnKeyOnRowVersion_TableWithModifyExtension()
     begin
         QtFieldTableAnswers(Database::"KRV Modified Row");
-        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
-        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
-        Observer.Discard();
+        // The Field table answers the rowversion row (0:timestamp) only to a FieldName filter, not to Get(table, 0) or a No. filter.
+        // Windows containers 27.5, 28.5 and 29.0 gave the same values as Linux (Windows check, 2026-10-22).
+        Observer.Expect('Get(table, 0)', 'not found');
+        Observer.Expect('by name timestamp', '0:timestamp:BigInteger:Normal:8:Yes;');
+        Observer.Expect('No. = 0 count', '0');
+        Observer.Expect('BigInteger count', '0');
+        Observer.Expect('by name SystemRowVersion count', '0');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QT_FieldTable_KeyOnRowVersionFromTableExtension()
     begin
         QtFieldTableAnswers(Database::"Customer Bank Account");
-        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
-        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
-        Observer.Discard();
+        // The Field table answers the rowversion row (0:timestamp) only to a FieldName filter, not to Get(table, 0) or a No. filter.
+        // Windows containers 27.5, 28.5 and 29.0 gave the same values as Linux (Windows check, 2026-10-22).
+        Observer.Expect('Get(table, 0)', 'not found');
+        Observer.Expect('by name timestamp', '0:timestamp:BigInteger:Normal:8:Yes;');
+        Observer.Expect('No. = 0 count', '0');
+        Observer.Expect('BigInteger count', '0');
+        Observer.Expect('by name SystemRowVersion count', '0');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QT_FieldTable_NoKeyOnRowVersion_Control()
     begin
         QtFieldTableAnswers(Database::"LT AJ Ts");
-        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
-        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
-        Observer.Discard();
+        // The Field table answers the rowversion row (0:timestamp) only to a FieldName filter, not to Get(table, 0) or a No. filter.
+        // Windows containers 27.5, 28.5 and 29.0 gave the same values as Linux (Windows check, 2026-10-22).
+        Observer.Expect('Get(table, 0)', 'not found');
+        Observer.Expect('by name timestamp', '0:timestamp:BigInteger:Normal:8:Yes;');
+        Observer.Expect('No. = 0 count', '0');
+        Observer.Expect('BigInteger count', '0');
+        Observer.Expect('by name SystemRowVersion count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -532,6 +553,97 @@ codeunit 79013 "LT AJ Misc"
         Observer.Expect('FieldExist(0)', 'No');
         Observer.Expect('key on rowversion', '[]');
         Observer.Expect('Field(No. of the timestamp row)', 'timestamp#0');
+        Observer.Verify();
+    end;
+
+    // ---- Writer RA (2026-10-22): the Field table read filtered only on TableNo, FindSet loop, on tables with a key over SystemRowVersion and the
+    // control: count, then each row as No.:FieldName:ObsoleteState in the order FindSet gives (a table with more than 15 rows: the first 3 rows,
+    // the position of the timestamp row, the last 8 rows, and whether the No. values ascend). The same with ObsoleteState <> Removed added. ----
+
+    local procedure RaFieldScan(TableNumber: Integer; WithoutRemoved: Boolean): Text
+    var
+        Fld: Record Field;
+        Rows: List of [Text];
+        Row: Text;
+        Result: Text;
+        TimestampAt: Integer;
+        PrevNo: Integer;
+        Ascending: Boolean;
+        Index: Integer;
+    begin
+        Fld.SetRange(TableNo, TableNumber);
+        if WithoutRemoved then
+            Fld.SetFilter(ObsoleteState, '<>%1', Fld.ObsoleteState::Removed);
+        Ascending := true;
+        PrevNo := -1;
+        if Fld.FindSet() then
+            repeat
+                Rows.Add(Format(Fld."No.") + ':' + Fld.FieldName + ':' + Format(Fld.ObsoleteState));
+                if (Fld.FieldName = 'timestamp') and (TimestampAt = 0) then
+                    TimestampAt := Rows.Count();
+                if Fld."No." <= PrevNo then
+                    Ascending := false;
+                PrevNo := Fld."No.";
+            until Fld.Next() = 0;
+        Result := 'count=' + Format(Fld.Count()) + '|rows=' + Format(Rows.Count()) + '|timestamp at=' + Format(TimestampAt) + '|ascending=' + Format(Ascending) + '|';
+        if Rows.Count() <= 15 then begin
+            foreach Row in Rows do
+                Result += Row + ';';
+            exit(Result);
+        end;
+        for Index := 1 to 3 do
+            Result += Rows.Get(Index) + ';';
+        Result += '...;';
+        for Index := Rows.Count() - 7 to Rows.Count() do
+            Result += Rows.Get(Index) + ';';
+        exit(Result);
+    end;
+
+    local procedure RaObserveScans(TableNumber: Integer)
+    begin
+        Observer.Observe('TableNo only', RaFieldScan(TableNumber, false));
+        Observer.Observe('TableNo and ObsoleteState <> Removed', RaFieldScan(TableNumber, true));
+    end;
+
+    [Test]
+    procedure RA_FieldTable_ScanByTableNo_OwnKeyOnRowVersion()
+    begin
+        RaObserveScans(Database::"KRV Row");
+#if BC29PLUS
+        Observer.Expect('TableNo only', 'count=13|rows=13|timestamp at=0|ascending=Yes|1:Code:No;2:Live Value:No;3:Pending Value:Pending;4:Removed Value:Removed;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=12|rows=12|timestamp at=0|ascending=Yes|1:Code:No;2:Live Value:No;3:Pending Value:Pending;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+#else
+        Observer.Expect('TableNo only', 'count=9|rows=9|timestamp at=0|ascending=Yes|1:Code:No;2:Live Value:No;3:Pending Value:Pending;4:Removed Value:Removed;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=8|rows=8|timestamp at=0|ascending=Yes|1:Code:No;2:Live Value:No;3:Pending Value:Pending;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+#endif
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RA_FieldTable_ScanByTableNo_KeyOnRowVersionFromTableExtension()
+    begin
+        RaObserveScans(Database::"Customer Bank Account");
+#if BC29PLUS
+        Observer.Expect('TableNo only', 'count=35|rows=35|timestamp at=0|ascending=Yes|1:Customer No.:No;2:Code:No;3:Name:No;...;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=35|rows=35|timestamp at=0|ascending=Yes|1:Customer No.:No;2:Code:No;3:Name:No;...;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+#else
+        Observer.Expect('TableNo only', 'count=31|rows=31|timestamp at=0|ascending=Yes|1:Customer No.:No;2:Code:No;3:Name:No;...;25:SWIFT Code:No;1211:Bank Clearing Code:No;1212:Bank Clearing Standard:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=31|rows=31|timestamp at=0|ascending=Yes|1:Customer No.:No;2:Code:No;3:Name:No;...;25:SWIFT Code:No;1211:Bank Clearing Code:No;1212:Bank Clearing Standard:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+#endif
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RA_FieldTable_ScanByTableNo_NoKeyOnRowVersion_Control()
+    begin
+        RaObserveScans(Database::"LT AJ Ts");
+#if BC29PLUS
+        Observer.Expect('TableNo only', 'count=11|rows=11|timestamp at=0|ascending=Yes|1:Id:No;2:Txt:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=11|rows=11|timestamp at=0|ascending=Yes|1:Id:No;2:Txt:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;2000000005:SystemCreatedByUserName:No;2000000006:SystemCreatedByFullName:No;2000000007:SystemModifiedByUserName:No;2000000008:SystemModifiedByFullName:No;');
+#else
+        Observer.Expect('TableNo only', 'count=7|rows=7|timestamp at=0|ascending=Yes|1:Id:No;2:Txt:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+        Observer.Expect('TableNo and ObsoleteState <> Removed', 'count=7|rows=7|timestamp at=0|ascending=Yes|1:Id:No;2:Txt:No;2000000000:$systemId:No;2000000001:SystemCreatedAt:No;2000000002:SystemCreatedBy:No;2000000003:SystemModifiedAt:No;2000000004:SystemModifiedBy:No;');
+#endif
         Observer.Verify();
     end;
 }
