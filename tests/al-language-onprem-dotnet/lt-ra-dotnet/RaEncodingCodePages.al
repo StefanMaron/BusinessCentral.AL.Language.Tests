@@ -247,6 +247,14 @@ codeunit 99445 "LT RA Encoding Code Pages"
         ObserveWrapper(850);
         ObserveWrapper(28591);
         ObserveWrapper(99999);
-        Observer.Finish();
+        Observer.Expect('DotNet_Encoding 1252 Codepage', '1252');
+        Observer.Expect('DotNet_Encoding 1252 round trip', '198,216,197,|198,216,197,');
+        Observer.Expect('DotNet_Encoding 850 Codepage', '850');
+        Observer.Expect('DotNet_Encoding 850 round trip', '146,157,143,|198,216,197,');
+        Observer.Expect('DotNet_Encoding 28591 Codepage', '28591');
+        Observer.Expect('DotNet_Encoding 28591 round trip', '198,216,197,|198,216,197,');
+        Observer.Expect('DotNet_Encoding 99999|text', 'A call to System.Text.Encoding.GetEncoding failed with this message: Valid values are between 0 and 65535, inclusive. (Parameter ''codepage'')');
+        Observer.Expect('DotNet_Encoding 99999|code', 'DotNetInvoke:ArgumentOutOfRange');
+        Observer.Verify();
     end;
 }
