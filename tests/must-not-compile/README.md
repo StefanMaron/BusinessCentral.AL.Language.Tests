@@ -586,6 +586,16 @@ is only a reference.
 | 2016 to 2039 | AL0104 / AL0105, AL0107 | A keyword as an unquoted parameter name, by value and after `var` (one file per word, both forms): `begin`, `procedure`, `trigger` give AL0104 ')' expected; `end`, `of`, `true`, `false`, `event`, `key`, `area`, `actions`, `chartpart`, `cuegroup`, `extends`, `fieldattribute`, `fieldelement`, `fieldgroups`, `pageextension`, `profileextension`, `tableelement`, `tableextension`, `textattribute`, `textelement` give AL0105; `var` gives AL0107; after `var` every word gives AL0107 first. The other diagnostics are the compiler's recovery (writer QT, AL Runner PR 5656). |
 | 2040 | AL0224 | A variable named by a keyword (`"If": Integer`) used unquoted in a statement (writer QT, AL Runner PR 5642; quoted use compiles: misc/lt-bn3-identifiers/Bn3Labels.al). |
 | 2048 | AL0132 | JsonArray has no Remove(JsonToken) method; RemoveAt removes by index (writer QV, AL Runner issue 5680). |
+| 2061 | AL0122 | Ternary with a Boolean and an Integer branch, both orders, also into a Variant (writer QW, corpus issue 685). |
+| 2062 | AL0777 | Ternary `Cond ? 'abc' : Guid`: the literal true branch sets a short Text type (writer QW). |
+| 2063 | AL0369 | Ternary with a Byte or Char true branch and an Integer constant out of its range (writer QW). |
+| 2064 | AL0122 | Ternary with a SecretText and a Text branch, both orders (writer QW). |
+| 2065 | AL0122 | Ternary with two record types, a codeunit and an interface, two List types (writer QW). |
+| 2066 | AL0130 | Ternary passed for a var parameter (writer QW). |
+| 2067 | AL0122 | Ternary with an Integer condition (writer QW). |
+| 2068 | AL0117 | Ternary used as a statement (writer QW). |
+| 2069 | AL0122 | Ternary with a Date and an Integer branch, both orders (writer QW). |
+| 2070 | AL0322 | Ternary in a page control's Visible or Editable property (writer QW). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 
