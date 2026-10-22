@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-maxoccurs-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (69160); own tables 87275, 87276, 87279, xmlport 87277, runner codeunit 87278, test codeunit 87280 (writer QR)
+// Fixtures used: Probe Observer (69160); own tables 87275, 87276, 87279, xmlport 87277, runner codeunit 87278, test codeunit 87280 (writer QR); writer QS: tests QS_TextAttr_* on table 87360, xmlport 87361, runner 87362 (QsXpTextAttrObjects.al)
 // Probe: observed on the corpus CI matrix; every literal asserted below is what the BC service tier produced.
 // Facts: MaxOccurs and MinOccurs on CONTAINER text elements (the root text element with MaxOccurs = Once, a required container with
 //   MinOccurs = Once and MaxOccurs = Once that holds a temporary table element, an optional container with MinOccurs = Zero and
@@ -399,6 +399,137 @@ codeunit 87280 "LT QR XP Container Tests"
         Import(Observer, 'unknown child', '<envelope><request><extra/></request></envelope>');
         Observer.Expect('unknown child|text', 'Imported XML cannot validate with the schema: The element ''request'' has invalid child element ''extra''. List of possible elements expected: ''head''.');
         Observer.Expect('unknown child|code', 'XmlPortInvalidXml');
+        Observer.Verify();
+    end;
+
+    local procedure QsExported(var Port: XmlPort "LT QS XP Text Attributes"): Text
+    var
+        Buffer: Record "LT QR XP Blob" temporary;
+        OutS: OutStream;
+        InS: InStream;
+        Line: Text;
+        Xml: Text;
+    begin
+        Buffer.Id := 1;
+        Buffer.Insert();
+        Buffer.Data.CreateOutStream(OutS, TextEncoding::UTF8);
+        Port.SetDestination(OutS);
+        Port.Export();
+        Buffer.Modify();
+        Buffer.CalcFields(Data);
+        Buffer.Data.CreateInStream(InS, TextEncoding::UTF8);
+        while not InS.EOS() do begin
+            InS.ReadText(Line);
+            Xml += Line + '|';
+        end;
+        exit(Xml);
+    end;
+
+    local procedure QsImport(var Observer: Codeunit "Probe Observer"; Name: Text; Body: Text)
+    var
+        Runner: Codeunit "LT QS XP Attr Runner";
+    begin
+        Runner.SetInput('<?xml version="1.0" encoding="UTF-8"?>' + Body);
+        ClearLastError();
+        if Runner.Run() then
+            Observer.Observe(Name, 'ok ' + Runner.Result())
+        else
+            Observer.ObserveError(Name);
+    end;
+
+    [Test]
+    procedure QS_TextAttr_Export_AllEmpty()
+    var
+        Observer: Codeunit "Probe Observer";
+        Port: XmlPort "LT QS XP Text Attributes";
+    begin
+        Observer.Observe('xml', QsExported(Port));
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<envelope version="">|  <body />|</envelope>|');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QS_TextAttr_Export_AllSet()
+    var
+        Observer: Codeunit "Probe Observer";
+        Port: XmlPort "LT QS XP Text Attributes";
+    begin
+        Port.SetValues('inst-1', '2', 'tok');
+        Port.AddRow('R1', 'ref-1', 'must-1');
+        Observer.Observe('xml', QsExported(Port));
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<envelope cache_instance_id="inst-1" version="2">|  <body token="tok">|    <row no="R1" ref="ref-1" must="must-1" />|  </body>|</envelope>|');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QS_TextAttr_Export_OptionalSetRequiredEmpty()
+    var
+        Observer: Codeunit "Probe Observer";
+        Port: XmlPort "LT QS XP Text Attributes";
+    begin
+        Port.SetValues('inst-1', '', '');
+        Port.AddRow('R1', '', '');
+        Port.AddRow('R2', 'ref-2', '');
+        Observer.Observe('xml', QsExported(Port));
+        Observer.Expect('xml', '<?xml version="1.0" encoding="UTF-8" standalone="no"?>|<envelope cache_instance_id="inst-1" version="">|  <body>|    <row no="R1" must="" />|    <row no="R2" ref="ref-2" must="" />|  </body>|</envelope>|');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QS_TextAttr_Import_Root()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QsImport(Observer, 'both present', '<envelope cache_instance_id="i1" version="2"/>');
+        QsImport(Observer, 'optional missing', '<envelope version="2"/>');
+        QsImport(Observer, 'required missing', '<envelope cache_instance_id="i1"/>');
+        QsImport(Observer, 'both missing', '<envelope/>');
+        QsImport(Observer, 'required empty', '<envelope version=""/>');
+        QsImport(Observer, 'optional empty', '<envelope cache_instance_id="" version="2"/>');
+        QsImport(Observer, 'unknown attribute', '<envelope version="2" other="x"/>');
+        Observer.Expect('both present', 'ok log=instance=i1;version=2; values: instance=i1 version=2 token= ref= must= rows=');
+        Observer.Expect('optional missing', 'ok log=version=2; values: instance= version=2 token= ref= must= rows=');
+        Observer.Expect('required missing|text', 'Imported XML cannot validate with the schema: The required attribute ''version'' is missing.');
+        Observer.Expect('required missing|code', 'XmlPortInvalidXml');
+        Observer.Expect('both missing|text', 'Imported XML cannot validate with the schema: The required attribute ''version'' is missing.');
+        Observer.Expect('both missing|code', 'XmlPortInvalidXml');
+        Observer.Expect('required empty', 'ok log=version=; values: instance= version= token= ref= must= rows=');
+        Observer.Expect('optional empty', 'ok log=instance=;version=2; values: instance= version=2 token= ref= must= rows=');
+        Observer.Expect('unknown attribute|text', 'Imported XML cannot validate with the schema: The ''other'' attribute is not declared.');
+        Observer.Expect('unknown attribute|code', 'XmlPortInvalidXml');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QS_TextAttr_Import_Container()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QsImport(Observer, 'token present', '<envelope version="2"><body token="t1"/></envelope>');
+        QsImport(Observer, 'token missing', '<envelope version="2"><body/></envelope>');
+        QsImport(Observer, 'body missing', '<envelope version="2"></envelope>');
+        Observer.Expect('token present', 'ok log=version=2;token=t1; values: instance= version=2 token=t1 ref= must= rows=');
+        Observer.Expect('token missing', 'ok log=version=2; values: instance= version=2 token= ref= must= rows=');
+        Observer.Expect('body missing', 'ok log=version=2; values: instance= version=2 token= ref= must= rows=');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure QS_TextAttr_Import_Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        QsImport(Observer, 'rows both present', '<envelope version="2"><body><row no="R1" ref="a" must="m1"/><row no="R2" ref="b" must="m2"/></body></envelope>');
+        QsImport(Observer, 'optional on first row only', '<envelope version="2"><body><row no="R1" ref="a" must="m1"/><row no="R2" must="m2"/></body></envelope>');
+        QsImport(Observer, 'optional on second row only', '<envelope version="2"><body><row no="R1" must="m1"/><row no="R2" ref="b" must="m2"/></body></envelope>');
+        QsImport(Observer, 'required missing on second row', '<envelope version="2"><body><row no="R1" must="m1"/><row no="R2"/></body></envelope>');
+        QsImport(Observer, 'required empty', '<envelope version="2"><body><row no="R1" must=""/></body></envelope>');
+        Observer.Expect('rows both present', 'ok log=version=2;row R1 ref=a must=m1;row R2 ref=b must=m2; values: instance= version=2 token= ref=b must=m2 rows=R1:a/m1;R2:b/m2;');
+        Observer.Expect('optional on first row only', 'ok log=version=2;row R1 ref=a must=m1;row R2 ref=a must=m2; values: instance= version=2 token= ref=a must=m2 rows=R1:a/m1;R2:a/m2;');
+        Observer.Expect('optional on second row only', 'ok log=version=2;row R1 ref= must=m1;row R2 ref=b must=m2; values: instance= version=2 token= ref=b must=m2 rows=R1:/m1;R2:b/m2;');
+        Observer.Expect('required missing on second row|text', 'Imported XML cannot validate with the schema: The required attribute ''must'' is missing.');
+        Observer.Expect('required missing on second row|code', 'XmlPortInvalidXml');
+        Observer.Expect('required empty', 'ok log=version=2;row R1 ref= must=; values: instance= version=2 token= ref= must= rows=R1:/;');
         Observer.Verify();
     end;
 }
