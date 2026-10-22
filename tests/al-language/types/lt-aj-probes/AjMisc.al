@@ -2,6 +2,9 @@
 // Scope: in-scope
 // Fixtures used: Probe Observer (codeunit 69160), Temp Blob (Base Application); own tables 79005, 79018, enum 79019
 // Facts: Text + Guid concatenation and MaxStrLen of a Guid; an Option compared with a Decimal; the bytes OutStream.Write produces for value types not pinned elsewhere (Code, Option, Enum, DateFormula, RecordId, Variant, Label, BigText, Record, JsonObject); the Field table row of the rowversion field (No. 0, name timestamp) on an own table and on Customer.
+// Facts (writer QT): RecordRef on a table with a key over SystemRowVersion (own key or from a tableextension): the FieldIndex walk never meets
+//   the rowversion field, Field(0) is timestamp (No. 0, BigInteger, Normal), FieldExist(0) is No, the key's FieldIndex(1) is timestamp No. 0.
+//   QT_FieldTable_* record the Field table answers but do not assert them (Linux suspect, Windows check queued).
 // BC versions: 27.5+
 
 table 79005 "LT AJ Item"
@@ -464,48 +467,71 @@ codeunit 79013 "LT AJ Misc"
     procedure QT_FieldTable_OwnKeyOnRowVersion()
     begin
         QtFieldTableAnswers(Database::"KRV Row");
-        Observer.Finish();
+        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
+        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
+        Observer.Discard();
     end;
 
     [Test]
     procedure QT_FieldTable_OwnKeyOnRowVersion_TableWithModifyExtension()
     begin
         QtFieldTableAnswers(Database::"KRV Modified Row");
-        Observer.Finish();
+        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
+        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
+        Observer.Discard();
     end;
 
     [Test]
     procedure QT_FieldTable_KeyOnRowVersionFromTableExtension()
     begin
         QtFieldTableAnswers(Database::"Customer Bank Account");
-        Observer.Finish();
+        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
+        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
+        Observer.Discard();
     end;
 
     [Test]
     procedure QT_FieldTable_NoKeyOnRowVersion_Control()
     begin
         QtFieldTableAnswers(Database::"LT AJ Ts");
-        Observer.Finish();
+        // Linux suspect (Windows check queued): the Field table answers the rowversion row (0:timestamp) only to a FieldName filter,
+        // not to Get(table, 0) or a No. filter. Values recorded, not asserted.
+        Observer.Discard();
     end;
 
     [Test]
     procedure QT_RecordRef_OwnKeyOnRowVersion()
     begin
         QtRecordRefAnswers(Database::"KRV Row");
-        Observer.Finish();
+        Observer.Expect('FieldIndex walk finds timestamp', '[]');
+        Observer.Expect('Field(0)', 'timestamp#0#BigInteger#Normal');
+        Observer.Expect('FieldExist(0)', 'No');
+        Observer.Expect('key on rowversion', '[2:timestamp#0#1;]');
+        Observer.Expect('Field(No. of the timestamp row)', 'timestamp#0');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QT_RecordRef_KeyOnRowVersionFromTableExtension()
     begin
         QtRecordRefAnswers(Database::"Customer Bank Account");
-        Observer.Finish();
+        Observer.Expect('FieldIndex walk finds timestamp', '[]');
+        Observer.Expect('Field(0)', 'timestamp#0#BigInteger#Normal');
+        Observer.Expect('FieldExist(0)', 'No');
+        Observer.Expect('key on rowversion', '[2:timestamp#0#1;]');
+        Observer.Expect('Field(No. of the timestamp row)', 'timestamp#0');
+        Observer.Verify();
     end;
 
     [Test]
     procedure QT_RecordRef_NoKeyOnRowVersion_Control()
     begin
         QtRecordRefAnswers(Database::"LT AJ Ts");
-        Observer.Finish();
+        Observer.Expect('FieldIndex walk finds timestamp', '[]');
+        Observer.Expect('Field(0)', 'timestamp#0#BigInteger#Normal');
+        Observer.Expect('FieldExist(0)', 'No');
+        Observer.Expect('key on rowversion', '[]');
+        Observer.Expect('Field(No. of the timestamp row)', 'timestamp#0');
+        Observer.Verify();
     end;
 }

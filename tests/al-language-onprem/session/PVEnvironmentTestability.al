@@ -6,6 +6,9 @@
 // What "Environment Information" answers: IsSaaS Yes, IsSandbox Yes, IsProduction No, GetEnvironmentName "Sandbox" (IsOnPrem is Yes as well, because the service tier is not Azure infrastructure).
 // The test library's SetTestabilitySandbox(true / false) and SetTestabilitySoftwareAsAService(true / false) change NOTHING a test can see on this tier: after SetTestabilitySandbox(false) the
 // session still reads IsSandbox Yes, IsProduction No and the name "Sandbox"; after SetTestabilitySoftwareAsAService(false) IsSaaS stays Yes.
+// Facts (writer QT, OnPrem app): IsOnPrem Yes, IsSaaS Yes, IsSandbox Yes, IsProduction No, name 'Sandbox'; after
+//   SetTestabilitySoftwareAsAService(true) IsSaaSInfrastructure is Yes. The default IsSaaSInfrastructure (Yes on 27.5 / 28.5, No on 29.0)
+//   is not asserted (Linux suspect, Windows check queued).
 // BC versions: 27.5, 29.0
 codeunit 61293 "PV Environment Testability"
 {
@@ -35,7 +38,20 @@ codeunit 61293 "PV Environment Testability"
         Observer.Observe('saas_false_is_onprem', Format(EnvInfo.IsOnPrem()));
         Observer.Observe('saas_false_is_saas', Format(EnvInfo.IsSaaS()));
         Observer.Observe('saas_false_is_saas_infrastructure', Format(EnvInfo.IsSaaSInfrastructure()));
-        Observer.Finish();
+        // Linux suspect (Windows check queued): the default IsSaaSInfrastructure is Yes on 27.5/28.5 and No on 29.0 on the same container. Not asserted.
+        Observer.Ignore('default_is_saas_infrastructure');
+        Observer.Ignore('saas_false_is_saas_infrastructure');
+        Observer.Expect('default_is_onprem', 'Yes');
+        Observer.Expect('default_is_saas', 'Yes');
+        Observer.Expect('default_is_sandbox', 'Yes');
+        Observer.Expect('default_is_production', 'No');
+        Observer.Expect('default_environment_name', '[Sandbox]');
+        Observer.Expect('saas_true_is_onprem', 'Yes');
+        Observer.Expect('saas_true_is_saas', 'Yes');
+        Observer.Expect('saas_true_is_saas_infrastructure', 'Yes');
+        Observer.Expect('saas_false_is_onprem', 'Yes');
+        Observer.Expect('saas_false_is_saas', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]

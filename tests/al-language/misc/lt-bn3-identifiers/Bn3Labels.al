@@ -3,6 +3,8 @@
 // Fixtures used: Probe Observer (codeunit 69160); own table 83851, codeunits 83852 and 83853
 // Probe: corpus #664 item 40 (microsoft/AL issue 2229): the word Labels (a report section keyword) as a field, procedure, parameter and variable name
 // Facts: Labels as table field name, procedure name, parameter name, global and local variable name: the code compiles and runs
+// Facts (writer QT): the 22 keywords alc accepts as variable names (If, Repeat, For, Div, Mod, ...) work as variables and parameters
+//   (QT_KeywordsAsVariableNames_Compile_AndHoldValues); the rejected ones are must-not-compile cases 2016-2040.
 // BC versions: 27, 28, 29
 
 table 83851 "LT BN3 Labels Row"
@@ -159,6 +161,12 @@ codeunit 83853 "LT BN3 Labels Tests"
         Observer.Observe('for loop variable', Format("For") + '|' + Format("Repeat"));
         Observer.Observe('div mod', Format("Div" div 4) + '|' + Format("Mod" mod 6));
         Observer.Observe('keyword parameters', Format(QtKeywordParameters("If", "Then", "Else", "Case", "While", "Do", "Repeat")));
-        Observer.Finish();
+        Observer.Expect('sum', '231');
+        Observer.Expect('text', 'twenty-two');
+        Observer.Expect('if on keyword variables', 'then');
+        Observer.Expect('for loop variable', '11|28');
+        Observer.Expect('div mod', '4|2');
+        Observer.Expect('keyword parameters', '28654321');
+        Observer.Verify();
     end;
 }
