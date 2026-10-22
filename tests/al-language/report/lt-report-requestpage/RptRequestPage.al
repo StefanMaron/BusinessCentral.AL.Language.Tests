@@ -1234,4 +1234,67 @@ codeunit 73850 "LT RpT Request Page"
                 RP.OK().Invoke();
         end;
     end;
+
+    // Writer RI (al-runtime-rs issue 5691): the handler's SetValue raises and the handler does not catch it (objects in
+    // RiRequestPageRefusedEntry.al). The error leaves Report.Run; the log shows which close triggers ran. A second run in the same test
+    // shows whether the page was closed.
+    [Test]
+    [HandlerFunctions('RiRefusedHandler')]
+    procedure RI_HandlerSetValue_OnValidateError_ReachesRun()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        PxMode := 'apply';
+        asserterror Report.Run(Report::"LT RI Rp Refused");
+        Observer.ObserveError('err');
+        Observer.Observe('log', L.Take());
+        PxMode := 'ok';
+        Report.Run(Report::"LT RI Rp Refused");
+        Observer.Observe('next run', L.Take());
+        Observer.Expect('err|text', 'Validation error for Field: ApplyCtl,  Message = ''LT RI apply rejected''');
+        Observer.Expect('err|code', 'TestValidation');
+        Observer.Expect('log', 'RP OnOpenPage;h apply;validate apply=Yes;RP OnQueryClosePage action=Cancel apply=Yes int=0;RP OnClosePage;');
+        Observer.Expect('next run', 'RP OnOpenPage;h ok;RP OnQueryClosePage action=OK apply=No int=0;RP OnClosePage;OnPreReport apply=No int=0;row 1;row 2;row 3;row 4;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RiRefusedHandler')]
+    procedure RI_HandlerSetValue_NotEvaluable_ReachesRun()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        PxMode := 'int';
+        asserterror Report.Run(Report::"LT RI Rp Refused");
+        Observer.ObserveError('err');
+        Observer.Observe('log', L.Take());
+        PxMode := 'ok';
+        Report.Run(Report::"LT RI Rp Refused");
+        Observer.Observe('next run', L.Take());
+        Observer.Expect('err|text', 'Validation error for Field: IntCtl,  Message = ''Your entry of ''abc'' is not an acceptable value for ''IntCtl''. The value "abc" can''t be evaluated into type Integer.''');
+        Observer.Expect('err|code', 'TestValidation');
+        Observer.Expect('log', 'RP OnOpenPage;h int;RP OnQueryClosePage action=Cancel apply=No int=0;RP OnClosePage;');
+        Observer.Expect('next run', 'RP OnOpenPage;h ok;RP OnQueryClosePage action=OK apply=No int=0;RP OnClosePage;OnPreReport apply=No int=0;row 1;row 2;row 3;row 4;');
+        Observer.Verify();
+    end;
+
+    [RequestPageHandler]
+    procedure RiRefusedHandler(var RP: TestRequestPage "LT RI Rp Refused")
+    begin
+        L.Add('h ' + PxMode);
+        case PxMode of
+            'apply':
+                RP.ApplyCtl.SetValue(true);
+            'int':
+                RP.IntCtl.SetValue('abc');
+        end;
+        if PxMode <> 'ok' then
+            L.Add('h after SetValue');
+        if PxMode = 'ok' then
+            RP.OK().Invoke()
+        else
+            RP.Cancel().Invoke();
+    end;
 }
