@@ -144,15 +144,16 @@ All tests share a single fixture library in `_fixtures/`. Never define your own 
 
 ## Multi-app fixtures
 
-Some behavior only shows when code is spread over several apps: an extension of a table that another app extends too, a subscriber in another app, the order of subscribers of different apps. Besides the main test app (`tests/al-language`) and the AL Internals Test Fixture (`tests/al-language-internals-fixture`), CI publishes three small apps for these cases. They hold no tests; the tests stay in the main test app, which depends on all of them.
+Some behavior only shows when code is spread over several apps: an extension of a table that another app extends too, a subscriber in another app, the order of subscribers of different apps. Besides the main test app (`tests/al-language`) and the AL Internals Test Fixture (`tests/al-language-internals-fixture`), CI publishes four small apps for these cases. They hold no tests; the tests stay in the main test app, which depends on A, B and C. D depends on A only, and no other app depends on D.
 
 | Folder | App id | Name | Publisher | Object ids | Depends on | What it is for |
 |---|---|---|---|---|---|---|
 | `tests/al-language-xapp-a` | `cd6a4292-f27b-4af9-89bc-15a5956f5c71` | AL Language XApp A | AL Language | 61100-61109, 61130-61139 | nothing | the base app: an event other apps subscribe to, tables other apps extend, a local event, a Company Triggers counter |
 | `tests/al-language-xapp-b` | `c87ced6d-11a6-4ad2-87c7-ac10083d0a2f` | AL Language XApp B | Zulu Probe Publisher | 61110-61119, 61140-61149 | fixture, A | table extensions of A's tables, a page with a protected variable whose type is a fixture table |
 | `tests/al-language-xapp-c` | `0df0fadc-d339-4b0f-a1d5-51dc51f10900` | AL Language XApp C | Bravo Probe Publisher | 61120-61129, 61150-61159 | A, B (not the fixture) | a page extension of B's page |
+| `tests/al-language-xapp-d` | `e92be076-de11-44ed-895e-17031341df29` | AL Language XApp D | Mike Probe Publisher | 61160-61169 | A | a subscriber of an event of A, in an app that no other app depends on and that depends on none of B, C and the main test app (subscriber order of apps that do not depend on each other) |
 
-CI publishes the fixture, A, B, C and then the main test app (`app_dirs` of every job in `ci.yml` that compiles `al-language`, and `$apps` in `nightly-windows.yml`). A change to one of these apps is a change to a dependency app, so the pull request gets a full run.
+CI publishes the fixture, A, D, B, C and then the main test app (D right after A, before B, on purpose) (`app_dirs` of every job in `ci.yml` that compiles `al-language`, and `$apps` in `nightly-windows.yml`). A change to one of these apps is a change to a dependency app, so the pull request gets a full run.
 
 **The ids, names and publishers are fixed on purpose.** The cross-app subscriber order probe (`tests/al-language/events/lt-bw-subscriber-order/`) needs every candidate rule to predict another order of the four apps A, B, C and the main app (M):
 
@@ -169,7 +170,7 @@ Each reversed order differs from all of these too. Each app has two object id bl
 
 **Adding a cross-app case.**
 
-1. Put the objects the other apps need into the app that fits the dependencies (A for a base object, B for an extension of A, C for an extension of B without the fixture). Use the free ids of that app's blocks; a new block needs a range outside every other app's `idRanges` (free today: 61160-61199 and 61350-61399).
+1. Put the objects the other apps need into the app that fits the dependencies (A for a base object, B for an extension of A, C for an extension of B without the fixture). Use the free ids of that app's blocks; a new block needs a range outside every other app's `idRanges` (free today: 61170-61199 and 61350-61399).
 2. Put the test into the main test app, as for any other test. It can name objects of A, B and C.
 3. A cross-app case that must not compile goes into `tests/must-not-compile/cases/` with `// @depends AL Language XApp A,AL Language XApp B` (the names of the corpus apps the case app depends on; see `tests/must-not-compile/README.md`). To check it locally, compile the fixture, A, B and C first and put their `.app` files into the `--symbols` folder.
 4. A new app is a bigger change: give it an id range outside every other app, add it to `app_dirs` of every job in `ci.yml` that compiles `al-language` (before `tests/al-language`), to `$apps` in `nightly-windows.yml`, to `CORPUS_DEPENDENCIES` in `.github/scripts/check-must-not-compile.py`, and to the tables above. Tell al-runtime-rs: its corpus runner loads the corpus apps by folder.
@@ -311,7 +312,7 @@ Every test codeunit runs when one of these is true:
 - The change touches one of these:
   - a file under `.github/` (workflows and the scripts CI runs). One exception: a change to `ci.yml` that edits only the values of `codeunit_range` lines (a "CI range edit") is selected as usual, plus every test codeunit the edit brings into its job's range. Any other line changed in `ci.yml`, a comment included, means a full run;
   - an `app.json`, the symbols in an app's `.alpackages/` folder, or an app's resource folder (`NavApp.ListResources` sees every resource);
-  - a dependency app: an app in `app_dirs` of a job and in no job's `test_app_dirs` (the fixture app `tests/al-language-internals-fixture` and the cross-app fixtures `tests/al-language-xapp-a`, `-b` and `-c`, which the other apps depend on);
+  - a dependency app: an app in `app_dirs` of a job and in no job's `test_app_dirs` (the fixture app `tests/al-language-internals-fixture` and the cross-app fixtures `tests/al-language-xapp-a`, `-b`, `-c` and `-d`; the other apps depend on the fixture and on A, B and C);
   - an event subscriber that can run during any test, when the change touches it, removes it, or touches an object it uses. That is an automatic subscriber whose publisher is:
     - not an object of the test apps (a platform, System Application or Base Application object, for example `Global Triggers`, `Company Triggers`, `Caption Class`, or a table event of `Customer`);
     - an install or upgrade event (the event name contains `Install` or `Upgrade`);
