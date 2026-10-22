@@ -244,5 +244,167 @@ codeunit 78603 "LT AH Dataset Header"
         Observer.Expect('text bytes base64', 'bm90IGFuIGltYWdl');
         Observer.Verify();
     end;
+
+    // Writer RB (AL Runner issues 5681 and 5666): the address lines for each "Address Format" of the Company Information's Country/Region
+    // (own rows RBPC, RBCP, RBCCP (the format of the GB demo row), RBBL, RBCU), for a blank country per General Ledger Setup
+    // "Local Address Format", and for a code with no Country/Region row; each with and without Name 2, Address 2, County and
+    // Contact Person. The Company Information row is the one of codeunit 86940; it, the countries and General Ledger Setup are restored.
+    local procedure RbCountry(CountryCode: Code[10]; AddrFormat: Enum "Country/Region Address Format")
+    var
+        Country: Record "Country/Region";
+    begin
+        if not Country.Get(CountryCode) then begin
+            Country.Init();
+            Country.Code := CountryCode;
+            Country.Insert();
+        end;
+        Country.Name := 'Land ' + CountryCode;
+        Country."Address Format" := AddrFormat;
+        Country.Modify();
+    end;
+
+    local procedure RbDropCountry(CountryCode: Code[10])
+    var
+        Country: Record "Country/Region";
+        CustomFormat: Record "Custom Address Format";
+        CustomLine: Record "Custom Address Format Line";
+    begin
+        CustomLine.SetRange("Country/Region Code", CountryCode);
+        CustomLine.DeleteAll();
+        CustomFormat.SetRange("Country/Region Code", CountryCode);
+        CustomFormat.DeleteAll();
+        if Country.Get(CountryCode) then
+            Country.Delete();
+    end;
+
+    local procedure RbRun(var Observer: Codeunit "Probe Observer"; CaseName: Text; Name2: Text; Address2: Text; County: Text; Contact: Text; CountryCode: Code[10])
+    var
+        Info: Record "Company Information";
+    begin
+        Info.Get();
+        Info.Name := 'RB Name';
+        Info."Name 2" := CopyStr(Name2, 1, MaxStrLen(Info."Name 2"));
+        Info.Address := 'RB Street 1';
+        Info."Address 2" := CopyStr(Address2, 1, MaxStrLen(Info."Address 2"));
+        Info.City := 'RB Town';
+        Info."Post Code" := 'RB-12';
+        Info.County := CopyStr(County, 1, MaxStrLen(Info.County));
+        Info."Contact Person" := CopyStr(Contact, 1, MaxStrLen(Info."Contact Person"));
+        Info."Country/Region Code" := CountryCode;
+        Info.Modify();
+        Observer.Observe(CaseName, AddressLines());
+    end;
+
+    local procedure RbRunFour(var Observer: Codeunit "Probe Observer"; CountryCode: Code[10])
+    begin
+        RbRun(Observer, 'full', 'RB Name 2', 'RB Floor 2', 'RB County', 'RB Contact', CountryCode);
+        RbRun(Observer, 'no county', 'RB Name 2', 'RB Floor 2', '', 'RB Contact', CountryCode);
+        RbRun(Observer, 'no address 2', 'RB Name 2', '', 'RB County', 'RB Contact', CountryCode);
+        RbRun(Observer, 'no name 2 no contact', '', 'RB Floor 2', 'RB County', '', CountryCode);
+    end;
+
+    [Test]
+    procedure RB_Header_AddressFormat_PostCodeCity()
+    var
+        Observer: Codeunit "Probe Observer";
+        QkRows: Codeunit "LT QK Setup Rows";
+    begin
+        QkRows.WriteCompanyInformation();
+        RbCountry('RBPC', "Country/Region Address Format"::"Post Code+City");
+        RbRunFour(Observer, 'RBPC');
+        QkRows.RestoreCompanyInformation();
+        RbDropCountry('RBPC');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RB_Header_AddressFormat_CityPostCode()
+    var
+        Observer: Codeunit "Probe Observer";
+        QkRows: Codeunit "LT QK Setup Rows";
+    begin
+        QkRows.WriteCompanyInformation();
+        RbCountry('RBCP', "Country/Region Address Format"::"City+Post Code");
+        RbRunFour(Observer, 'RBCP');
+        QkRows.RestoreCompanyInformation();
+        RbDropCountry('RBCP');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RB_Header_AddressFormat_CityCountyPostCode()
+    var
+        Observer: Codeunit "Probe Observer";
+        QkRows: Codeunit "LT QK Setup Rows";
+    begin
+        QkRows.WriteCompanyInformation();
+        RbCountry('RBCCP', "Country/Region Address Format"::"City+County+Post Code");
+        RbRunFour(Observer, 'RBCCP');
+        QkRows.RestoreCompanyInformation();
+        RbDropCountry('RBCCP');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RB_Header_AddressFormat_BlankLinePostCodeCity()
+    var
+        Observer: Codeunit "Probe Observer";
+        QkRows: Codeunit "LT QK Setup Rows";
+    begin
+        QkRows.WriteCompanyInformation();
+        RbCountry('RBBL', "Country/Region Address Format"::"Blank Line+Post Code+City");
+        RbRunFour(Observer, 'RBBL');
+        QkRows.RestoreCompanyInformation();
+        RbDropCountry('RBBL');
+        Observer.Finish();
+    end;
+
+    // Custom: Validate from City+Post Code creates the default Custom Address Format rows of the Base Application.
+    [Test]
+    procedure RB_Header_AddressFormat_CustomAndUnknownCode()
+    var
+        Observer: Codeunit "Probe Observer";
+        QkRows: Codeunit "LT QK Setup Rows";
+        Country: Record "Country/Region";
+    begin
+        QkRows.WriteCompanyInformation();
+        RbCountry('RBCU', "Country/Region Address Format"::"City+Post Code");
+        Country.Get('RBCU');
+        Country.Validate("Address Format", "Country/Region Address Format"::Custom);
+        Country.Modify();
+        RbRunFour(Observer, 'RBCU');
+        RbDropCountry('RBNONE');
+        RbRun(Observer, 'unknown code full', 'RB Name 2', 'RB Floor 2', 'RB County', 'RB Contact', 'RBNONE');
+        RbRun(Observer, 'unknown code no county', 'RB Name 2', 'RB Floor 2', '', 'RB Contact', 'RBNONE');
+        QkRows.RestoreCompanyInformation();
+        RbDropCountry('RBCU');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RB_Header_AddressFormat_BlankCountryPerLocalFormat()
+    var
+        Observer: Codeunit "Probe Observer";
+        QkRows: Codeunit "LT QK Setup Rows";
+        GLSetup: Record "General Ledger Setup";
+        SavedFormat: Integer;
+        Index: Integer;
+    begin
+        QkRows.WriteCompanyInformation();
+        GLSetup.Get();
+        SavedFormat := GLSetup."Local Address Format";
+        for Index := 0 to 3 do begin
+            GLSetup.Get();
+            GLSetup."Local Address Format" := Index;
+            GLSetup.Modify();
+            RbRun(Observer, 'local ' + Format(Index) + ' full', 'RB Name 2', 'RB Floor 2', 'RB County', 'RB Contact', '');
+            RbRun(Observer, 'local ' + Format(Index) + ' no county', 'RB Name 2', 'RB Floor 2', '', 'RB Contact', '');
+        end;
+        GLSetup.Get();
+        GLSetup."Local Address Format" := SavedFormat;
+        GLSetup.Modify();
+        QkRows.RestoreCompanyInformation();
+        Observer.Finish();
+    end;
 }
 #endif

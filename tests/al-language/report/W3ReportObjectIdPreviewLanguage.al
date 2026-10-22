@@ -227,6 +227,58 @@ report 67760 "W3 Lang Rpt"
     end;
 }
 
+// Writer RB (AL Runner issues 5681 and 5666): the dataset values when the language or region is set before SaveAs (GlobalLanguage, the
+// Language and FormatRegion of the report variable), for Decimal, Integer, Date, Time, DateTime and Boolean columns and for Format() texts.
+report 87800 "LT RB Fmt Rpt"
+{
+    ProcessingOnly = false;
+    UsageCategory = None;
+
+    dataset
+    {
+        dataitem(Row; "W3 Row")
+        {
+            column(Id; Id) { }
+            column(DecC; DecVar) { }
+            column(NegDecC; NegDecVar) { }
+            column(IntC; IntVar) { }
+            column(DateC; DateVar) { }
+            column(TimeC; TimeVar) { }
+            column(DtC; DtVar) { }
+            column(BoolC; BoolVar) { }
+            column(FmtC; FmtVar) { }
+
+            trigger OnAfterGetRecord()
+            begin
+                DecVar := 1234.5;
+                NegDecVar := -1234567.891;
+                IntVar := 1234567;
+                DateVar := DMY2Date(5, 3, 2024);
+                TimeVar := 093005T;
+                DtVar := CreateDateTime(DateVar, TimeVar);
+                BoolVar := true;
+                FmtVar := Format(DecVar) + '|' + Format(NegDecVar) + '|' + Format(IntVar) + '|' + Format(DateVar) + '|' + Format(TimeVar) + '|' + Format(BoolVar);
+            end;
+        }
+    }
+
+    var
+        DecVar: Decimal;
+        NegDecVar: Decimal;
+        IntVar: Integer;
+        DateVar: Date;
+        TimeVar: Time;
+        DtVar: DateTime;
+        BoolVar: Boolean;
+        FmtVar: Text;
+        L: Codeunit "W3 ObjId Log";
+
+    trigger OnPreReport()
+    begin
+        L.Add('pre language=' + Format(CurrReport.Language) + ' region=[' + CurrReport.FormatRegion + '] global=' + Format(GlobalLanguage()));
+    end;
+}
+
 // Writer QV (AL Runner issue 5666): CurrReport.Preview read in a dataset column (directly and through a report procedure), in the report
 // triggers and in the request page triggers, for each way the tests of codeunit 67761 start the report. RDLC layout, so SaveAs Pdf and
 // the Preview and Print actions of the request page have a layout.
@@ -777,5 +829,75 @@ codeunit 67761 "W3 ObjId Probe"
             'print':
                 RP.Print().Invoke();
         end;
+    end;
+
+    // Writer RB: SaveAs Xml of report 87800 with nothing set, after GlobalLanguage(1031), and with Language / FormatRegion set on the
+    // report variable before SaveAs. GlobalLanguage is put back.
+    local procedure RbRun(var Rpt: Report "LT RB Fmt Rpt"; var Observer: Codeunit "Probe Observer")
+    var
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        Xml: Text;
+    begin
+        TempBlob.CreateOutStream(OutS);
+        Observer.Observe('saved', Format(Rpt.SaveAs('', ReportFormat::Xml, OutS), 0, 9));
+        Xml := Dataset.ReadAll(TempBlob);
+        Observer.Observe('log', L.Take());
+        Observer.Observe('columns', Dataset.ColumnLines(Xml));
+        Observer.Observe('item language', Dataset.ItemAttribute(Xml, 1, 'language'));
+        Observer.Observe('item formatRegion', Dataset.ItemAttribute(Xml, 1, 'formatRegion'));
+    end;
+
+    [Test]
+    procedure RB_SaveAs_NothingSet()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT RB Fmt Rpt";
+    begin
+        Seed();
+        RbRun(Rpt, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RB_SaveAs_AfterGlobalLanguage1031()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT RB Fmt Rpt";
+        OldLanguage: Integer;
+    begin
+        Seed();
+        OldLanguage := GlobalLanguage();
+        Observer.Observe('set 1031 ok', Format(TrySetGlobalLanguage(1031), 0, 9));
+        RbRun(Rpt, Observer);
+        TrySetGlobalLanguage(OldLanguage);
+        Observer.Observe('language restored', Format(GlobalLanguage() = OldLanguage, 0, 9));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RB_SaveAs_ReportVariableLanguage1031()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT RB Fmt Rpt";
+    begin
+        Seed();
+        Rpt.Language := 1031;
+        Observer.Observe('read before run', Format(Rpt.Language));
+        RbRun(Rpt, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RB_SaveAs_ReportVariableFormatRegionDeDE()
+    var
+        Observer: Codeunit "Probe Observer";
+        Rpt: Report "LT RB Fmt Rpt";
+    begin
+        Seed();
+        Rpt.FormatRegion := 'de-DE';
+        Observer.Observe('read before run', Rpt.FormatRegion);
+        RbRun(Rpt, Observer);
+        Observer.Finish();
     end;
 }
