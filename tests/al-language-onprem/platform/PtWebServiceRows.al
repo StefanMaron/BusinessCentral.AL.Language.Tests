@@ -404,6 +404,24 @@ codeunit 61281 "LT PT Web Service Rows"
             TenantWebServiceOData.Delete();
         Observer.Observe('restored: all rows as before', Format(RdAllRows() = Before));
         Observer.Observe('counts restored', RdCounts());
-        Observer.Finish();
+        // The fresh tenant already has 'Job List' with 14 columns (the seven fields twice) and an OData row: the calls add seven columns, the
+        // OData Insert fails, GenerateSelectText lists every column row, and both filter texts of a page service without filter rows are empty.
+        Observer.Expect('counts before', '17|64|402|29');
+        Observer.Expect('rows before', 'columns 14 new 0: odata 1 filters 0');
+        Observer.Expect('clauses before', '[$select=No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager][][]');
+        Observer.Expect('rows after columns', 'columns 21 new 7:[167|1|No|Yes][167|3|Description|Yes][167|5|Bill_to_Customer_No|Yes][167|19|Status|Yes][167|20|Person_Responsible|Yes][167|2|Search_Description|Yes][167|1036|Project_Manager|Yes] odata 1 filters 0');
+        Observer.Expect('odata insert', 'No');
+        Observer.Expect('select ok', 'Yes');
+        Observer.Expect('v3 ok', 'Yes');
+        Observer.Expect('v4 ok', 'Yes');
+        Observer.Expect('select text', '[$select=No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager]');
+        Observer.Expect('v3 text', '[]');
+        Observer.Expect('v4 text', '[]');
+        Observer.Expect('clauses after', '[$select=No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager][][]');
+        Observer.Expect('rows after', 'columns 21 new 7:[167|1|No|Yes][167|3|Description|Yes][167|5|Bill_to_Customer_No|Yes][167|19|Status|Yes][167|20|Person_Responsible|Yes][167|2|Search_Description|Yes][167|1036|Project_Manager|Yes] odata 1 filters 0');
+        Observer.Expect('counts after', '17|64|409|29');
+        Observer.Expect('restored: all rows as before', 'Yes');
+        Observer.Expect('counts restored', '17|64|402|29');
+        Observer.Verify();
     end;
 }

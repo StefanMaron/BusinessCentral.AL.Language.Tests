@@ -447,7 +447,7 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         exit(OData.FindFirst());
     end;
 
-    local procedure RjRowsOf(Id: RecordId): Text
+    local procedure RjRowsOf(Id: RecordId; FromEntry: Integer): Text
     var
         Columns: Record "Tenant Web Service Columns";
         OData: Record "Tenant Web Service OData";
@@ -455,7 +455,9 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Result: Text;
     begin
         Columns.SetRange(TenantWebServiceID, Id);
-        Result := 'columns ' + Format(Columns.Count()) + ':';
+        Result := 'columns ' + Format(Columns.Count());
+        Columns.SetFilter("Entry ID", '>%1', FromEntry);
+        Result += ' new ' + Format(Columns.Count()) + ':';
         if Columns.FindSet() then
             repeat
                 Result += '[' + Format(Columns."Data Item") + '|' + Format(Columns."Field Number") + '|' + Columns."Field Name" + '|' + Format(Columns.Include) + ']';
@@ -493,7 +495,7 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
 
         TenantWebService.Get(TenantWebService."Object Type"::Query, 'SegmentLines');
         Observer.Observe('row', Format(TenantWebService."Object Type") + '|' + TenantWebService."Service Name" + '|' + Format(TenantWebService."Object ID") + '|' + Format(TenantWebService.Published));
-        Observer.Observe('rows before columns', RjRowsOf(TenantWebService.RecordId));
+        Observer.Observe('rows before columns', RjRowsOf(TenantWebService.RecordId, MaxEntry));
         ODataUtility.GetTenantWebServiceMetadata(TenantWebService, metaData);
         Observer.Observe('metadata is null', Format(IsNull(metaData)));
         WebServiceManagement.CreateTenantWebServiceColumnForQuery(TenantWebService.RecordId, 1, DATABASE::"Segment Line", metaData);
@@ -529,7 +531,7 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         RjFindOData(TenantWebServiceOData, TenantWebService.RecordId);
         Observer.Observe('clauses read back', '[' + WebServiceManagement.GetODataSelectClause(TenantWebServiceOData) + '][' +
           WebServiceManagement.GetODataFilterClause(TenantWebServiceOData) + '][' + WebServiceManagement.GetODataV4FilterClause(TenantWebServiceOData) + ']');
-        Observer.Observe('rows after', RjRowsOf(TenantWebService.RecordId));
+        Observer.Observe('rows after', RjRowsOf(TenantWebService.RecordId, MaxEntry));
         Observer.Observe('counts after', RjCounts());
 
         Columns.Reset();

@@ -627,6 +627,57 @@ codeunit 61286 "LT S Media Files"
         exit(Result);
     end;
 
+    // Which of the likely names (prefix + separator + index + extension) AL File.Exists finds after an export, with the file length.
+    local procedure RjCandidates(Prefix: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row"): Text
+    var
+        F: File;
+        Seps: List of [Text];
+        Exts: List of [Text];
+        Sep: Text;
+        Ext: Text;
+        Name: Text;
+        Result: Text;
+        i: Integer;
+    begin
+        Seps.Add('');
+        Seps.Add('-');
+        Seps.Add('_');
+        Seps.Add(' ');
+        Seps.Add('.');
+        Seps.Add('/');
+        Exts.Add('');
+        Exts.Add('.jpg');
+        Exts.Add('.jpeg');
+        Exts.Add('.png');
+        Exts.Add('.JPG');
+        Exts.Add('.PNG');
+        Exts.Add('.bin');
+        for i := 0 to 3 do
+            foreach Sep in Seps do
+                foreach Ext in Exts do begin
+                    Name := Prefix + Sep + Format(i) + Ext;
+                    if File.Exists(Name) then begin
+                        F.Open(Name);
+                        Result += '[' + RjMaskAll(Name, Dir, Row1, Row2) + '|len=' + Format(F.Len()) + ']';
+                        F.Close();
+                    end;
+                end;
+        foreach Ext in Exts do
+            if File.Exists(Prefix + Ext) then
+                Result += '[' + RjMaskAll(Prefix + Ext, Dir, Row1, Row2) + ']';
+        for i := 1 to Row2.Set.Count() do
+            foreach Sep in Seps do
+                foreach Ext in Exts do begin
+                    Name := Prefix + Sep + Format(Row2.Set.Item(i)) + Ext;
+                    if File.Exists(Name) then
+                        Result += '[' + RjMaskAll(Name, Dir, Row1, Row2) + ']';
+                    Name := Prefix + Sep + DelChr(Format(Row2.Set.Item(i)), '=', '{}') + Ext;
+                    if File.Exists(Name) then
+                        Result += '[' + RjMaskAll(Name, Dir, Row1, Row2) + ']';
+                end;
+        exit(Result);
+    end;
+
     [TryFunction]
     local procedure RjTryList(var Result: Text; Folder: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row")
     begin
@@ -681,6 +732,7 @@ codeunit 61286 "LT S Media Files"
         Count2 := RjExportSet(Row2, MediaFolder);
         RjObserver.Observe('export count two items', Format(Count2));
         RjObserver.Observe('media folder after two', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('al file names after two', RjCandidates(MediaFolder + '\' + Format(Row2.Set), Dir, Row1, Row2));
         RjObserver.Observe('package folder after two, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         Count1 := RjExportSet(Row1, MediaFolder);
         RjObserver.Observe('export count one item again', Format(Count1));
@@ -692,6 +744,7 @@ codeunit 61286 "LT S Media Files"
         // the same with a prefix that has no backslash: CombinePath(MediaFolder, Format(Set))
         Count2 := Row2.Set.ExportFile(FileManagement.CombinePath(MediaFolder, Format(Row2.Set)));
         RjObserver.Observe('slash prefix export count', Format(Count2));
+        RjObserver.Observe('slash prefix al file names', RjCandidates(FileManagement.CombinePath(MediaFolder, Format(Row2.Set)), Dir, Row1, Row2));
         RjObserver.Observe('slash prefix media folder', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('slash prefix package folder, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         FileManagement.ServerRemoveDirectory(Dir, true);
