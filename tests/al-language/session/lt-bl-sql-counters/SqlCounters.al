@@ -315,7 +315,9 @@ codeunit 81861 "LT BL Sql Counters"
         Executed := After - Before;
         Observer.Observe('within (0, 100]', Format((Executed > 0) and (Executed <= 100)));
         Observer.Observe('raw', Format(Executed));
-        Observer.Finish();
+        Observer.Expect('within (0, 100]', 'Yes');
+        Observer.Expect('raw', '3');
+        Observer.Verify();
     end;
 
     // Each value: three measurements "statements/rows" of the same operations.
@@ -326,7 +328,17 @@ codeunit 81861 "LT BL Sql Counters"
     begin
         RoSeries(Observer, 'insert', 1);
         RoSeries(Observer, 'insert+count', 2);
-        Observer.Finish();
+        Observer.Expect('insert N=1', '0/0 0/0 0/0');
+        Observer.Expect('insert N=2', '0/0 0/0 0/0');
+        Observer.Expect('insert N=5', '1/0 1/0 1/0');
+        Observer.Expect('insert N=10', '2/0 2/0 2/0');
+        Observer.Expect('insert N=20', '4/0 4/0 4/0');
+        Observer.Expect('insert+count N=1', '2/1 2/1 2/1');
+        Observer.Expect('insert+count N=2', '3/1 3/1 3/1');
+        Observer.Expect('insert+count N=5', '2/1 2/1 2/1');
+        Observer.Expect('insert+count N=10', '3/1 3/1 3/1');
+        Observer.Expect('insert+count N=20', '5/1 5/1 5/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -337,7 +349,22 @@ codeunit 81861 "LT BL Sql Counters"
         RoSeries(Observer, 'get distinct', 3);
         RoSeries(Observer, 'get same', 4);
         RoSeries(Observer, 'findset loop', 5);
-        Observer.Finish();
+        Observer.Expect('get distinct N=1', '1/1 1/1 1/1');
+        Observer.Expect('get distinct N=2', '2/2 2/2 2/2');
+        Observer.Expect('get distinct N=5', '5/5 5/5 5/5');
+        Observer.Expect('get distinct N=10', '10/10 10/10 10/10');
+        Observer.Expect('get distinct N=20', '20/20 20/20 20/20');
+        Observer.Expect('get same N=1', '1/1 1/1 1/1');
+        Observer.Expect('get same N=2', '1/1 1/1 1/1');
+        Observer.Expect('get same N=5', '1/1 1/1 1/1');
+        Observer.Expect('get same N=10', '1/1 1/1 1/1');
+        Observer.Expect('get same N=20', '1/1 1/1 1/1');
+        Observer.Expect('findset loop N=1', '1/2 1/2 1/2');
+        Observer.Expect('findset loop N=2', '1/3 1/3 1/3');
+        Observer.Expect('findset loop N=5', '1/6 1/6 1/6');
+        Observer.Expect('findset loop N=10', '1/11 1/11 1/11');
+        Observer.Expect('findset loop N=20', '1/21 1/21 1/21');
+        Observer.Verify();
     end;
 
     [Test]
@@ -349,6 +376,26 @@ codeunit 81861 "LT BL Sql Counters"
         RoSeries(Observer, 'delete', 7);
         RoSeries(Observer, 'deleteall', 8);
         RoSeries(Observer, 'count', 9);
-        Observer.Finish();
+        Observer.Expect('modify N=1', '2/2 2/2 2/2');
+        Observer.Expect('modify N=2', '4/4 4/4 4/4');
+        Observer.Expect('modify N=5', '10/10 10/10 10/10');
+        Observer.Expect('modify N=10', '20/20 20/20 20/20');
+        Observer.Expect('modify N=20', '40/40 40/40 40/40');
+        Observer.Expect('delete N=1', '2/1 2/1 2/1');
+        Observer.Expect('delete N=2', '4/2 4/2 4/2');
+        Observer.Expect('delete N=5', '10/5 10/5 10/5');
+        Observer.Expect('delete N=10', '20/10 20/10 20/10');
+        Observer.Expect('delete N=20', '40/20 40/20 40/20');
+        Observer.Expect('deleteall N=1', '1/0 1/0 1/0');
+        Observer.Expect('deleteall N=2', '1/0 1/0 1/0');
+        Observer.Expect('deleteall N=5', '1/0 1/0 1/0');
+        Observer.Expect('deleteall N=10', '1/0 1/0 1/0');
+        Observer.Expect('deleteall N=20', '1/0 1/0 1/0');
+        Observer.Expect('count N=1', '1/1 1/1 1/1');
+        Observer.Expect('count N=2', '1/1 1/1 1/1');
+        Observer.Expect('count N=5', '1/1 1/1 1/1');
+        Observer.Expect('count N=10', '1/1 1/1 1/1');
+        Observer.Expect('count N=20', '1/1 1/1 1/1');
+        Observer.Verify();
     end;
 }

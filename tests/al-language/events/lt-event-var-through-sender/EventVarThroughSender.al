@@ -292,7 +292,14 @@ codeunit 74364 "LT EvVar Tests"
         Observer.Observe('5 nested, sender sets, nested reads params', RoNested(5));
         Observer.Observe('6 nested, params by value', RoNested(6));
         Observer.Observe('7 nested sets, subscriber reads sender after return', RoNested(7));
-        Observer.Finish();
+        Observer.Expect('1 subscriber sets, reads sender', 'sender:Yes/42/set by subscriber;params at end:Yes/42/set by subscriber;globals:Yes/42/set by subscriber');
+        Observer.Expect('2 nested var sender', 'sender:Yes/42/set by nested;params at end:Yes/42/set by nested;globals:Yes/42/set by nested');
+        Observer.Expect('3 nested sender by value', 'value sender:Yes/42/set by nested;params at end:Yes/42/set by nested;globals:Yes/42/set by nested');
+        Observer.Expect('4 two levels', 'sender:Yes/42/set by nested;sender in outer:Yes/42/set by nested;params at end:Yes/42/set by nested;globals:Yes/42/set by nested');
+        Observer.Expect('5 nested, sender sets, nested reads params', 'nested params:Yes/5/set by sender;params at end:Yes/5/set by sender;globals:Yes/5/set by sender');
+        Observer.Expect('6 nested, params by value', 'sender:No/1/initial;params at end:No/1/initial;globals:No/1/initial');
+        Observer.Expect('7 nested sets, subscriber reads sender after return', 'sender after return:Yes/42/set by nested;params at end:Yes/42/set by nested;globals:Yes/42/set by nested');
+        Observer.Verify();
     end;
 
     [Test]
@@ -311,7 +318,11 @@ codeunit 74364 "LT EvVar Tests"
         Observer.Observe('nested: sender saw', Format(Setter.GetFlagSeenBySender()));
         Observer.Observe('nested: after event', Format(Result));
         UnbindSubscription(Setter);
-        Observer.Finish();
+        Observer.Expect('direct: sender saw', 'Yes');
+        Observer.Expect('direct: after event', 'Yes');
+        Observer.Expect('nested: sender saw', 'Yes');
+        Observer.Expect('nested: after event', 'Yes');
+        Observer.Verify();
     end;
 }
 

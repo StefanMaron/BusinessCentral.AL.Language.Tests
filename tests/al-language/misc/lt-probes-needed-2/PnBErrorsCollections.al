@@ -277,31 +277,46 @@ codeunit 70550 "LT PnB ErrorInfo"
         RoRaiseFull(ErrType, true);
     end;
 
-    local procedure RoDescribe(Info: ErrorInfo): Text
+    // The message goes last and on its own: the Probe Observer cuts a value after "Correlation ID: " up to the next backslash.
+    local procedure RoObserveInfo(var Obs: Codeunit "Probe Observer"; Name: Text; Info: ErrorInfo)
     var
         DimKey: Text;
         Dims: Text;
+        Cr: Text[1];
+        Lf: Text[1];
+        Lines: List of [Text];
+        Line: Text;
+        N: Integer;
     begin
         foreach DimKey in Info.CustomDimensions.Keys() do
             Dims += DimKey + '=' + Info.CustomDimensions.Get(DimKey) + ',';
-        exit('message=' + Info.Message + ';type=' + Format(Info.ErrorType) + ';dims=' + Format(Info.CustomDimensions.Count()) + ':' + Dims +
-            ';detailed=' + Info.DetailedMessage + ';collectible=' + Format(Info.Collectible));
+        Obs.Observe(Name + ' type', Format(Info.ErrorType));
+        Obs.Observe(Name + ' dims', Format(Info.CustomDimensions.Count()) + ':' + Dims);
+        Obs.Observe(Name + ' detailed', Info.DetailedMessage);
+        Obs.Observe(Name + ' collectible', Format(Info.Collectible));
+        Cr[1] := 13;
+        Lf[1] := 10;
+        Lines := Info.Callstack.Replace(Cr, '').Split(Lf);
+        Obs.Observe(Name + ' callstack lines', Format(Lines.Count()));
+        foreach Line in Lines do begin
+            N += 1;
+            Obs.Observe(Name + ' callstack ' + Format(N), Line);
+        end;
+        Obs.Observe(Name + ' message', Info.Message);
     end;
 
     [ErrorBehavior(ErrorBehavior::Collect)]
-    local procedure RoCollect(ErrType: ErrorType; Nested: Boolean; Clear: Boolean; var Described: Text; var Callstack: Text)
+    local procedure RoCollect(ErrType: ErrorType; Nested: Boolean; Clear: Boolean; var Count: Integer; var Info: ErrorInfo)
     var
         Errors: List of [ErrorInfo];
-        Info: ErrorInfo;
     begin
         if Nested then
             RoRaiseNested(ErrType)
         else
             RoRaiseFull(ErrType, true);
         Errors := GetCollectedErrors(Clear);
+        Count := Errors.Count();
         Errors.Get(1, Info);
-        Described := 'count=' + Format(Errors.Count()) + ';' + RoDescribe(Info);
-        Callstack := Info.Callstack;
     end;
 
     [ErrorBehavior(ErrorBehavior::Collect)]
@@ -314,17 +329,17 @@ codeunit 70550 "LT PnB ErrorInfo"
     procedure RO_CollectedErrorInfo_Internal_And_Client()
     var
         Obs: Codeunit "Probe Observer";
-        Described: Text;
-        Callstack: Text;
+        Info: ErrorInfo;
+        Count: Integer;
     begin
-        RoCollect(ErrorType::Internal, false, true, Described, Callstack);
-        Obs.Observe('internal', Described);
-        Obs.Observe('internal callstack', Callstack);
-        RoCollect(ErrorType::Client, false, true, Described, Callstack);
-        Obs.Observe('client', Described);
-        Obs.Observe('client callstack', Callstack);
-        RoCollect(ErrorType::Internal, true, true, Described, Callstack);
-        Obs.Observe('internal nested callstack', Callstack);
+        RoCollect(ErrorType::Internal, false, true, Count, Info);
+        Obs.Observe('internal count', Format(Count));
+        RoObserveInfo(Obs, 'internal', Info);
+        RoCollect(ErrorType::Client, false, true, Count, Info);
+        Obs.Observe('client count', Format(Count));
+        RoObserveInfo(Obs, 'client', Info);
+        RoCollect(ErrorType::Internal, true, true, Count, Info);
+        RoObserveInfo(Obs, 'internal nested', Info);
         Obs.Finish();
     end;
 
@@ -332,11 +347,12 @@ codeunit 70550 "LT PnB ErrorInfo"
     procedure RO_CollectedErrorInfo_Internal_NotCleared_ScopeExit()
     var
         Obs: Codeunit "Probe Observer";
-        Described: Text;
-        Callstack: Text;
+        Info: ErrorInfo;
+        Count: Integer;
     begin
-        asserterror RoCollect(ErrorType::Internal, false, false, Described, Callstack);
-        Obs.Observe('kept: described', Described);
+        asserterror RoCollect(ErrorType::Internal, false, false, Count, Info);
+        Obs.Observe('kept: count', Format(Count));
+        Obs.Observe('kept: message', Info.Message);
         Obs.ObserveError('kept: scope exit');
         asserterror RoCollectInternalAndLeave();
         Obs.ObserveError('left: scope exit');

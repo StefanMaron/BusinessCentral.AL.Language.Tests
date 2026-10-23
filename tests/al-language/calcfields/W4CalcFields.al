@@ -489,7 +489,19 @@ codeunit 68042 "W4 CalcFields Tests"
         Observer.Observe('text quoted 10|200..299|400..499', Format(Summary.TextUnion, 0, 9));
         Observer.Observe('integer quoted 10|200..299|400..499', Format(Summary.IntUnion, 0, 9));
         Observer.Observe('count code quoted 10|200..299|400..499', Format(Summary.CountUnion));
-        Observer.Finish();
+        Observer.Expect('code quoted 10|200..299|400..499', '12335');
+        Observer.Expect('code unquoted 10|200..299|400..499', '12335');
+        Observer.Expect('code quoted 200..299', '12302');
+        Observer.Expect('code quoted ..199', '321');
+        Observer.Expect('code quoted 400..', '3744');
+        Observer.Expect('code quoted <>10&<>250', '16380');
+        Observer.Expect('code quoted >=400', '3744');
+        Observer.Expect('code quoted A..C|X', '2560');
+        Observer.Expect('code quoted 10 | 200..299', '12303');
+        Observer.Expect('text quoted 10|200..299|400..499', '12335');
+        Observer.Expect('integer quoted 10|200..299|400..499', '12323');
+        Observer.Expect('count code quoted 10|200..299|400..499', '7');
+        Observer.Verify();
     end;
 
     [Test]

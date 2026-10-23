@@ -466,7 +466,28 @@ codeunit 72507 "LT SyT Round"
         Big := 5;
         asserterror Big := Round(Big, 1, 'q');
         Observer.ObserveError('biginteger q');
-        Observer.Finish();
+        Observer.Expect('q from a procedure|text', 'The supplied value is not valid.');
+        Observer.Expect('q from a procedure|code', 'InvalidValue');
+        Observer.Expect('try [q]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [Q]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [X]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [ ]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [  ]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [<>]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [==]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [<<]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [=<]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [< ]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [ <]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [ = ]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [1]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [0]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [up]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('integer q|text', 'The supplied value is not valid.');
+        Observer.Expect('integer q|code', 'InvalidValue');
+        Observer.Expect('biginteger q|text', 'The supplied value is not valid.');
+        Observer.Expect('biginteger q|code', 'InvalidValue');
+        Observer.Verify();
     end;
 
     [Test]
@@ -478,7 +499,9 @@ codeunit 72507 "LT SyT Round"
         ClearLastError();
         Observer.Observe('codeunit.run', Format(Runner.Run()));
         Observer.Observe('last error', GetLastErrorText() + '|' + GetLastErrorCode());
-        Observer.Finish();
+        Observer.Expect('codeunit.run', 'No');
+        Observer.Expect('last error', 'The supplied value is not valid.|InvalidValue');
+        Observer.Verify();
     end;
 }
 

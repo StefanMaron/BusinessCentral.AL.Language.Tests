@@ -175,6 +175,14 @@ codeunit 80980 "BC Round Duration"
         D := 0;
         Observer.Observe('zero empty', RoRndDir(D, ''));
         Observer.Observe('zero q', RoRndDir(D, 'q'));
-        Observer.Finish();
+        Observer.Expect('empty', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('>>', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('q', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('space', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('<>', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('< ', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('zero empty', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('zero q', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Verify();
     end;
 }

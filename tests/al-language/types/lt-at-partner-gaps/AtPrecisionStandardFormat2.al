@@ -813,7 +813,8 @@ codeunit 80004 "LT AT Precision Std Format 2"
         Row.Dec5 := 1234;
         Actual += '|' + Format(Row.Dec5, 0, '<Integer>');
         Observer.Observe('Dec5 5|1234', Actual);
-        Observer.Finish();
+        Observer.Expect('Dec5 5|1234', '5|1234');
+        Observer.Verify();
     end;
 
     local procedure RoQsRow(Row: Record "LT QS Std Fmt Row"; Spec: Text): Text
@@ -890,7 +891,9 @@ codeunit 80004 "LT AT Precision Std Format 2"
         RoQsValues(Observer, '<Integer>');
         RoQsValues(Observer, '<Integer Thousand>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('<Integer>', '5|5|5|5|5 ; 1234|1234|1234|1234|1234 ; 1234|1234|1234|1234|1234 ; 0|0|0|0|0 ; 0|0|0|0|0 ; 1234567|1234567|1234567|1234567|1234567');
+        Observer.Expect('<Integer Thousand>', '5|5|5|5|5 ; 1,234|1,234|1,234|1,234|1,234 ; 1,234|1,234|1,234|1,234|1,234 ; 0|0|0|0|0 ; 0|0|0|0|0 ; 1,234,567|1,234,567|1,234,567|1,234,567|1,234,567');
+        Observer.Verify();
     end;
 
     [Test]
@@ -904,7 +907,14 @@ codeunit 80004 "LT AT Precision Std Format 2"
         RoQsValues(Observer, '<Decimals>');
         RoQsValues(Observer, '<Integer><Decimals>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('<Decimals>', '.00|.00|.0|| ; .00|.00|.0|| ; .57|.5678|.6|.5678|.5678 ; .50|.50|.5|.5|.5 ; .00|.00|.0|| ; .25|.25|.3|.25|.25');
+        Observer.Expect('<Integer><Decimals>', '5.00|5.00|5.0|5|5 ; 1234.00|1234.00|1234.0|1234|1234 ; 1234.57|1234.5678|1234.6|1234.5678|1234.5678 ; 0.50|0.50|0.5|0.5|0.5 ; 0.00|0.00|0.0|0|0 ; 1234567.25|1234567.25|1234567.3|1234567.25|1234567.25');
+#else
+        Observer.Expect('<Decimals>', '|.00|.0|| ; |.00|.0|| ; .5678|.5678|.6|.5678|.5678 ; .5|.50|.5|.5|.5 ; |.00|.0|| ; .25|.25|.3|.25|.25');
+        Observer.Expect('<Integer><Decimals>', '5|5.00|5.0|5|5 ; 1234|1234.00|1234.0|1234|1234 ; 1234.5678|1234.5678|1234.6|1234.5678|1234.5678 ; 0.5|0.50|0.5|0.5|0.5 ; 0|0.00|0.0|0|0 ; 1234567.25|1234567.25|1234567.3|1234567.25|1234567.25');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -918,7 +928,14 @@ codeunit 80004 "LT AT Precision Std Format 2"
         RoQsValues(Observer, '<Sign><Integer Thousand><Decimals>');
         RoQsValues(Observer, '<Standard Format,0>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('<Sign><Integer Thousand><Decimals>', '5.00|5.00|5.0|5|5 ; 1,234.00|1,234.00|1,234.0|1,234|1,234 ; 1,234.57|1,234.5678|1,234.6|1,234.5678|1,234.5678 ; -0.50|-0.50|-0.5|-0.5|-0.5 ; 0.00|0.00|0.0|0|0 ; -1,234,567.25|-1,234,567.25|-1,234,567.3|-1,234,567.25|-1,234,567.25');
+        Observer.Expect('<Standard Format,0>', '5.00|5.00|5.0|5|5 ; 1,234.00|1,234.00|1,234.0|1,234|1,234 ; 1,234.57|1,234.5678|1,234.6|1,234.5678|1,234.5678 ; -0.50|-0.50|-0.5|-0.5|-0.5 ; 0.00|0.00|0.0|0|0 ; -1,234,567.25|-1,234,567.25|-1,234,567.3|-1,234,567.25|-1,234,567.25');
+#else
+        Observer.Expect('<Sign><Integer Thousand><Decimals>', '5|5.00|5.0|5|5 ; 1,234|1,234.00|1,234.0|1,234|1,234 ; 1,234.5678|1,234.5678|1,234.6|1,234.5678|1,234.5678 ; -0.5|-0.50|-0.5|-0.5|-0.5 ; 0|0.00|0.0|0|0 ; -1,234,567.25|-1,234,567.25|-1,234,567.3|-1,234,567.25|-1,234,567.25');
+        Observer.Expect('<Standard Format,0>', '5|5.00|5.0|5|5 ; 1,234|1,234.00|1,234.0|1,234|1,234 ; 1,234.5678|1,234.5678|1,234.6|1,234.5678|1,234.5678 ; -0.5|-0.50|-0.5|-0.5|-0.5 ; 0|0.00|0.0|0|0 ; -1,234,567.25|-1,234,567.25|-1,234,567.3|-1,234,567.25|-1,234,567.25');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -932,7 +949,14 @@ codeunit 80004 "LT AT Precision Std Format 2"
         RoQsValues(Observer, '<Standard Format,1>');
         RoQsValues(Observer, '<Standard Format,9>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('<Standard Format,1>', '5.00|5.00|5.0|5|5 ; 1234.00|1234.00|1234.0|1234|1234 ; 1234.57|1234.5678|1234.6|1234.5678|1234.5678 ; -0.50|-0.50|-0.5|-0.5|-0.5 ; 0.00|0.00|0.0|0|0 ; -1234567.25|-1234567.25|-1234567.3|-1234567.25|-1234567.25');
+        Observer.Expect('<Standard Format,9>', '5.00|5.00|5.0|5|5 ; 1234.00|1234.00|1234.0|1234|1234 ; 1234.57|1234.5678|1234.6|1234.5678|1234.5678 ; -0.50|-0.50|-0.5|-0.5|-0.5 ; 0.00|0.00|0.0|0|0 ; -1234567.25|-1234567.25|-1234567.3|-1234567.25|-1234567.25');
+#else
+        Observer.Expect('<Standard Format,1>', '5|5.00|5.0|5|5 ; 1234|1234.00|1234.0|1234|1234 ; 1234.5678|1234.5678|1234.6|1234.5678|1234.5678 ; -0.5|-0.50|-0.5|-0.5|-0.5 ; 0|0.00|0.0|0|0 ; -1234567.25|-1234567.25|-1234567.3|-1234567.25|-1234567.25');
+        Observer.Expect('<Standard Format,9>', '5|5.00|5.0|5|5 ; 1234|1234.00|1234.0|1234|1234 ; 1234.5678|1234.5678|1234.6|1234.5678|1234.5678 ; -0.5|-0.50|-0.5|-0.5|-0.5 ; 0|0.00|0.0|0|0 ; -1234567.25|-1234567.25|-1234567.3|-1234567.25|-1234567.25');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -947,7 +971,10 @@ codeunit 80004 "LT AT Precision Std Format 2"
         RoRoValues(Observer, '<Integer Thousand>');
         RoRoValues(Observer, '<Decimals>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('<Integer>', '5|5|5|5 ; 1234|1234|1234|1234 ; 1234|1235|1234|1234 ; 0|1|0|0 ; 0|0|0|0 ; 1234567|1234567|1234567|1234567');
+        Observer.Expect('<Integer Thousand>', '5|5|5|5 ; 1,234|1,234|1,234|1,234 ; 1,234|1,235|1,234|1,234 ; 0|1|0|0 ; 0|0|0|0 ; 1,234,567|1,234,567|1,234,567|1,234,567');
+        Observer.Expect('<Decimals>', '.00||.000| ; .00||.000| ; .57||.5678|.5678 ; .50||.500|.5 ; .00||.000| ; .25||.250|.25');
+        Observer.Verify();
     end;
 
     [Test]
@@ -962,7 +989,10 @@ codeunit 80004 "LT AT Precision Std Format 2"
         RoRoValues(Observer, '<Sign><Integer Thousand><Decimals>');
         RoRoValues(Observer, '<Standard Format,0>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('<Integer><Decimals>', '5.00|5|5.000|5 ; 1234.00|1234|1234.000|1234 ; 1234.57|1235|1234.5678|1234.5678 ; 0.50|1|0.500|0.5 ; 0.00|0|0.000|0 ; 1234567.25|1234567|1234567.250|1234567.25');
+        Observer.Expect('<Sign><Integer Thousand><Decimals>', '5.00|5|5.000|5 ; 1,234.00|1,234|1,234.000|1,234 ; 1,234.57|1,235|1,234.5678|1,234.5678 ; -0.50|-1|-0.500|-0.5 ; 0.00|0|0.000|0 ; -1,234,567.25|-1,234,567|-1,234,567.250|-1,234,567.25');
+        Observer.Expect('<Standard Format,0>', '5.00|5|5.000|5 ; 1,234.00|1,234|1,234.000|1,234 ; 1,234.57|1,235|1,234.5678|1,234.5678 ; -0.50|-1|-0.500|-0.5 ; 0.00|0|0.000|0 ; -1,234,567.25|-1,234,567|-1,234,567.250|-1,234,567.25');
+        Observer.Verify();
     end;
 
     [Test]
@@ -977,7 +1007,10 @@ codeunit 80004 "LT AT Precision Std Format 2"
         RoRoValues(Observer, '<Standard Format,9>');
         RoRoValues(Observer, '<Integer Thousand><Decimals,3>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('<Standard Format,1>', '5.00|5|5.000|5 ; 1234.00|1234|1234.000|1234 ; 1234.57|1235|1234.5678|1234.5678 ; -0.50|-1|-0.500|-0.5 ; 0.00|0|0.000|0 ; -1234567.25|-1234567|-1234567.250|-1234567.25');
+        Observer.Expect('<Standard Format,9>', '5.00|5|5.000|5 ; 1234.00|1234|1234.000|1234 ; 1234.57|1235|1234.5678|1234.5678 ; -0.50|-1|-0.500|-0.5 ; 0.00|0|0.000|0 ; -1234567.25|-1234567|-1234567.250|-1234567.25');
+        Observer.Expect('<Integer Thousand><Decimals,3>', '5.00|5.00|5.00|5.00 ; 1,234.00|1,234.00|1,234.00|1,234.00 ; 1,234.57|1,235.00|1,234***|1,234*** ; 0.50|1.00|0.50|0.50 ; 0.00|0.00|0.00|0.00 ; 1,234,567.25|1,234,567.00|1,234,567.25|1,234,567.25');
+        Observer.Verify();
     end;
 
     [Test]
@@ -990,7 +1023,8 @@ codeunit 80004 "LT AT Precision Std Format 2"
         GlobalLanguage(1033);
         RoRoValues(Observer, '<Integer>.<Decimals>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('<Integer>.<Decimals>', '5..00|5.|5..000|5. ; 1234..00|1234.|1234..000|1234. ; 1234..57|1235.|1234..5678|1234..5678 ; 0..50|1.|0..500|0..5 ; 0..00|0.|0..000|0. ; 1234567..25|1234567.|1234567..250|1234567..25');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1005,7 +1039,10 @@ codeunit 80004 "LT AT Precision Std Format 2"
         RoRoValues(Observer, '<Integer><Decimals>');
         RoRoValues(Observer, '<Standard Format,0>');
         GlobalLanguage(Orig);
-        Observer.Finish();
+        Observer.Expect('<Integer Thousand>', '5|5|5|5 ; 1,234|1,234|1,234|1,234 ; 1,234|1,235|1,234|1,234 ; 0|1|0|0 ; 0|0|0|0 ; 1,234,567|1,234,567|1,234,567|1,234,567');
+        Observer.Expect('<Integer><Decimals>', '5.00|5|5.000|5 ; 1234.00|1234|1234.000|1234 ; 1234.57|1235|1234.5678|1234.5678 ; 0.50|1|0.500|0.5 ; 0.00|0|0.000|0 ; 1234567.25|1234567|1234567.250|1234567.25');
+        Observer.Expect('<Standard Format,0>', '5.00|5|5.000|5 ; 1,234.00|1,234|1,234.000|1,234 ; 1,234.57|1,235|1,234.5678|1,234.5678 ; -0.50|-1|-0.500|-0.5 ; 0.00|0|0.000|0 ; -1,234,567.25|-1,234,567|-1,234,567.250|-1,234,567.25');
+        Observer.Verify();
     end;
 }
 
