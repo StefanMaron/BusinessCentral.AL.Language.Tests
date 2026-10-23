@@ -98,6 +98,7 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Visited: Text;
         Sorted: Text;
         FullNameOk: Boolean;
+        FullNameBackslashOk: Boolean;
         Count: Integer;
         Name: Text;
     begin
@@ -113,6 +114,7 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         DirectoryInfo := DirectoryInfo.DirectoryInfo(Path);
         Observer.Observe('created exists', Format(DirectoryInfo.Exists));
         FullNameOk := true;
+        FullNameBackslashOk := true;
         Enumerator := DirectoryInfo.GetFiles('*.xml').GetEnumerator();
         while Enumerator.MoveNext() do begin
             FileInfo := Enumerator.Current;
@@ -120,9 +122,12 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
             Names.Add(FileInfo.Name);
             if FileInfo.FullName <> Path + '/' + FileInfo.Name then
                 FullNameOk := false;
+            if FileInfo.FullName <> Path + '\' + FileInfo.Name then
+                FullNameBackslashOk := false;
         end;
         Observer.Observe('count', Format(Count));
         Observer.Observe('fullname is path + / + name', Format(FullNameOk));
+        Observer.Observe('fullname is path + \ + name', Format(FullNameBackslashOk));
         foreach Name in Names do
             if Name = 'a.xml' then
                 Sorted += 'a.xml,';
@@ -142,10 +147,14 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Directory.Delete(Path, true);
         Observer.Expect('missing exists', 'No');
         Observer.Expect('created exists', 'Yes');
-        Observer.Ignore('count');
-        Observer.Ignore('fullname is path + / + name');
-        Observer.Ignore('names (fixed order)');
-        Observer.Ignore('enumeration order');
+        // Windows BC 27.5, 28.5 and 29.0 (windows-check QX item 14, 2026-10-22) and bc-linux dc007079 (bc-linux #175, #183): the pattern
+        // matches case-insensitively (b.XML; not e.xml.bak or d.txt), the files come in name order, and FullName joins with a backslash.
+        // The older Linux image listed no file.
+        Observer.Expect('count', '3');
+        Observer.Expect('fullname is path + / + name', 'No');
+        Observer.Expect('fullname is path + \ + name', 'Yes');
+        Observer.Expect('names (fixed order)', 'a.xml,b.XML,c.xml,');
+        Observer.Expect('enumeration order', 'a.xml,b.XML,c.xml,');
         Observer.Verify();
     end;
 
