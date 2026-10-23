@@ -176,6 +176,9 @@ codeunit 60254 "Test Codeunit Run Write Tx"
     // Writer RN (al-runner issue 5767): LockTable without a write, and a read under ReadIsolation UpdLock or RepeatableRead:
     // Database.IsInWriteTransaction afterwards, and whether the guarded Codeunit.Run is then refused (error text and code)
     // or runs (the marker row the run codeunit commits).
+    // Measured (BC 29.0; 27.5 and 28.5 by CI): LockTable on a database record, and setting ReadIsolation UpdLock or a read under
+    // UpdLock or RepeatableRead (not ReadCommitted), make IsInWriteTransaction Yes; the guarded Codeunit.Run then fails with DB:Ok
+    // "An error occurred and the transaction is stopped. ..." and does not run. LockTable on a temporary record does not; Commit ends it.
     local procedure RnSeedCommitted()
     var
         ALTUniversal: Record "ALT Universal";
@@ -221,7 +224,12 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         Observer.Observe('after_commit', RnTx());
         ALTUniversal.FindFirst();
         Observer.Observe('read_after_commit', RnTx());
-        Observer.Finish();
+        Observer.Expect('start', 'No');
+        Observer.Expect('after_locktable', 'Yes');
+        Observer.Expect('after_locked_read', 'Yes');
+        Observer.Expect('after_commit', 'No');
+        Observer.Expect('read_after_commit', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -234,7 +242,12 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         TempUniversal.LockTable();
         Observer.Observe('after_temp_locktable', RnTx());
         RnGuardedRun(Observer);
-        Observer.Finish();
+        Observer.Expect('after_temp_locktable', 'No');
+        Observer.Expect('tx_before_run', 'No');
+        Observer.Expect('run|text', 'RN no error, run returned Yes');
+        Observer.Expect('run|code', 'Dialog');
+        Observer.Expect('marker', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -259,7 +272,11 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         Committed.ReadIsolation := IsolationLevel::ReadCommitted;
         Committed.FindFirst();
         Observer.Observe('readcommitted_read', RnTx());
-        Observer.Finish();
+        Observer.Expect('updlock_set', 'Yes');
+        Observer.Expect('updlock_read', 'Yes');
+        Observer.Expect('repeatable_read', 'Yes');
+        Observer.Expect('readcommitted_read', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -271,7 +288,11 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         Initialize();
         ALTUniversal.LockTable();
         RnGuardedRun(Observer);
-        Observer.Finish();
+        Observer.Expect('tx_before_run', 'Yes');
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('marker', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -284,7 +305,11 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         ALTUniversal.LockTable();
         Commit();
         RnGuardedRun(Observer);
-        Observer.Finish();
+        Observer.Expect('tx_before_run', 'No');
+        Observer.Expect('run|text', 'RN no error, run returned Yes');
+        Observer.Expect('run|code', 'Dialog');
+        Observer.Expect('marker', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -298,7 +323,9 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         Codeunit.Run(Codeunit::"ALT Run Tx Inserter");
         Observer.Observe('marker', Format(MarkerRowCount()));
         Observer.Observe('tx_after_run', RnTx());
-        Observer.Finish();
+        Observer.Expect('marker', '1');
+        Observer.Expect('tx_after_run', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -312,7 +339,11 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         Locked.ReadIsolation := IsolationLevel::UpdLock;
         Locked.FindFirst();
         RnGuardedRun(Observer);
-        Observer.Finish();
+        Observer.Expect('tx_before_run', 'Yes');
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('marker', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -325,7 +356,11 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         RnSeedCommitted();
         Locked.ReadIsolation := IsolationLevel::UpdLock;
         RnGuardedRun(Observer);
-        Observer.Finish();
+        Observer.Expect('tx_before_run', 'Yes');
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('marker', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -339,6 +374,10 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         Locked.ReadIsolation := IsolationLevel::RepeatableRead;
         Locked.FindFirst();
         RnGuardedRun(Observer);
-        Observer.Finish();
+        Observer.Expect('tx_before_run', 'Yes');
+        Observer.Expect('run|text', 'An error occurred and the transaction is stopped. Contact your administrator or partner for further assistance.');
+        Observer.Expect('run|code', 'DB:Ok');
+        Observer.Expect('marker', '0');
+        Observer.Verify();
     end;
 }

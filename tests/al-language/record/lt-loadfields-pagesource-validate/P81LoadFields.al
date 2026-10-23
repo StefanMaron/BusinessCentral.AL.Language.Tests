@@ -1029,6 +1029,11 @@ codeunit 70303 "LT P81 LoadFields"
 
     // Writer RN (al-runner issue 5764): reading a field that is not loaded loads which fields; Modify of a record read with
     // SetLoadFields after a second record variable (same session) changed the stored row: which fields the Modify writes.
+    // Measured (BC 29.0; 27.5 and 28.5 by CI): reading one field that is not loaded loads every field; the next row (Next) loads the
+    // load fields plus the field read (Name), not Qty. Modify of the partial record writes the fields it has loaded (also a loaded field
+    // it did not change: the other variable's Name change is lost) and the ones assigned, keeps a stored value of a field never loaded
+    // or assigned (Qty 99, the Blob), raises no error. A field read (JIT) before the other change writes the old value back (Qty 7).
+    // Not asked: a change by another session (single session only).
     local procedure RnStored(): Text
     var
         Full: Record "LT P81 LF Row";
@@ -1061,7 +1066,61 @@ codeunit 70303 "LT P81 LoadFields"
         ObserveLoaded(Observer, KeyOnly, 'key_after_name');
         KeyOnly.Next();
         ObserveLoaded(Observer, KeyOnly, 'key_after_next');
-        Observer.Finish();
+        Observer.Expect('qty', '7');
+        Observer.Expect('name_after_qty_loaded_Code', 'Yes');
+        Observer.Expect('name_after_qty_loaded_Name', 'Yes');
+        Observer.Expect('name_after_qty_loaded_Qty', 'Yes');
+        Observer.Expect('name_after_qty_loaded_Notes', 'Yes');
+        Observer.Expect('name_after_qty_loaded_Pic', 'Yes');
+        Observer.Expect('name_after_qty_loaded_Cnt', 'Yes');
+        Observer.Expect('name_after_qty_loaded_KindFilter', 'Yes');
+        Observer.Expect('name_after_qty_loaded_SumAmount', 'Yes');
+        Observer.Expect('name_after_qty_loaded_SystemId', 'Yes');
+        Observer.Expect('name_after_qty_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('name_after_qty_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('name_after_qty_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('name_after_qty_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('key_before_loaded_Code', 'Yes');
+        Observer.Expect('key_before_loaded_Name', 'No');
+        Observer.Expect('key_before_loaded_Qty', 'No');
+        Observer.Expect('key_before_loaded_Notes', 'Yes');
+        Observer.Expect('key_before_loaded_Pic', 'No');
+        Observer.Expect('key_before_loaded_Cnt', 'Yes');
+        Observer.Expect('key_before_loaded_KindFilter', 'Yes');
+        Observer.Expect('key_before_loaded_SumAmount', 'Yes');
+        Observer.Expect('key_before_loaded_SystemId', 'Yes');
+        Observer.Expect('key_before_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('key_before_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('key_before_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('key_before_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('name', 'alpha');
+        Observer.Expect('key_after_name_loaded_Code', 'Yes');
+        Observer.Expect('key_after_name_loaded_Name', 'Yes');
+        Observer.Expect('key_after_name_loaded_Qty', 'Yes');
+        Observer.Expect('key_after_name_loaded_Notes', 'Yes');
+        Observer.Expect('key_after_name_loaded_Pic', 'Yes');
+        Observer.Expect('key_after_name_loaded_Cnt', 'Yes');
+        Observer.Expect('key_after_name_loaded_KindFilter', 'Yes');
+        Observer.Expect('key_after_name_loaded_SumAmount', 'Yes');
+        Observer.Expect('key_after_name_loaded_SystemId', 'Yes');
+        Observer.Expect('key_after_name_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('key_after_name_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('key_after_name_loaded_SystemCreatedBy', 'Yes');
+        Observer.Expect('key_after_name_loaded_SystemModifiedBy', 'Yes');
+        Observer.Expect('key_after_next_loaded_Code', 'Yes');
+        Observer.Expect('key_after_next_loaded_Name', 'Yes');
+        Observer.Expect('key_after_next_loaded_Qty', 'No');
+        Observer.Expect('key_after_next_loaded_Notes', 'Yes');
+        Observer.Expect('key_after_next_loaded_Pic', 'No');
+        Observer.Expect('key_after_next_loaded_Cnt', 'Yes');
+        Observer.Expect('key_after_next_loaded_KindFilter', 'Yes');
+        Observer.Expect('key_after_next_loaded_SumAmount', 'Yes');
+        Observer.Expect('key_after_next_loaded_SystemId', 'Yes');
+        Observer.Expect('key_after_next_loaded_SystemCreatedAt', 'Yes');
+        Observer.Expect('key_after_next_loaded_SystemModifiedAt', 'Yes');
+        Observer.Expect('key_after_next_loaded_SystemCreatedBy', 'Yes');
+        Observer.Ignore('key_after_next_loaded_SystemModifiedBy'); // cut from the observation message, not measured
+        Observer.Verify();
     end;
 
     [Test]
@@ -1082,7 +1141,11 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('stored', RnStored());
         Observer.Observe('partial_qty_loaded', Loaded(Partial, 3));
         Observer.Observe('partial_qty', Format(Partial.Qty));
-        Observer.Finish();
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('stored', 'partial|99|blob-a');
+        Observer.Expect('partial_qty_loaded', 'Yes');
+        Observer.Expect('partial_qty', '99');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1102,7 +1165,9 @@ codeunit 70303 "LT P81 LoadFields"
         Partial.Name := 'partial';
         Observer.Observe('modify', Format(Partial.Modify()));
         Observer.Observe('stored', RnStored());
-        Observer.Finish();
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('stored', 'partial|99|blob-a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1122,7 +1187,10 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Observe('modify', Format(Partial.Modify()));
         Observer.Observe('stored', RnStored());
         Observer.Observe('partial_name', Partial.Name);
-        Observer.Finish();
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('stored', 'alpha|5|blob-a');
+        Observer.Expect('partial_name', 'alpha');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1142,7 +1210,10 @@ codeunit 70303 "LT P81 LoadFields"
         Partial.Name := 'partial';
         Observer.Observe('modify', Format(Partial.Modify()));
         Observer.Observe('stored', RnStored());
-        Observer.Finish();
+        Observer.Expect('jit_qty', '7');
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('stored', 'partial|7|blob-a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1162,7 +1233,10 @@ codeunit 70303 "LT P81 LoadFields"
         Partial.Name := 'partial';
         Observer.Observe('modify', Format(Partial.Modify()));
         Observer.Observe('stored', RnStored());
-        Observer.Finish();
+        Observer.Expect('jit_qty', '99');
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('stored', 'partial|99|blob-a');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1181,7 +1255,9 @@ codeunit 70303 "LT P81 LoadFields"
         Partial.Name := 'partial';
         Observer.Observe('modify', Format(Partial.Modify()));
         Observer.Observe('stored', RnStored());
-        Observer.Finish();
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('stored', 'partial|7|blob-other');
+        Observer.Verify();
     end;
 }
 

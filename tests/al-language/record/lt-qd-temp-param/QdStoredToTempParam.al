@@ -251,6 +251,9 @@ codeunit 86508 "LT QD Stored To Temp Param"
 
     // Writer RN (al-runner issue 5768): a TEMPORARY record (rows, a current row, filters, a key, marks) handed by value to a
     // `temporary` parameter; and a record of a TableType = Temporary table to a by-value parameter with and without `temporary`.
+    // Measured (BC 29.0; 27.5 and 28.5 by CI): as for a stored record: the callee gets an empty table with the current field values,
+    // no filters in any filter group, the primary key ascending and no marks; the caller keeps everything. A TableType = Temporary
+    // record by value behaves the same with or without `temporary`; by var the callee sees the caller's rows and filters.
     local procedure RnFillTemp(var TempRow: Record "LT QD TP Row" temporary)
     begin
         TempRow.Id := 1;
@@ -295,7 +298,23 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Observer.Observe('caller.count', Format(TempRow.Count()));
         Observer.Observe('caller.rows', RnTempRows(TempRow));
         Observer.Observe('stored.rows', StoredRows());
-        Observer.Finish();
+        Observer.Expect('callee.isTemporary', 'Yes');
+        Observer.Expect('callee.count', '0');
+        Observer.Expect('callee.current', '2=two');
+        Observer.Expect('callee.filters', '');
+        Observer.Expect('callee.get', 'No');
+        Observer.Expect('callee.findFirst', 'No:2=two');
+        Observer.Expect('callee.insert', 'Yes');
+        Observer.Expect('callee.modify', 'Yes');
+        Observer.Expect('callee.countAfter', '1');
+        Observer.Expect('callee.isTemporaryAfter', 'Yes');
+        Observer.Expect('caller.isTemporary', 'Yes');
+        Observer.Expect('caller.current', '2=two');
+        Observer.Expect('caller.filters', 'Id: 1..2');
+        Observer.Expect('caller.count', '2');
+        Observer.Expect('caller.rows', '1=one;2=two;3=three;');
+        Observer.Expect('stored.rows', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -317,7 +336,15 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Observer.Observe('caller.filters2', TempRow.GetFilters());
         TempRow.FilterGroup(0);
         Observer.Observe('caller.count', Format(TempRow.Count()));
-        Observer.Finish();
+        Observer.Expect('fg.count', '0');
+        Observer.Expect('fg.group', '0');
+        Observer.Expect('fg.filters0', '');
+        Observer.Expect('fg.filters2', '');
+        Observer.Expect('fg.current', '3=three');
+        Observer.Expect('caller.filters0', 'Name: t*');
+        Observer.Expect('caller.filters2', 'Id: 2..3');
+        Observer.Expect('caller.count', '2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -344,7 +371,19 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Observer.Observe('caller.ascending', Format(TempRow.Ascending()));
         Observer.Observe('caller.current', Format(TempRow.Id) + '=' + TempRow.Name);
         Observer.Observe('caller.order', QfOrder(TempRow));
-        Observer.Finish();
+        Observer.Expect('callee.isTemporary', 'Yes');
+        Observer.Expect('callee.key', 'Id');
+        Observer.Expect('callee.ascending', 'Yes');
+        Observer.Expect('callee.view', 'VERSION(1) SORTING(Field1)');
+        Observer.Expect('callee.current', '1=c');
+        Observer.Expect('callee.order', '1,2,3,');
+        Observer.Expect('callee.keyAfter', 'Id');
+        Observer.Expect('callee.ascendingAfter', 'Yes');
+        Observer.Expect('caller.key', 'Name');
+        Observer.Expect('caller.ascending', 'No');
+        Observer.Expect('caller.current', '1=c');
+        Observer.Expect('caller.order', '1,3,2,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -372,7 +411,18 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Observer.Observe('caller.markedOnly', Format(TempRow.MarkedOnly()));
         Observer.Observe('caller.count', Format(TempRow.Count()));
         Observer.Observe('caller.order', QfOrder(TempRow));
-        Observer.Finish();
+        Observer.Expect('callee.markedOnly', 'No');
+        Observer.Expect('callee.mark', 'No');
+        Observer.Expect('callee.current', '3=b');
+        Observer.Expect('callee.count', '0');
+        Observer.Expect('callee.countFilled', '3');
+        Observer.Expect('callee.orderFilled', '1,2,3,');
+        Observer.Expect('callee.countAll', '3');
+        Observer.Expect('callee.marks', '1=No,2=No,3=No,');
+        Observer.Expect('caller.markedOnly', 'Yes');
+        Observer.Expect('caller.count', '2');
+        Observer.Expect('caller.order', '1,3,');
+        Observer.Verify();
     end;
 
     [Test]
@@ -398,7 +448,23 @@ codeunit 86508 "LT QD Stored To Temp Param"
         Observer.Observe('caller.filters', Row.GetFilters());
         Row.Reset();
         Observer.Observe('caller.countAll', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('plain.isTemporary', 'Yes');
+        Observer.Expect('plain.count', '0');
+        Observer.Expect('plain.filters', '');
+        Observer.Expect('plain.current', 'B');
+        Observer.Expect('declared.isTemporary', 'Yes');
+        Observer.Expect('declared.count', '0');
+        Observer.Expect('declared.filters', '');
+        Observer.Expect('declared.current', 'B');
+        Observer.Expect('byvar.isTemporary', 'Yes');
+        Observer.Expect('byvar.count', '2');
+        Observer.Expect('byvar.filters', 'Code: A..B');
+        Observer.Expect('byvar.current', 'B');
+        Observer.Expect('caller.isTemporary', 'Yes');
+        Observer.Expect('caller.count', '2');
+        Observer.Expect('caller.filters', 'Code: A..B');
+        Observer.Expect('caller.countAll', '3');
+        Observer.Verify();
     end;
 
     local procedure QfSeed()

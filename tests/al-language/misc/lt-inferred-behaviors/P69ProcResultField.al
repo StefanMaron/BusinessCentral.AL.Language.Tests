@@ -386,6 +386,9 @@ codeunit 71161 "LT P69 Proc Result Field"
     // Writer RN (al-runner issue 5757): a procedure that returns a Record and leaves by a bare `exit;` (unnamed and named return
     // value) or by falling off its end: the field values (the table has InitValue fields), Get on the blank key, the receiving
     // variable's earlier values and filters.
+    // Measured (BC 29.0; 27.5 and 28.5 by CI): a bare exit or no exit returns a record with the InitValue values (Qty 7, Flag Yes,
+    // Kind Two) and blank fields elsewhere; a named return value keeps what was assigned to it; the receiving variable keeps its filters;
+    // Get on the blank key finds nothing.
     local procedure RnBareExit(CodeValue: Code[10]): Record "LT P69 Ret Row"
     var
         Row: Record "LT P69 Ret Row";
@@ -436,7 +439,15 @@ codeunit 71161 "LT P69 Proc Result Field"
         Observer.Observe('direct_kind', Format(RnBareExit('').Kind));
         Row := RnBareExit('A');
         Observer.Observe('found', RnDescribe(Row));
-        Observer.Finish();
+        Observer.Expect('assigned', 'code=;name=;qty=7;flag=Yes;kind=Two;date=');
+        Observer.Expect('assigned_filters', 'Code: A');
+        Observer.Expect('get_blank', 'No');
+        Observer.Expect('direct_code', '[]');
+        Observer.Expect('direct_qty', '7');
+        Observer.Expect('direct_flag', 'Yes');
+        Observer.Expect('direct_kind', 'Two');
+        Observer.Expect('found', 'code=A;name=alpha;qty=2.5;flag=No;kind=One;date=2021-06-05');
+        Observer.Verify();
     end;
 
     [Test]
@@ -453,6 +464,9 @@ codeunit 71161 "LT P69 Proc Result Field"
         Row.Get('A');
         Row := RnNoExit();
         Observer.Observe('no_exit', RnDescribe(Row));
-        Observer.Finish();
+        Observer.Expect('named_blank', 'code=;name=named;qty=7;flag=Yes;kind=Two;date=');
+        Observer.Expect('named_found', 'code=A;name=alpha;qty=2.5;flag=No;kind=One;date=2021-06-05');
+        Observer.Expect('no_exit', 'code=;name=;qty=7;flag=Yes;kind=Two;date=');
+        Observer.Verify();
     end;
 }
