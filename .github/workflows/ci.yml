@@ -270,10 +270,10 @@ jobs:
     # files AL File wrote under the user folder and returns paths with '\' (#175, #181); MediaSet.ImportFile
     # stores the bare file name (#176); Directory/DirectoryInfo listings match patterns case-insensitively
     # and list in name order (#183).
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dc0070790143930d1d8fc2c3c5d530344373cde1
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@84291ff28add7ea223808bacf6e9b642b9656154
     with:
-      bc_linux_ref:         "dc0070790143930d1d8fc2c3c5d530344373cde1"
-      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-dc0070790143930d1d8fc2c3c5d530344373cde1"
+      bc_linux_ref:         "84291ff28add7ea223808bacf6e9b642b9656154"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-84291ff28add7ea223808bacf6e9b642b9656154"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       # Dependency apps of al-language, in publish order (an app after the apps it depends on). The cross-app fixtures
@@ -366,10 +366,10 @@ jobs:
     # files AL File wrote under the user folder and returns paths with '\' (#175, #181); MediaSet.ImportFile
     # stores the bare file name (#176); Directory/DirectoryInfo listings match patterns case-insensitively
     # and list in name order (#183).
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dc0070790143930d1d8fc2c3c5d530344373cde1
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@84291ff28add7ea223808bacf6e9b642b9656154
     with:
-      bc_linux_ref:         "dc0070790143930d1d8fc2c3c5d530344373cde1"
-      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-dc0070790143930d1d8fc2c3c5d530344373cde1"
+      bc_linux_ref:         "84291ff28add7ea223808bacf6e9b642b9656154"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-84291ff28add7ea223808bacf6e9b642b9656154"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       # al-language is a production app HERE only in the sense that it has to be
@@ -415,10 +415,10 @@ jobs:
     # files AL File wrote under the user folder and returns paths with '\' (#175, #181); MediaSet.ImportFile
     # stores the bare file name (#176); Directory/DirectoryInfo listings match patterns case-insensitively
     # and list in name order (#183).
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dc0070790143930d1d8fc2c3c5d530344373cde1
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@84291ff28add7ea223808bacf6e9b642b9656154
     with:
-      bc_linux_ref:         "dc0070790143930d1d8fc2c3c5d530344373cde1"
-      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:dc0070790143930d1d8fc2c3c5d530344373cde1"
+      bc_linux_ref:         "84291ff28add7ea223808bacf6e9b642b9656154"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:84291ff28add7ea223808bacf6e9b642b9656154"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       app_dirs: |
@@ -470,10 +470,10 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     # Same bc-linux pin as the jobs above (dc007079; the extra_apps input exists since bcc60c1c).
-    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@dc0070790143930d1d8fc2c3c5d530344373cde1
+    uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@84291ff28add7ea223808bacf6e9b642b9656154
     with:
-      bc_linux_ref:         "dc0070790143930d1d8fc2c3c5d530344373cde1"
-      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-dc0070790143930d1d8fc2c3c5d530344373cde1"
+      bc_linux_ref:         "84291ff28add7ea223808bacf6e9b642b9656154"
+      runner_image:         "ghcr.io/aldevtools/msdyn365bc.on.linux/bc-runner:rdlc-84291ff28add7ea223808bacf6e9b642b9656154"
       bc_version:           ${{ matrix.bc_version }}
       bc_country:           "w1"
       # al-language is published only because the test app depends on it (Probe Observer). Its own tests run in the
