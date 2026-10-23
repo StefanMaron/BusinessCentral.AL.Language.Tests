@@ -6,6 +6,8 @@
 //   that has a FlowField column, a nested data item and a Method = Count column: the entries of MetaData.Fields() (FieldNo, TableNo, FieldName,
 //   in order), and the Tenant Web Service Columns rows WebServiceManagement.CreateTenantWebServiceColumnForQuery gives for each column.
 //   One data item with normal fields is pinned in lt-qx-dotnet/QxDotNetDemoShapes.al (QX_QueryMetadataReader_TenantWebServiceColumns).
+// Writer RJ (DemoTool on BC 29): MetaData.Fields() of Method = Sum, Count, Average, Min and Max columns (queries 60760 and 86175 of the main
+//   app) and of Base Application's query 51 "Power BI Vendor List".
 // BC versions: 27, 28, 29
 table 99415 "LT RE QM Header"
 {

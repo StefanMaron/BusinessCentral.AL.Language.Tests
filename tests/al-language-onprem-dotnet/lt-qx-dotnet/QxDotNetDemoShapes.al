@@ -11,6 +11,8 @@
 // Writer RD (DemoTool round 2, Export RapidStart Packages): static System.IO.Directory.Exists, File Management server folder and file methods,
 //   ServerTempFileName, XmlDocument.Save to a server file, ServersideCompress / ServersideDecompress. AL File.Exists answers Yes for a file
 //   deleted through DotNet on the Linux tier (DotNet File.Exists: No): a Linux suspect, those lines are Ignore'd.
+// Writer RJ (DemoTool on BC 29, Create Web Services.CreateSegmentWebService): ODataUtility.GenerateSelectText, GenerateODataV3FilterText and
+//   GenerateODataV4FilterText of the 'SegmentLines' query service with no Tenant Web Service Filter rows, and the rows the calls add.
 // BC versions: 27, 28, 29
 dotnet
 {

@@ -542,6 +542,7 @@ codeunit 61286 "LT S Media Files"
     local procedure RjMaskAll(Value: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row"): Text
     begin
         Value := Value.Replace(Dir, '<dir>');
+        Value := Value.Replace('<dir>/Media', '<media>').Replace('<dir>\Media', '<media>');
         Value := RjMask(Value, Row1.Set.MediaId(), 'set1');
         Value := RjMask(Value, Row2.Set.MediaId(), 'set2');
         Value := RjMask(Value, Row1.Set.Item(1), 's1i1');
@@ -867,18 +868,48 @@ codeunit 61286 "LT S Media Files"
         Row1.DeleteAll();
         Cleanup(Jpg);
         Cleanup(Png);
-        RjObserver.Finish();
-    end;
-
-    [Test]
-    procedure RJ_MediaSet_ExportFile_ConfigPackageShape_More1()
-    begin
-        RjObserver.More();
-    end;
-
-    [Test]
-    procedure RJ_MediaSet_ExportFile_ConfigPackageShape_More2()
-    begin
-        RjObserver.More();
+        // Linux suspect, not asserted: File Management.GetServerDirectoryFilesList / ...InclSubDirs (DotNet Directory) list none of the files AL
+        // File.Exists finds (the QX GetFiles item: AL File and DotNet see different paths on the Linux tier); queued for the Windows check.
+        RjObserver.Ignore('media folder');
+        RjObserver.Ignore('media folder after one');
+        RjObserver.Ignore('package folder after one, with sub folders');
+        RjObserver.Ignore('media folder after two');
+        RjObserver.Ignore('package folder after two, with sub folders');
+        RjObserver.Ignore('media folder after again');
+        RjObserver.Ignore('temporary path, with sub folders');
+        RjObserver.Ignore('slash prefix media folder');
+        RjObserver.Ignore('slash prefix package folder, with sub folders');
+        // Not an oracle: which item a numbered file holds varies between runs (with it the lengths in the name list); the rule below holds.
+        RjObserver.Ignore('al file names after two');
+        RjObserver.Ignore('bytes of -1');
+        RjObserver.Ignore('bytes of -2');
+        RjObserver.Ignore('slash prefix al file names');
+        RjObserver.Ignore('files');
+        RjObserver.Ignore('key order');
+        RjObserver.Ignore('files follow the media index order');
+        // ExportFile returns the number of items and writes one file per item, named <prefix>-1, <prefix>-2 ... with no extension ('\' and '/'
+        // prefixes alike); file -n holds the content of the n-th Tenant Media Set row of the set in primary key order (ID, Media ID), not
+        // Item(n) (Item follows the Media Index, the import order). An imported PNG is re-encoded, a JPEG kept.
+        RjObserver.Expect('set counts', '1|2');
+        RjObserver.Expect('format set length', '38');
+        RjObserver.Expect('format set is MediaId', 'Yes');
+        RjObserver.Expect('tenant item bytes same as files', 'No|Yes|No');
+        RjObserver.Expect('export count one item', '1');
+        RjObserver.Expect('export count two items', '2');
+        RjObserver.Expect('export count one item again', '1');
+        RjObserver.Expect('al file names after again', '[<media>\<set1>-1|len=108]');
+        RjObserver.Expect('bytes of again -1', 'len=108 bytes of: s2i2');
+        RjObserver.Expect('slash prefix export count', '2');
+        RjObserver.Expect('set 1 export count', '2');
+        RjObserver.Expect('set 2 export count', '2');
+        RjObserver.Expect('set 3 export count', '2');
+        RjObserver.Expect('set 4 export count', '2');
+        RjObserver.Expect('set 5 export count', '2');
+        RjObserver.Expect('set 6 export count', '2');
+        RjObserver.Expect('set 7 export count', '2');
+        RjObserver.Expect('set 8 export count', '2');
+        RjObserver.Expect('media index order', 'i1i2 i1i2 i1i2 i1i2 i1i2 i1i2 i1i2 i1i2 ');
+        RjObserver.Expect('files follow the key order', 'Yes');
+        RjObserver.Verify();
     end;
 }
