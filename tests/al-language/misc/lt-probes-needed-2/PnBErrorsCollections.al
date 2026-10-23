@@ -340,7 +340,18 @@ codeunit 70550 "LT PnB ErrorInfo"
         RoObserveInfo(Obs, 'client', Info);
         RoCollect(ErrorType::Internal, true, true, Count, Info);
         RoObserveInfo(Obs, 'internal nested', Info);
-        Obs.Finish();
+        Obs.Expect('internal count', '1');
+        Obs.Expect('internal', 'type=Internal;dims=1:Dim1=Val1,;detailed=Detailed message;collectible=Yes');
+        Obs.Expect('internal callstack', '"LT PnB ErrorInfo"(CodeUnit 70550).RoRaiseFull line 9 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RoCollect line 7 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RO_CollectedErrorInfo_Internal_And_Client line 6 - AL Language Coverage Tests by AL Language version x');
+        Obs.Expect('internal message', 'An error has occurred. If the error persists, please contact your system administrator.\r\nCorrelation ID: x');
+        Obs.Expect('client count', '1');
+        Obs.Expect('client', 'type=Client;dims=1:Dim1=Val1,;detailed=Detailed message;collectible=Yes');
+        Obs.Expect('client callstack', '"LT PnB ErrorInfo"(CodeUnit 70550).RoRaiseFull line 9 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RoCollect line 7 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RO_CollectedErrorInfo_Internal_And_Client line 9 - AL Language Coverage Tests by AL Language version x');
+        Obs.Expect('client message', 'Full message');
+        Obs.Expect('internal nested', 'type=Internal;dims=1:Dim1=Val1,;detailed=Detailed message;collectible=Yes');
+        Obs.Expect('internal nested callstack', '"LT PnB ErrorInfo"(CodeUnit 70550).RoRaiseFull line 9 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RoRaiseNested line 2 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RoCollect line 5 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RO_CollectedErrorInfo_Internal_And_Client line 12 - AL Language Coverage Tests by AL Language version x');
+        Obs.Expect('internal nested message', 'An error has occurred. If the error persists, please contact your system administrator.\r\nCorrelation ID: x');
+        Obs.Verify();
     end;
 
     [Test]
