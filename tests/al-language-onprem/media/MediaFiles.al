@@ -251,8 +251,10 @@ codeunit 61286 "LT S Media Files"
         Observer.Expect('set_count_after_two', '2');
         Observer.Expect('set_import_ids_equal', 'Yes');
         Observer.Expect('set_id_is_media_id', 'Yes');
-        Observer.Expect('item1', 'description=[first set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=Yes width=1 height=1 hascontent=Yes');
-        Observer.Expect('item2', 'description=[second set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=Yes width=1 height=1 hascontent=Yes');
+        // MediaSet.ImportFile stores the bare file name as the Tenant Media File Name (filename_longer_than_name=No): Windows BC 27.5, 28.5 and
+        // 29.0 (windows-check QX item 9, 2026-10-22, and 2026-10-23) and bc-linux dc007079 (bc-linux #176). The older Linux image stored 'TEMP\<name>'.
+        Observer.Expect('item1', 'description=[first set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=No width=1 height=1 hascontent=Yes');
+        Observer.Expect('item2', 'description=[second set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=No width=1 height=1 hascontent=Yes');
         Observer.Expect('export_count', '2');
         Observer.Expect('prefix_itself_exists', 'No');
         Observer.Verify();
@@ -341,7 +343,8 @@ codeunit 61286 "LT S Media Files"
         Observer.Expect('media file name', '<tmp><name>');
         Observer.Expect('media upper tenant', 'description=[Upper case extension] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
         Observer.Expect('mediaset count', '1');
-        Observer.Expect('mediaset item 1 tenant', 'description=[Item picture] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
+        // The bare file name (filename_longer_than_name=No): Windows BC 27.5, 28.5 and 29.0 (windows-check QX item 9) and bc-linux dc007079 (#176).
+        Observer.Expect('mediaset item 1 tenant', 'description=[Item picture] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=No width=3 height=2 hascontent=Yes');
         Observer.Ignore('mediaset file name');
         Observer.Expect('mediaset count after get', '1');
         Observer.Verify();
