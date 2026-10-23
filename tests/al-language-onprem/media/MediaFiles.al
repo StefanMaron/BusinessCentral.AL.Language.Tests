@@ -345,7 +345,8 @@ codeunit 61286 "LT S Media Files"
         Observer.Expect('mediaset count', '1');
         // The bare file name (filename_longer_than_name=No): Windows BC 27.5, 28.5 and 29.0 (windows-check QX item 9) and bc-linux dc007079 (#176).
         Observer.Expect('mediaset item 1 tenant', 'description=[Item picture] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=No width=3 height=2 hascontent=Yes');
-        Observer.Ignore('mediaset file name');
+        // Windows BC 27.5, 28.5 and 29.0 (windows-check QX item 9, 2026-10-22) and bc-linux dc007079 (bc-linux #176): the bare file name.
+        Observer.Expect('mediaset file name', '<name>');
         Observer.Expect('mediaset count after get', '1');
         Observer.Verify();
     end;
@@ -354,8 +355,7 @@ codeunit 61286 "LT S Media Files"
     // Sales Document Icon SetIconFromFile of 'SalesStatusIcons\Quote.PNG' into a MediaSet, Word Template.Template.ImportFile(Path, 'Template')
     // of a .docx into a Media): a JPEG and then a 2 x 3 PNG with an upper-case .PNG extension into the same MediaSet (the returned Guid against
     // MediaId and Item(1), the order of the items, Mime Type, Width, Height); a .docx file into a Media (Tenant Media row, File Name form,
-    // the exported bytes). The Tenant Media File Name of a MediaSet item differs between the Linux and the Windows service tier (windows-check QX
-    // item 9) and is not asserted here. ----
+    // the exported bytes). The Tenant Media File Name of a MediaSet item is asserted in QX_MediaAndMediaSet_ImportFile_Jpeg. ----
 
     local procedure RdPngBase64(): Text
     begin
