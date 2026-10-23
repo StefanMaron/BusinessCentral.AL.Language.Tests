@@ -1026,6 +1026,163 @@ codeunit 70303 "LT P81 LoadFields"
         Observer.Expect('set none', 'Yes');
         Observer.Verify();
     end;
+
+    // Writer RN (al-runner issue 5764): reading a field that is not loaded loads which fields; Modify of a record read with
+    // SetLoadFields after a second record variable (same session) changed the stored row: which fields the Modify writes.
+    local procedure RnStored(): Text
+    var
+        Full: Record "LT P81 LF Row";
+    begin
+        Full.Get('A');
+        Full.CalcFields(Notes);
+        exit(Full.Name + '|' + Format(Full.Qty) + '|' + GetNotes(Full));
+    end;
+
+    [Test]
+    procedure RN_JitRead_UnloadedField_LoadsWhich()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT P81 LF Row";
+        KeyOnly: Record "LT P81 LF Row";
+        Q: Integer;
+        N: Text;
+    begin
+        Seed();
+        Row.SetLoadFields(Name);
+        Row.Get('A');
+        Q := Row.Qty;
+        Observer.Observe('qty', Format(Q));
+        ObserveLoaded(Observer, Row, 'name_after_qty');
+        KeyOnly.SetLoadFields(Code);
+        KeyOnly.FindFirst();
+        ObserveLoaded(Observer, KeyOnly, 'key_before');
+        N := KeyOnly.Name;
+        Observer.Observe('name', N);
+        ObserveLoaded(Observer, KeyOnly, 'key_after_name');
+        KeyOnly.Next();
+        ObserveLoaded(Observer, KeyOnly, 'key_after_next');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_StaleModify_UnloadedFieldChangedElsewhere()
+    var
+        Observer: Codeunit "Probe Observer";
+        Partial: Record "LT P81 LF Row";
+        Other: Record "LT P81 LF Row";
+    begin
+        Seed();
+        Partial.SetLoadFields(Name);
+        Partial.Get('A');
+        Other.Get('A');
+        Other.Qty := 99;
+        Other.Modify();
+        Partial.Name := 'partial';
+        Observer.Observe('modify', Format(Partial.Modify()));
+        Observer.Observe('stored', RnStored());
+        Observer.Observe('partial_qty_loaded', Loaded(Partial, 3));
+        Observer.Observe('partial_qty', Format(Partial.Qty));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_StaleModify_LoadedFieldChangedElsewhere()
+    var
+        Observer: Codeunit "Probe Observer";
+        Partial: Record "LT P81 LF Row";
+        Other: Record "LT P81 LF Row";
+    begin
+        Seed();
+        Partial.SetLoadFields(Name);
+        Partial.Get('A');
+        Other.Get('A');
+        Other.Name := 'other';
+        Other.Qty := 99;
+        Other.Modify();
+        Partial.Name := 'partial';
+        Observer.Observe('modify', Format(Partial.Modify()));
+        Observer.Observe('stored', RnStored());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_StaleModify_UnloadedFieldSetHere_LoadedChangedElsewhere()
+    var
+        Observer: Codeunit "Probe Observer";
+        Partial: Record "LT P81 LF Row";
+        Other: Record "LT P81 LF Row";
+    begin
+        Seed();
+        Partial.SetLoadFields(Name);
+        Partial.Get('A');
+        Other.Get('A');
+        Other.Name := 'other';
+        Other.Modify();
+        Partial.Qty := 5;
+        Observer.Observe('modify', Format(Partial.Modify()));
+        Observer.Observe('stored', RnStored());
+        Observer.Observe('partial_name', Partial.Name);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_StaleModify_JitReadBeforeOtherChange()
+    var
+        Observer: Codeunit "Probe Observer";
+        Partial: Record "LT P81 LF Row";
+        Other: Record "LT P81 LF Row";
+    begin
+        Seed();
+        Partial.SetLoadFields(Name);
+        Partial.Get('A');
+        Observer.Observe('jit_qty', Format(Partial.Qty));
+        Other.Get('A');
+        Other.Qty := 99;
+        Other.Modify();
+        Partial.Name := 'partial';
+        Observer.Observe('modify', Format(Partial.Modify()));
+        Observer.Observe('stored', RnStored());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_StaleModify_JitReadAfterOtherChange()
+    var
+        Observer: Codeunit "Probe Observer";
+        Partial: Record "LT P81 LF Row";
+        Other: Record "LT P81 LF Row";
+    begin
+        Seed();
+        Partial.SetLoadFields(Name);
+        Partial.Get('A');
+        Other.Get('A');
+        Other.Qty := 99;
+        Other.Modify();
+        Observer.Observe('jit_qty', Format(Partial.Qty));
+        Partial.Name := 'partial';
+        Observer.Observe('modify', Format(Partial.Modify()));
+        Observer.Observe('stored', RnStored());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_StaleModify_BlobChangedElsewhere()
+    var
+        Observer: Codeunit "Probe Observer";
+        Partial: Record "LT P81 LF Row";
+        Other: Record "LT P81 LF Row";
+    begin
+        Seed();
+        Partial.SetLoadFields(Name);
+        Partial.Get('A');
+        Other.Get('A');
+        SetNotes(Other, 'blob-other');
+        Other.Modify();
+        Partial.Name := 'partial';
+        Observer.Observe('modify', Format(Partial.Modify()));
+        Observer.Observe('stored', RnStored());
+        Observer.Finish();
+    end;
 }
 
 table 82952 "LT BR LF Target"

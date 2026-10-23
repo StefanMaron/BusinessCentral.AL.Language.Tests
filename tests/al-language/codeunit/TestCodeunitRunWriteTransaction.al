@@ -172,4 +172,173 @@ codeunit 60254 "Test Codeunit Run Write Tx"
         Assert.AreEqual(1, DirtyMarkerRowCount(),
             'A successful guarded Codeunit.Run commits its own transaction, so its row must survive a later rollback in the caller.');
     end;
+
+    // Writer RN (al-runner issue 5767): LockTable without a write, and a read under ReadIsolation UpdLock or RepeatableRead:
+    // Database.IsInWriteTransaction afterwards, and whether the guarded Codeunit.Run is then refused (error text and code)
+    // or runs (the marker row the run codeunit commits).
+    local procedure RnSeedCommitted()
+    var
+        ALTUniversal: Record "ALT Universal";
+    begin
+        ALTUniversal.Init();
+        ALTUniversal."Entry No." := 1;
+        ALTUniversal.Insert();
+        Commit();
+    end;
+
+    local procedure RnTx(): Text
+    begin
+        exit(Format(Database.IsInWriteTransaction()));
+    end;
+
+    local procedure RnGuardedRun(var Observer: Codeunit "Probe Observer")
+    var
+        Ok: Boolean;
+    begin
+        Observer.Observe('tx_before_run', RnTx());
+        asserterror begin
+            Ok := Codeunit.Run(Codeunit::"ALT Run Tx Inserter");
+            Error('RN no error, run returned %1', Ok);
+        end;
+        Observer.ObserveError('run');
+        Observer.Observe('marker', Format(MarkerRowCount()));
+    end;
+
+    [Test]
+    procedure RN_LockTable_WriteTransactionState()
+    var
+        Observer: Codeunit "Probe Observer";
+        ALTUniversal: Record "ALT Universal";
+    begin
+        Initialize();
+        RnSeedCommitted();
+        Observer.Observe('start', RnTx());
+        ALTUniversal.LockTable();
+        Observer.Observe('after_locktable', RnTx());
+        ALTUniversal.FindFirst();
+        Observer.Observe('after_locked_read', RnTx());
+        Commit();
+        Observer.Observe('after_commit', RnTx());
+        ALTUniversal.FindFirst();
+        Observer.Observe('read_after_commit', RnTx());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_LockTable_Temporary_WriteTransactionState()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempUniversal: Record "ALT Universal" temporary;
+    begin
+        Initialize();
+        TempUniversal.LockTable();
+        Observer.Observe('after_temp_locktable', RnTx());
+        RnGuardedRun(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_ReadIsolation_WriteTransactionState()
+    var
+        Observer: Codeunit "Probe Observer";
+        UpdLock: Record "ALT Universal";
+        Repeatable: Record "ALT Universal";
+        Committed: Record "ALT Universal";
+    begin
+        Initialize();
+        RnSeedCommitted();
+        UpdLock.ReadIsolation := IsolationLevel::UpdLock;
+        Observer.Observe('updlock_set', RnTx());
+        UpdLock.FindFirst();
+        Observer.Observe('updlock_read', RnTx());
+        Commit();
+        Repeatable.ReadIsolation := IsolationLevel::RepeatableRead;
+        Repeatable.FindFirst();
+        Observer.Observe('repeatable_read', RnTx());
+        Commit();
+        Committed.ReadIsolation := IsolationLevel::ReadCommitted;
+        Committed.FindFirst();
+        Observer.Observe('readcommitted_read', RnTx());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_GuardedRun_AfterLockTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        ALTUniversal: Record "ALT Universal";
+    begin
+        Initialize();
+        ALTUniversal.LockTable();
+        RnGuardedRun(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_GuardedRun_AfterLockTableAndCommit()
+    var
+        Observer: Codeunit "Probe Observer";
+        ALTUniversal: Record "ALT Universal";
+    begin
+        Initialize();
+        ALTUniversal.LockTable();
+        Commit();
+        RnGuardedRun(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_UnguardedRun_AfterLockTable()
+    var
+        Observer: Codeunit "Probe Observer";
+        ALTUniversal: Record "ALT Universal";
+    begin
+        Initialize();
+        ALTUniversal.LockTable();
+        Codeunit.Run(Codeunit::"ALT Run Tx Inserter");
+        Observer.Observe('marker', Format(MarkerRowCount()));
+        Observer.Observe('tx_after_run', RnTx());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_GuardedRun_AfterUpdLockRead()
+    var
+        Observer: Codeunit "Probe Observer";
+        Locked: Record "ALT Universal";
+    begin
+        Initialize();
+        RnSeedCommitted();
+        Locked.ReadIsolation := IsolationLevel::UpdLock;
+        Locked.FindFirst();
+        RnGuardedRun(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_GuardedRun_AfterUpdLockSetWithoutRead()
+    var
+        Observer: Codeunit "Probe Observer";
+        Locked: Record "ALT Universal";
+    begin
+        Initialize();
+        RnSeedCommitted();
+        Locked.ReadIsolation := IsolationLevel::UpdLock;
+        RnGuardedRun(Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RN_GuardedRun_AfterRepeatableRead()
+    var
+        Observer: Codeunit "Probe Observer";
+        Locked: Record "ALT Universal";
+    begin
+        Initialize();
+        RnSeedCommitted();
+        Locked.ReadIsolation := IsolationLevel::RepeatableRead;
+        Locked.FindFirst();
+        RnGuardedRun(Observer);
+        Observer.Finish();
+    end;
 }
