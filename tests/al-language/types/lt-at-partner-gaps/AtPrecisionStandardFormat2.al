@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-format-property
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160); self-contained codeunit 80004; writer QS: table 87356 (tests QS_*)
+// Fixtures used: Probe Observer (codeunit 69160); self-contained codeunit 80004; writer QS: table 87356 (tests QS_*); writer RO: table 88442 (tests RO_*)
 // Probe: observed on the corpus CI matrix; every literal asserted below is what the BC service tier produced.
 // Facts: Format(D, 0, '<Precision,2:2><Standard Format,2>') for a Decimal D: 0, 1234.5, -1, and the rounding and grouping edges 1234.567,
 // 0.005, 1234567.1 and -0.5.
@@ -798,4 +798,233 @@ codeunit 80004 "LT AT Precision Std Format 2"
         Observer.Observe(Prefix + ' number 2', Format(Row.Amt, 0, 2) + '|' + Format(Row.UnitAmt, 0, 2) + '|' + Format(Row.Custom, 0, 2) + '|' + Format(Row.Dec5, 0, 2) + '|' + Format(Row.Plain, 0, 2));
         Observer.Observe(Prefix + ' number 9', Format(Row.Amt, 0, 9) + '|' + Format(Row.UnitAmt, 0, 9) + '|' + Format(Row.Custom, 0, 9) + '|' + Format(Row.Dec5, 0, 9) + '|' + Format(Row.Plain, 0, 9));
     end;
+
+    // Writer RO (al-runner issue 5737): Format(Rec.Field, 0, '<format string>') of Decimal fields that declare their places
+    // (DecimalPlaces, AutoFormatType) with format strings other than <Precision,..> and <Standard Format,2>.
+    [Test]
+    procedure RO_IntegerOfDecimalPlacesField_Repro()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT QS Std Fmt Row";
+        Actual: Text;
+    begin
+        Row.Dec5 := 5;
+        Actual := Format(Row.Dec5, 0, '<Integer>');
+        Row.Dec5 := 1234;
+        Actual += '|' + Format(Row.Dec5, 0, '<Integer>');
+        Observer.Observe('Dec5 5|1234', Actual);
+        Observer.Finish();
+    end;
+
+    local procedure RoQsRow(Row: Record "LT QS Std Fmt Row"; Spec: Text): Text
+    begin
+        exit(Format(Row.Amt, 0, Spec) + '|' + Format(Row.UnitAmt, 0, Spec) + '|' + Format(Row.Custom, 0, Spec) + '|' + Format(Row.Dec5, 0, Spec) + '|' + Format(Row.Plain, 0, Spec));
+    end;
+
+    local procedure RoRoRow(Row: Record "LT RO Fmt Row"; Spec: Text): Text
+    begin
+        exit(Format(Row.DP22, 0, Spec) + '|' + Format(Row.DP00, 0, Spec) + '|' + Format(Row.DP35, 0, Spec) + '|' + Format(Row.DP05, 0, Spec));
+    end;
+
+    // Each observation: the values 5 ; 1234 ; 1234.5678 ; -0.5 ; 0 ; -1234567.25, each as Amt|UnitAmt|Custom|Dec5|Plain.
+    local procedure RoQsValues(var Observer: Codeunit "Probe Observer"; Spec: Text)
+    var
+        Row: Record "LT QS Std Fmt Row";
+        Values: List of [Decimal];
+        D: Decimal;
+        Line: Text;
+    begin
+        Values.Add(5);
+        Values.Add(1234);
+        Values.Add(1234.5678);
+        Values.Add(-0.5);
+        Values.Add(0);
+        Values.Add(-1234567.25);
+        foreach D in Values do begin
+            Row.Amt := D;
+            Row.UnitAmt := D;
+            Row.Custom := D;
+            Row.Dec5 := D;
+            Row.Plain := D;
+            if Line <> '' then
+                Line += ' ; ';
+            Line += RoQsRow(Row, Spec);
+        end;
+        Observer.Observe(Spec, Line);
+    end;
+
+    // Each observation: the same values, each as DP22|DP00|DP35|DP05.
+    local procedure RoRoValues(var Observer: Codeunit "Probe Observer"; Spec: Text)
+    var
+        Row: Record "LT RO Fmt Row";
+        Values: List of [Decimal];
+        D: Decimal;
+        Line: Text;
+    begin
+        Values.Add(5);
+        Values.Add(1234);
+        Values.Add(1234.5678);
+        Values.Add(-0.5);
+        Values.Add(0);
+        Values.Add(-1234567.25);
+        foreach D in Values do begin
+            Row.DP22 := D;
+            Row.DP00 := D;
+            Row.DP35 := D;
+            Row.DP05 := D;
+            if Line <> '' then
+                Line += ' ; ';
+            Line += RoRoRow(Row, Spec);
+        end;
+        Observer.Observe(Spec, Line);
+    end;
+
+    [Test]
+    procedure RO_FieldFormatStrings_AutoFormatFields_EnUs_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+    begin
+        Orig := GlobalLanguage();
+        GlobalLanguage(1033);
+        RoQsValues(Observer, '<Integer>');
+        RoQsValues(Observer, '<Integer Thousand>');
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RO_FieldFormatStrings_AutoFormatFields_EnUs_2()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+    begin
+        Orig := GlobalLanguage();
+        GlobalLanguage(1033);
+        RoQsValues(Observer, '<Decimals>');
+        RoQsValues(Observer, '<Integer><Decimals>');
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RO_FieldFormatStrings_AutoFormatFields_EnUs_3()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+    begin
+        Orig := GlobalLanguage();
+        GlobalLanguage(1033);
+        RoQsValues(Observer, '<Sign><Integer Thousand><Decimals>');
+        RoQsValues(Observer, '<Standard Format,0>');
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RO_FieldFormatStrings_AutoFormatFields_EnUs_4()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+    begin
+        Orig := GlobalLanguage();
+        GlobalLanguage(1033);
+        RoQsValues(Observer, '<Standard Format,1>');
+        RoQsValues(Observer, '<Standard Format,9>');
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RO_FieldFormatStrings_DecimalPlacesFields_EnUs_1()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+    begin
+        Orig := GlobalLanguage();
+        GlobalLanguage(1033);
+        RoRoValues(Observer, '<Integer>');
+        RoRoValues(Observer, '<Integer Thousand>');
+        RoRoValues(Observer, '<Decimals>');
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RO_FieldFormatStrings_DecimalPlacesFields_EnUs_2()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+    begin
+        Orig := GlobalLanguage();
+        GlobalLanguage(1033);
+        RoRoValues(Observer, '<Integer><Decimals>');
+        RoRoValues(Observer, '<Sign><Integer Thousand><Decimals>');
+        RoRoValues(Observer, '<Standard Format,0>');
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RO_FieldFormatStrings_DecimalPlacesFields_EnUs_3()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+    begin
+        Orig := GlobalLanguage();
+        GlobalLanguage(1033);
+        RoRoValues(Observer, '<Standard Format,1>');
+        RoRoValues(Observer, '<Standard Format,9>');
+        RoRoValues(Observer, '<Integer Thousand><Decimals,3>');
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RO_FieldFormatStrings_DecimalPlacesFields_EnUs_4()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+    begin
+        Orig := GlobalLanguage();
+        GlobalLanguage(1033);
+        RoRoValues(Observer, '<Integer>.<Decimals>');
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RO_FieldFormatStrings_DecimalPlacesFields_DeDe()
+    var
+        Observer: Codeunit "Probe Observer";
+        Orig: Integer;
+    begin
+        Orig := GlobalLanguage();
+        GlobalLanguage(1031);
+        RoRoValues(Observer, '<Integer Thousand>');
+        RoRoValues(Observer, '<Integer><Decimals>');
+        RoRoValues(Observer, '<Standard Format,0>');
+        GlobalLanguage(Orig);
+        Observer.Finish();
+    end;
+}
+
+// Writer RO: Decimal fields with DecimalPlaces 2:2, 0:0, 3:5 and 0:5 (al-runner issue 5737).
+table 88442 "LT RO Fmt Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; DP22; Decimal) { DecimalPlaces = 2 : 2; }
+        field(3; DP00; Decimal) { DecimalPlaces = 0 : 0; }
+        field(4; DP35; Decimal) { DecimalPlaces = 3 : 5; }
+        field(5; DP05; Decimal) { DecimalPlaces = 0 : 5; }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
 }

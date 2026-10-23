@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/errorinfo/errorinfo-data-type
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), PnBObjects.al (tables 70527, log 70531), self-contained codeunits 70550-70553
+// Fixtures used: Probe Observer (codeunit 69160), PnBObjects.al (tables 70527, log 70531), self-contained codeunits 70550-70553; writer RO: tests RO_* in 70550
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 //   70550: "ErrorInfo | ErrorType() before one was set is refused..." (153); "ErrorInfo | ErrorInfo.Create with 3 arguments..." (154);
 //          "Error collection | the scope-exit text for several collected errors is Multiple errors occurred..." (194)
@@ -256,6 +256,91 @@ codeunit 70550 "LT PnB ErrorInfo"
         Obs.Expect('noErrorsFlow', '[none]');
         Obs.Expect('noErrorsLast', '');
         Obs.Verify();
+    end;
+
+    // Writer RO (al-runner issue 5766): an ErrorInfo with ErrorType::Internal (or Client) that is collected, read back through
+    // GetCollectedErrors: Message, ErrorType, CustomDimensions, DetailedMessage, Collectible and Callstack.
+    local procedure RoRaiseFull(ErrType: ErrorType; IsCollectible: Boolean)
+    var
+        Info: ErrorInfo;
+    begin
+        Info.Message := 'Full message';
+        Info.DetailedMessage := 'Detailed message';
+        Info.ErrorType := ErrType;
+        Info.CustomDimensions.Add('Dim1', 'Val1');
+        Info.Collectible := IsCollectible;
+        Error(Info);
+    end;
+
+    local procedure RoRaiseNested(ErrType: ErrorType)
+    begin
+        RoRaiseFull(ErrType, true);
+    end;
+
+    local procedure RoDescribe(Info: ErrorInfo): Text
+    var
+        DimKey: Text;
+        Dims: Text;
+    begin
+        foreach DimKey in Info.CustomDimensions.Keys() do
+            Dims += DimKey + '=' + Info.CustomDimensions.Get(DimKey) + ',';
+        exit('message=' + Info.Message + ';type=' + Format(Info.ErrorType) + ';dims=' + Format(Info.CustomDimensions.Count()) + ':' + Dims +
+            ';detailed=' + Info.DetailedMessage + ';collectible=' + Format(Info.Collectible));
+    end;
+
+    [ErrorBehavior(ErrorBehavior::Collect)]
+    local procedure RoCollect(ErrType: ErrorType; Nested: Boolean; Clear: Boolean; var Described: Text; var Callstack: Text)
+    var
+        Errors: List of [ErrorInfo];
+        Info: ErrorInfo;
+    begin
+        if Nested then
+            RoRaiseNested(ErrType)
+        else
+            RoRaiseFull(ErrType, true);
+        Errors := GetCollectedErrors(Clear);
+        Errors.Get(1, Info);
+        Described := 'count=' + Format(Errors.Count()) + ';' + RoDescribe(Info);
+        Callstack := Info.Callstack;
+    end;
+
+    [ErrorBehavior(ErrorBehavior::Collect)]
+    local procedure RoCollectInternalAndLeave()
+    begin
+        RoRaiseFull(ErrorType::Internal, true);
+    end;
+
+    [Test]
+    procedure RO_CollectedErrorInfo_Internal_And_Client()
+    var
+        Obs: Codeunit "Probe Observer";
+        Described: Text;
+        Callstack: Text;
+    begin
+        RoCollect(ErrorType::Internal, false, true, Described, Callstack);
+        Obs.Observe('internal', Described);
+        Obs.Observe('internal callstack', Callstack);
+        RoCollect(ErrorType::Client, false, true, Described, Callstack);
+        Obs.Observe('client', Described);
+        Obs.Observe('client callstack', Callstack);
+        RoCollect(ErrorType::Internal, true, true, Described, Callstack);
+        Obs.Observe('internal nested callstack', Callstack);
+        Obs.Finish();
+    end;
+
+    [Test]
+    procedure RO_CollectedErrorInfo_Internal_NotCleared_ScopeExit()
+    var
+        Obs: Codeunit "Probe Observer";
+        Described: Text;
+        Callstack: Text;
+    begin
+        asserterror RoCollect(ErrorType::Internal, false, false, Described, Callstack);
+        Obs.Observe('kept: described', Described);
+        Obs.ObserveError('kept: scope exit');
+        asserterror RoCollectInternalAndLeave();
+        Obs.ObserveError('left: scope exit');
+        Obs.Finish();
     end;
 }
 

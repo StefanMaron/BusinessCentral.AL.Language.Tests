@@ -436,6 +436,79 @@ codeunit 68042 "W4 CalcFields Tests"
         Observer.Expect('quoted <>x', '5');
         Observer.Verify();
     end;
+
+    // Writer RO (al-runner issue 5745): CalcFormula filter('...') with ranges and unions in the quoted text (fixtures in
+    // RoCalcFormulaRanges.al). Each entry's Amount is a distinct power of two, so a sum names the entries that matched.
+    local procedure RoAddEntry(Id: Integer; Cat: Code[20]; Num: Integer)
+    var
+        Entry: Record "LT RO CF Entry";
+    begin
+        Entry.Id := Id;
+        Entry.Cat := Cat;
+        Entry.Txt := Cat;
+        Entry.Num := Num;
+        Entry.Amount := Power(2, Id - 1);
+        Entry.Insert();
+    end;
+
+    [Test]
+    procedure RO_CalcFormula_QuotedRangesAndUnions()
+    var
+        Observer: Codeunit "Probe Observer";
+        Entry: Record "LT RO CF Entry";
+        Summary: Record "LT RO CF Sum";
+    begin
+        Entry.DeleteAll();
+        // Amounts: 1 '10', 2 '250', 4 '25', 8 '2000', 16 '3', 32 '450', 64 '100', 128 '500', 256 '1', 512 'B', 1024 'C1', 2048 'X',
+        // 4096 '200', 8192 '299'. Num holds the number of a numeric code, -1 otherwise.
+        RoAddEntry(1, '10', 10);
+        RoAddEntry(2, '250', 250);
+        RoAddEntry(3, '25', 25);
+        RoAddEntry(4, '2000', 2000);
+        RoAddEntry(5, '3', 3);
+        RoAddEntry(6, '450', 450);
+        RoAddEntry(7, '100', 100);
+        RoAddEntry(8, '500', 500);
+        RoAddEntry(9, '1', 1);
+        RoAddEntry(10, 'B', -1);
+        RoAddEntry(11, 'C1', -1);
+        RoAddEntry(12, 'X', -1);
+        RoAddEntry(13, '200', 200);
+        RoAddEntry(14, '299', 299);
+        Summary.Init();
+        Summary.CalcFields(QuotedUnion, PlainUnion, QuotedRange, QuotedUpTo, QuotedFrom, QuotedNotAnd, QuotedGe, QuotedLetters, QuotedSpaces, TextUnion, IntUnion, CountUnion);
+        Observer.Observe('code quoted 10|200..299|400..499', Format(Summary.QuotedUnion, 0, 9));
+        Observer.Observe('code unquoted 10|200..299|400..499', Format(Summary.PlainUnion, 0, 9));
+        Observer.Observe('code quoted 200..299', Format(Summary.QuotedRange, 0, 9));
+        Observer.Observe('code quoted ..199', Format(Summary.QuotedUpTo, 0, 9));
+        Observer.Observe('code quoted 400..', Format(Summary.QuotedFrom, 0, 9));
+        Observer.Observe('code quoted <>10&<>250', Format(Summary.QuotedNotAnd, 0, 9));
+        Observer.Observe('code quoted >=400', Format(Summary.QuotedGe, 0, 9));
+        Observer.Observe('code quoted A..C|X', Format(Summary.QuotedLetters, 0, 9));
+        Observer.Observe('code quoted 10 | 200..299', Format(Summary.QuotedSpaces, 0, 9));
+        Observer.Observe('text quoted 10|200..299|400..499', Format(Summary.TextUnion, 0, 9));
+        Observer.Observe('integer quoted 10|200..299|400..499', Format(Summary.IntUnion, 0, 9));
+        Observer.Observe('count code quoted 10|200..299|400..499', Format(Summary.CountUnion));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RO_CalcFormula_QuotedUnion_Repro()
+    var
+        Entry: Record "LT RO CF Entry";
+        Summary: Record "LT RO CF Sum";
+    begin
+        // The reporter's shape: one entry with Category 250 and Amount 17.
+        Entry.DeleteAll();
+        Entry.Id := 1;
+        Entry.Cat := '250';
+        Entry.Amount := 17;
+        Entry.Insert();
+        Summary.Init();
+        Summary.CalcFields(QuotedUnion);
+        if Summary.QuotedUnion <> 17 then
+            Error('Expected 17, got %1.', Summary.QuotedUnion);
+    end;
 }
 
 enum 82962 "LT BR CF Enum"
