@@ -173,6 +173,11 @@ codeunit 99418 "LT RE Query Metadata Shapes"
         Observer.Observe('one data item', RjFieldsOf(60760));
         Observer.Observe('nested data item', RjFieldsOf(86175));
         Observer.Observe('query 51', RjFieldsOf(51));
-        Observer.Finish();
+        // Sum, Average, Min and Max columns carry the field number of their source field and the table of their data item, like a plain column;
+        // the Method = Count column has field number 0. FieldName is the column name. ReverseSign and FlowField columns are plain entries.
+        Observer.Expect('one data item', '6:[2|60862|CustNo][3|60862|TotalAmount][0|60862|CountAmount][3|60862|AverageAmount][3|60862|MinAmount][3|60862|MaxAmount]');
+        Observer.Expect('nested data item', '5:[1|74054|DocNo][4|74055|SumKind][4|74055|AvgKind][4|74055|MinKind][4|74055|MaxKind]');
+        Observer.Expect('query 51', '10:[1|23|Vendor_No][2|23|Vendor_Name][66|23|Balance_Due][4|380|Posting_Date][36|380|Applied_Vend_Ledger_Entry_No][7|380|Amount][8|380|Amount_LCY][13|380|Transaction_No][1|380|Entry_No][39|380|Remaining_Pmt_Disc_Possible]');
+        Observer.Verify();
     end;
 }

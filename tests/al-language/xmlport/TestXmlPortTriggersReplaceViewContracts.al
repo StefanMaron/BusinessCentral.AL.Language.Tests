@@ -680,6 +680,14 @@ codeunit 68205 "Probe XmlPort More"
         Observer.Observe('elem log', XmlLog.Take());
         Observer.Observe('elem rows', RjRows());
         RjClear();
-        Observer.Finish();
+        // The first child row under a parent row gets every link field. A later child row under the same parent keeps the link fields that are part
+        // of its primary key (GCode, HCode), already in OnBeforeInsertRecord, and has the link field outside the key (GRef, HRef) blank.
+        Observer.Expect('attr import', 'ok');
+        Observer.Expect('attr log', 'H D1/L1/D1;L D1/L1/1/L1;L D1/L1/2/;L D1/L1/3/;H D1/L2/;L D1/L2/1/L2;L D1/L2/2/;H D2/L3/D2;L D2/L3/5/L3;');
+        Observer.Expect('attr rows', 'H D1/L1/D1;H D1/L2/;H D2/L3/D2;L D1/L1/1/L1/a;L D1/L1/2//b;L D1/L1/3//c;L D1/L2/1/L2/d;L D1/L2/2//e;L D2/L3/5/L3/f;');
+        Observer.Expect('elem import', 'ok');
+        Observer.Expect('elem log', 'L /A/1/A;L /A/2/;L /A/3/;L /A/4/;L /B/1/B;');
+        Observer.Expect('elem rows', 'H /A/;H /B/;L /A/1/A/a;L /A/2//b;L /A/3//c;L /A/4//d;L /B/1/B/e;');
+        Observer.Verify();
     end;
 }

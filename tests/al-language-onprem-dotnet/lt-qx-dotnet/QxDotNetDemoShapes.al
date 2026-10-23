@@ -440,6 +440,13 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         exit(Format(TenantWebService.Count()) + '|' + Format(Columns.Count()) + '|' + Format(OData.Count()) + '|' + Format(Filters.Count()));
     end;
 
+    local procedure RjFindOData(var OData: Record "Tenant Web Service OData"; Id: RecordId): Boolean
+    begin
+        OData.Reset();
+        OData.SetRange(TenantWebServiceID, Id);
+        exit(OData.FindFirst());
+    end;
+
     local procedure RjRowsOf(Id: RecordId): Text
     var
         Columns: Record "Tenant Web Service Columns";
@@ -519,7 +526,7 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         WebServiceManagement.SetODataV4FilterClause(TenantWebServiceOData, ODataV4FilterText);
         TenantWebServiceOData.Modify();
 
-        TenantWebServiceOData.Get(TenantWebService.RecordId);
+        RjFindOData(TenantWebServiceOData, TenantWebService.RecordId);
         Observer.Observe('clauses read back', '[' + WebServiceManagement.GetODataSelectClause(TenantWebServiceOData) + '][' +
           WebServiceManagement.GetODataFilterClause(TenantWebServiceOData) + '][' + WebServiceManagement.GetODataV4FilterClause(TenantWebServiceOData) + ']');
         Observer.Observe('rows after', RjRowsOf(TenantWebService.RecordId));

@@ -577,7 +577,7 @@ codeunit 61286 "LT S Media Files"
         exit(TempConfigMediaBuffer."Media Set".ExportFile(MediaFolder + '\' + Format(TempConfigMediaBuffer."Media Set")));
     end;
 
-    local procedure RjListFolder(Folder: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row"; JpgB64: Text; PngB64: Text): Text
+    local procedure RjListFolder(Folder: Text; Recursive: Boolean; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row"; JpgB64: Text; PngB64: Text): Text
     var
         TempNameValueBuffer: Record "Name/Value Buffer" temporary;
         FileManagement: Codeunit "File Management";
@@ -589,7 +589,18 @@ codeunit 61286 "LT S Media Files"
         Same: Text;
         Result: Text;
     begin
-        FileManagement.GetServerDirectoryFilesList(TempNameValueBuffer, Folder);
+        if Recursive then
+            FileManagement.GetServerDirectoryFilesListInclSubDirs(TempNameValueBuffer, Folder)
+        else
+            FileManagement.GetServerDirectoryFilesList(TempNameValueBuffer, Folder);
+        if Folder = TemporaryPath() then begin
+            // only the entries this test wrote (names that hold a set or item id or the package folder)
+            if TempNameValueBuffer.FindSet() then
+                repeat
+                    if (StrPos(RjMaskAll(TempNameValueBuffer.Name, Dir, Row1, Row2), '<s') = 0) and (StrPos(TempNameValueBuffer.Name, 'ltrjpkg') = 0) then
+                        TempNameValueBuffer.Delete();
+                until TempNameValueBuffer.Next() = 0;
+        end;
         Result := Format(TempNameValueBuffer.Count()) + ':';
         if TempNameValueBuffer.FindSet() then
             repeat
@@ -616,6 +627,12 @@ codeunit 61286 "LT S Media Files"
         exit(Result);
     end;
 
+    [TryFunction]
+    local procedure RjTryList(var Result: Text; Folder: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row")
+    begin
+        Result := RjListFolder(Folder, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64());
+    end;
+
     [Test]
     procedure RJ_MediaSet_ExportFile_ConfigPackageShape()
     var
@@ -628,6 +645,7 @@ codeunit 61286 "LT S Media Files"
         MediaFolder: Text;
         Count1: Integer;
         Count2: Integer;
+        TempList: Text;
     begin
         Row1.SetFilter(Code, 'LTRJ*');
         Row1.DeleteAll();
@@ -658,15 +676,24 @@ codeunit 61286 "LT S Media Files"
           Format(RjTenantBase64(Row2.Set.Item(1)) = QxJpegBase64()) + '|' + Format(RjTenantBase64(Row2.Set.Item(2)) = RdPngBase64()));
         Count1 := RjExportSet(Row1, MediaFolder);
         RjObserver.Observe('export count one item', Format(Count1));
-        RjObserver.Observe('media folder after one', RjListFolder(MediaFolder, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
-        RjObserver.Observe('package folder after one', RjListFolder(Dir, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('media folder after one', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('package folder after one, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         Count2 := RjExportSet(Row2, MediaFolder);
         RjObserver.Observe('export count two items', Format(Count2));
-        RjObserver.Observe('media folder after two', RjListFolder(MediaFolder, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
-        RjObserver.Observe('package folder after two', RjListFolder(Dir, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('media folder after two', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('package folder after two, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         Count1 := RjExportSet(Row1, MediaFolder);
         RjObserver.Observe('export count one item again', Format(Count1));
-        RjObserver.Observe('media folder after again', RjListFolder(MediaFolder, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('media folder after again', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        if RjTryList(TempList, TemporaryPath(), Dir, Row1, Row2) then
+            RjObserver.Observe('temporary path, with sub folders', TempList)
+        else
+            RjObserver.Observe('temporary path, with sub folders', 'error ' + GetLastErrorText());
+        // the same with a prefix that has no backslash: CombinePath(MediaFolder, Format(Set))
+        Count2 := Row2.Set.ExportFile(FileManagement.CombinePath(MediaFolder, Format(Row2.Set)));
+        RjObserver.Observe('slash prefix export count', Format(Count2));
+        RjObserver.Observe('slash prefix media folder', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('slash prefix package folder, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         FileManagement.ServerRemoveDirectory(Dir, true);
         Row1.Reset();
         Row1.SetFilter(Code, 'LTRJ*');
@@ -678,6 +705,12 @@ codeunit 61286 "LT S Media Files"
 
     [Test]
     procedure RJ_MediaSet_ExportFile_ConfigPackageShape_More1()
+    begin
+        RjObserver.More();
+    end;
+
+    [Test]
+    procedure RJ_MediaSet_ExportFile_ConfigPackageShape_More2()
     begin
         RjObserver.More();
     end;

@@ -124,6 +124,9 @@ codeunit 68380 "Probe Random Seeded"
         Numbers := Format(Random(1000)) + ' ' + Format(Random(7)) + ' ' + Format(Random(1000000));
         Observer.Observe('numbers', Numbers);
         Observer.Observe('go on with seed 7', Format(Numbers = '872 5 52262'));
-        Observer.Finish();
+        // Random in this test goes on with the sequence the seed of the previous test started (Sequence(7) above: 39 872 5 | 52262).
+        Observer.Expect('numbers', '872 5 52262');
+        Observer.Expect('go on with seed 7', 'Yes');
+        Observer.Verify();
     end;
 }

@@ -287,6 +287,13 @@ codeunit 61281 "LT PT Web Service Rows"
     // then GenerateODataV3FilterText and GenerateODataV4FilterText of that page service (no Tenant Web Service Filter rows; the query case is
     // RJ_CreateSegmentWebService_FilterTexts in lt-qx-dotnet/QxDotNetDemoShapes.al). The test then removes what it added. ----
 
+    local procedure RjFindOData(var OData: Record "Tenant Web Service OData"; Id: RecordId): Boolean
+    begin
+        OData.Reset();
+        OData.SetRange(TenantWebServiceID, Id);
+        exit(OData.FindFirst());
+    end;
+
     local procedure RjRowsOf(Id: RecordId; FromEntry: Integer): Text
     var
         Columns: Record "Tenant Web Service Columns";
@@ -342,7 +349,7 @@ codeunit 61281 "LT PT Web Service Rows"
         if Columns.FindLast() then
             MaxEntry := Columns."Entry ID";
         Observer.Observe('rows before', RjRowsOf(TenantWebService.RecordId, MaxEntry));
-        ODataExisted := TenantWebServiceOData.Get(TenantWebService.RecordId);
+        ODataExisted := RjFindOData(TenantWebServiceOData, TenantWebService.RecordId);
         if ODataExisted then begin
             Observer.Observe('clauses before', RjClauses(TenantWebServiceOData));
             OldSelect := WebServiceManagement.GetODataSelectClause(TenantWebServiceOData);
@@ -379,7 +386,7 @@ codeunit 61281 "LT PT Web Service Rows"
         Observer.Observe('select text', '[' + SelectText + ']');
         Observer.Observe('v3 text', '[' + ODataV3FilterText + ']');
         Observer.Observe('v4 text', '[' + ODataV4FilterText + ']');
-        TenantWebServiceOData.Get(TenantWebService.RecordId);
+        RjFindOData(TenantWebServiceOData, TenantWebService.RecordId);
         Observer.Observe('clauses after', RjClauses(TenantWebServiceOData));
         Observer.Observe('rows after', RjRowsOf(TenantWebService.RecordId, MaxEntry));
         Observer.Observe('counts after', RdCounts());
