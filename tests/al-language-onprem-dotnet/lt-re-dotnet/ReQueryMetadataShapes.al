@@ -144,4 +144,35 @@ codeunit 99418 "LT RE Query Metadata Shapes"
         Observer.Expect('columns', '[99415|1|HeadId|Yes][99415|2|HeadName|Yes][99415|3|LineTotal|Yes][99415|4|LineCountFlow|Yes][99416|4|LineDescription|Yes][99416|3|LineAmount|Yes][99416|0|Lines|Yes][99416|1||Yes][99415|9||Yes]');
         Observer.Verify();
     end;
+
+    // ---- Writer RJ (Microsoft's DemoTool, Create Web Services.CreatePowerBITenantWebServices and the other query web services): the entries
+    // of MetaData.Fields() for query columns with Method = Sum, Count, Average, Min and Max next to a plain column (query 60760 "QJ Order Sum",
+    // one data item), the same methods on a nested data item (query 86175), and Base Application's query 51 "Power BI Vendor List" (ReverseSign
+    // columns, a FlowField, a nested data item), read the way ODataUtility.GetTenantWebServiceMetadata reads them (no Tenant Web Service row). ----
+
+    local procedure RjFieldsOf(QueryId: Integer): Text
+    var
+        TenantWebService: Record "Tenant Web Service";
+        ODataUtility: Codeunit ODataUtility;
+        MetaData: DotNet QueryMetadataReader;
+    begin
+        TenantWebService.Init();
+        TenantWebService."Object Type" := TenantWebService."Object Type"::Query;
+        TenantWebService."Object ID" := QueryId;
+        ODataUtility.GetTenantWebServiceMetadata(TenantWebService, MetaData);
+        if IsNull(MetaData) then
+            exit('null');
+        exit(Format(MetaData.Fields().Count()) + ':' + FieldsText(MetaData));
+    end;
+
+    [Test]
+    procedure RJ_QueryMetadataReader_AggregateMethods()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('one data item', RjFieldsOf(60760));
+        Observer.Observe('nested data item', RjFieldsOf(86175));
+        Observer.Observe('query 51', RjFieldsOf(51));
+        Observer.Finish();
+    end;
 }

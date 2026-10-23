@@ -12,6 +12,8 @@
 //  - Random(0) answers 1, a negative bound acts as its absolute value, Random(1) answers 1;
 //  - Random(-2147483648) raises "Arithmetic operation resulted in an overflow." / AL:Overflow;
 //  - Randomize() with no seed and Random without Randomize give numbers in 1..N that no test can predict.
+// Writer RJ (al-runtime-rs ADR-053): Randomize(7) in one test, then Random in the next test of the same test codeunit (default TestIsolation of
+//   the test runner): does the generator go on with the sequence of seed 7 (39 872 5 | 52262 ...)?
 // BC versions: 27.5
 
 codeunit 68380 "Probe Random Seeded"
@@ -102,5 +104,26 @@ codeunit 68380 "Probe Random Seeded"
             Value := Random(10);
             Assert.IsTrue((Value >= 1) and (Value <= 10), 'in 1..10');
         end;
+    end;
+
+    // ---- Writer RJ: the seed of one test and Random in the next test of this codeunit. The two tests must stay adjacent and in this order. ----
+
+    [Test]
+    procedure RJ_Randomize_Seed7_InOneTest()
+    begin
+        Randomize(7);
+        Assert.AreEqual(39, Random(100), 'first number of seed 7');
+    end;
+
+    [Test]
+    procedure RJ_Randomize_Seed7_RandomInTheNextTest()
+    var
+        Observer: Codeunit "Probe Observer";
+        Numbers: Text;
+    begin
+        Numbers := Format(Random(1000)) + ' ' + Format(Random(7)) + ' ' + Format(Random(1000000));
+        Observer.Observe('numbers', Numbers);
+        Observer.Observe('go on with seed 7', Format(Numbers = '872 5 52262'));
+        Observer.Finish();
     end;
 }

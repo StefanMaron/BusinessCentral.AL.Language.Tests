@@ -422,4 +422,121 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Observer.Expect('delete', 'YesYesYesYes');
         Observer.Verify();
     end;
+
+    // ---- Writer RJ (Microsoft's DemoTool, Create Web Services.CreateSegmentWebService, CreateWebServices.Codeunit.al:89-123): the same calls in
+    // the same order on query 106 "Segment Lines" as 'SegmentLines' (CreateTenantWebService, GetTenantWebServiceMetadata, eight
+    // CreateTenantWebServiceColumnForQuery calls, a Tenant Web Service OData row, GenerateSelectText, GenerateODataV3FilterText,
+    // GenerateODataV4FilterText with no Tenant Web Service Filter rows, the three Set...Clause calls, Modify): what each TryFunction returns,
+    // the texts, the clauses read back, and the rows of Tenant Web Service, Columns, OData and Filter after the calls. The test then removes
+    // the rows it added. ----
+
+    local procedure RjCounts(): Text
+    var
+        TenantWebService: Record "Tenant Web Service";
+        Columns: Record "Tenant Web Service Columns";
+        OData: Record "Tenant Web Service OData";
+        Filters: Record "Tenant Web Service Filter";
+    begin
+        exit(Format(TenantWebService.Count()) + '|' + Format(Columns.Count()) + '|' + Format(OData.Count()) + '|' + Format(Filters.Count()));
+    end;
+
+    local procedure RjRowsOf(Id: RecordId): Text
+    var
+        Columns: Record "Tenant Web Service Columns";
+        OData: Record "Tenant Web Service OData";
+        Filters: Record "Tenant Web Service Filter";
+        Result: Text;
+    begin
+        Columns.SetRange(TenantWebServiceID, Id);
+        Result := 'columns ' + Format(Columns.Count()) + ':';
+        if Columns.FindSet() then
+            repeat
+                Result += '[' + Format(Columns."Data Item") + '|' + Format(Columns."Field Number") + '|' + Columns."Field Name" + '|' + Format(Columns.Include) + ']';
+            until Columns.Next() = 0;
+        OData.SetRange(TenantWebServiceID, Id);
+        Filters.SetRange(TenantWebServiceID, Id);
+        exit(Result + ' odata ' + Format(OData.Count()) + ' filters ' + Format(Filters.Count()));
+    end;
+
+    [Test]
+    procedure RJ_CreateSegmentWebService_FilterTexts()
+    var
+        TenantWebService: Record "Tenant Web Service";
+        TenantWebServiceOData: Record "Tenant Web Service OData";
+        Columns: Record "Tenant Web Service Columns";
+        Filters: Record "Tenant Web Service Filter";
+        WebServiceManagement: Codeunit "Web Service Management";
+        ODataUtility: Codeunit ODataUtility;
+        metaData: DotNet QueryMetadataReader;
+        SelectText: Text;
+        ODataV3FilterText: Text;
+        ODataV4FilterText: Text;
+        Existed: Boolean;
+        Ok: Boolean;
+        MaxEntry: Integer;
+    begin
+        Columns.SetCurrentKey("Entry ID");
+        if Columns.FindLast() then
+            MaxEntry := Columns."Entry ID";
+        Existed := TenantWebService.Get(TenantWebService."Object Type"::Query, 'SegmentLines');
+        Observer.Observe('row before', Format(Existed));
+        Observer.Observe('counts before', RjCounts());
+        WebServiceManagement.CreateTenantWebService(
+          TenantWebService."Object Type"::Query, QUERY::"Segment Lines", 'SegmentLines', true);
+
+        TenantWebService.Get(TenantWebService."Object Type"::Query, 'SegmentLines');
+        Observer.Observe('row', Format(TenantWebService."Object Type") + '|' + TenantWebService."Service Name" + '|' + Format(TenantWebService."Object ID") + '|' + Format(TenantWebService.Published));
+        Observer.Observe('rows before columns', RjRowsOf(TenantWebService.RecordId));
+        ODataUtility.GetTenantWebServiceMetadata(TenantWebService, metaData);
+        Observer.Observe('metadata is null', Format(IsNull(metaData)));
+        WebServiceManagement.CreateTenantWebServiceColumnForQuery(TenantWebService.RecordId, 1, DATABASE::"Segment Line", metaData);
+        WebServiceManagement.CreateTenantWebServiceColumnForQuery(TenantWebService.RecordId, 3, DATABASE::"Segment Line", metaData);
+        WebServiceManagement.CreateTenantWebServiceColumnForQuery(TenantWebService.RecordId, 5, DATABASE::"Segment Line", metaData);
+        WebServiceManagement.CreateTenantWebServiceColumnForQuery(TenantWebService.RecordId, 6, DATABASE::"Segment Line", metaData);
+        WebServiceManagement.CreateTenantWebServiceColumnForQuery(TenantWebService.RecordId, 12, DATABASE::"Segment Line", metaData);
+        WebServiceManagement.CreateTenantWebServiceColumnForQuery(TenantWebService.RecordId, 18, DATABASE::"Segment Line", metaData);
+        WebServiceManagement.CreateTenantWebServiceColumnForQuery(TenantWebService.RecordId, 19, DATABASE::"Segment Line", metaData);
+        WebServiceManagement.CreateTenantWebServiceColumnForQuery(TenantWebService.RecordId, 27, DATABASE::"Segment Line", metaData);
+
+        TenantWebServiceOData.Init();
+        TenantWebServiceOData.TenantWebServiceID := TenantWebService.RecordId;
+        Observer.Observe('odata insert', Format(TenantWebServiceOData.Insert()));
+        Ok := ODataUtility.GenerateSelectText(TenantWebService."Service Name", TenantWebService."Object Type", SelectText);
+        Observer.Observe('select ok', Format(Ok));
+        Ok := ODataUtility.GenerateODataV3FilterText(TenantWebService."Service Name", TenantWebService."Object Type", ODataV3FilterText);
+        Observer.Observe('v3 ok', Format(Ok));
+        if not Ok then
+            Observer.Observe('v3 error', GetLastErrorText());
+        Ok := ODataUtility.GenerateODataV4FilterText(TenantWebService."Service Name", TenantWebService."Object Type", ODataV4FilterText);
+        Observer.Observe('v4 ok', Format(Ok));
+        if not Ok then
+            Observer.Observe('v4 error', GetLastErrorText());
+        Observer.Observe('select text', '[' + SelectText + ']');
+        Observer.Observe('v3 text', '[' + ODataV3FilterText + ']');
+        Observer.Observe('v4 text', '[' + ODataV4FilterText + ']');
+        WebServiceManagement.SetODataSelectClause(TenantWebServiceOData, SelectText);
+        WebServiceManagement.SetODataFilterClause(TenantWebServiceOData, ODataV3FilterText);
+        WebServiceManagement.SetODataV4FilterClause(TenantWebServiceOData, ODataV4FilterText);
+        TenantWebServiceOData.Modify();
+
+        TenantWebServiceOData.Get(TenantWebService.RecordId);
+        Observer.Observe('clauses read back', '[' + WebServiceManagement.GetODataSelectClause(TenantWebServiceOData) + '][' +
+          WebServiceManagement.GetODataFilterClause(TenantWebServiceOData) + '][' + WebServiceManagement.GetODataV4FilterClause(TenantWebServiceOData) + ']');
+        Observer.Observe('rows after', RjRowsOf(TenantWebService.RecordId));
+        Observer.Observe('counts after', RjCounts());
+
+        Columns.Reset();
+        Columns.SetRange(TenantWebServiceID, TenantWebService.RecordId);
+        Columns.SetFilter("Entry ID", '>%1', MaxEntry);
+        Columns.DeleteAll();
+        if not Existed then begin
+            TenantWebServiceOData.SetRange(TenantWebServiceID, TenantWebService.RecordId);
+            TenantWebServiceOData.DeleteAll();
+            Filters.SetRange(TenantWebServiceID, TenantWebService.RecordId);
+            Filters.DeleteAll();
+            TenantWebService.Delete();
+        end;
+        Observer.Observe('counts restored', RjCounts());
+        Observer.Finish();
+    end;
 }

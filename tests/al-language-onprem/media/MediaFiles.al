@@ -6,6 +6,9 @@
 // Writer QX: a JPEG file through Media.ImportFile and MediaSet.ImportFile with two arguments (Tenant Media row, File Name form).
 // Writer RD: a JPEG and an upper-case .PNG into one MediaSet (returned Guid = MediaId, not Item(1)); a .docx into a Media (mime, exported bytes;
 //   BC 29 on the Linux tier stores a re-zipped package, not asserted).
+// Writer RJ (DemoTool, Export RapidStart Packages: Config. XML Exchange.ExportMediaSet, ConfigXMLExchange.Codeunit.al:1433-1457, then
+//   UpdateConfigPackageMediaSet and ImportMediaSetFromFile, :1505-1563): MediaSet.ExportFile(MediaFolder + '\' + Format(Set)) of a set with one
+//   and a set with two items, the files File Management.GetServerDirectoryFilesList lists (names, order), their bytes against the imported files.
 // BC versions: 27, 28, 29
 codeunit 61286 "LT S Media Files"
 {
@@ -13,6 +16,7 @@ codeunit 61286 "LT S Media Files"
     TestPermissions = Disabled;
 
     var
+        RjObserver: Codeunit "Probe Observer";
         ValidPngBase64: Label 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', Locked = true;
 
     local procedure TempName(Suffix: Text): Text
@@ -514,5 +518,167 @@ codeunit 61286 "LT S Media Files"
         Observer.Expect('export is the file', 'Yes');
 #endif
         Observer.Verify();
+    end;
+
+    // ---- Writer RJ (Microsoft's DemoTool, Export RapidStart Packages: Config. XML Exchange.ExportMediaSet copies the field through a FieldRef
+    // into a temporary Config. Media Buffer and calls "Media Set".ExportFile(MediaFolder + '\' + Format("Media Set")), MediaFolder being
+    // CombinePath(<package folder>, 'Media'); UpdateConfigPackageMediaSet lists that folder with GetServerDirectoryFilesList and reads each file
+    // back with BLOBImportFromServerFile, Media Set ID = GetFileNameWithoutExtension(file name)). Names are masked: <dir> is the package
+    // folder, <set1>/<set2> the Format of the sets, <s2i1> etc. the Format of an item's media id (also without braces and in lower case). ----
+
+    local procedure RjMask(Value: Text; Id: Guid; Tag: Text): Text
+    var
+        G: Text;
+    begin
+        G := Format(Id);
+        Value := Value.Replace(G, '<' + Tag + '>');
+        Value := Value.Replace(LowerCase(G), '<' + Tag + '>');
+        G := DelChr(G, '=', '{}');
+        Value := Value.Replace(G, '<' + Tag + '-nobraces>');
+        Value := Value.Replace(LowerCase(G), '<' + Tag + '-nobraces-lower>');
+        exit(Value);
+    end;
+
+    local procedure RjMaskAll(Value: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row"): Text
+    begin
+        Value := Value.Replace(Dir, '<dir>');
+        Value := RjMask(Value, Row1.Set.MediaId(), 'set1');
+        Value := RjMask(Value, Row2.Set.MediaId(), 'set2');
+        Value := RjMask(Value, Row1.Set.Item(1), 's1i1');
+        Value := RjMask(Value, Row2.Set.Item(1), 's2i1');
+        Value := RjMask(Value, Row2.Set.Item(2), 's2i2');
+        exit(Value);
+    end;
+
+    local procedure RjTenantBase64(Id: Guid): Text
+    var
+        Tenant: Record "Tenant Media";
+        Base64: Codeunit "Base64 Convert";
+        InS: InStream;
+    begin
+        if not Tenant.Get(Id) then
+            exit('');
+        Tenant.CalcFields(Content);
+        Tenant.Content.CreateInStream(InS);
+        exit(Base64.ToBase64(InS));
+    end;
+
+    local procedure RjExportSet(var Row: Record "PZ OnPrem Media Row"; MediaFolder: Text): Integer
+    var
+        TempConfigMediaBuffer: Record "Config. Media Buffer" temporary;
+        RecRef: RecordRef;
+        FieldRef: FieldRef;
+    begin
+        RecRef.GetTable(Row);
+        FieldRef := RecRef.Field(Row.FieldNo(Set));
+        TempConfigMediaBuffer.Init();
+        TempConfigMediaBuffer."Media Set" := FieldRef.Value();
+        TempConfigMediaBuffer.Insert();
+        exit(TempConfigMediaBuffer."Media Set".ExportFile(MediaFolder + '\' + Format(TempConfigMediaBuffer."Media Set")));
+    end;
+
+    local procedure RjListFolder(Folder: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row"; JpgB64: Text; PngB64: Text): Text
+    var
+        TempNameValueBuffer: Record "Name/Value Buffer" temporary;
+        FileManagement: Codeunit "File Management";
+        TempBlob: Codeunit "Temp Blob";
+        Base64: Codeunit "Base64 Convert";
+        DummyGuid: Guid;
+        InS: InStream;
+        B64: Text;
+        Same: Text;
+        Result: Text;
+    begin
+        FileManagement.GetServerDirectoryFilesList(TempNameValueBuffer, Folder);
+        Result := Format(TempNameValueBuffer.Count()) + ':';
+        if TempNameValueBuffer.FindSet() then
+            repeat
+                Clear(TempBlob);
+                FileManagement.BLOBImportFromServerFile(TempBlob, TempNameValueBuffer.Name);
+                TempBlob.CreateInStream(InS);
+                B64 := Base64.ToBase64(InS);
+                Same := '';
+                if B64 = JpgB64 then
+                    Same += ' jpg';
+                if B64 = PngB64 then
+                    Same += ' png';
+                if B64 = RjTenantBase64(Row1.Set.Item(1)) then
+                    Same += ' s1i1';
+                if B64 = RjTenantBase64(Row2.Set.Item(1)) then
+                    Same += ' s2i1';
+                if B64 = RjTenantBase64(Row2.Set.Item(2)) then
+                    Same += ' s2i2';
+                Result += '[' + Format(TempNameValueBuffer.ID) + '|' + RjMaskAll(TempNameValueBuffer.Name, Dir, Row1, Row2) + '|v=' +
+                  RjMaskAll(TempNameValueBuffer.Value, Dir, Row1, Row2) + '|id=' +
+                  RjMaskAll(CopyStr(FileManagement.GetFileNameWithoutExtension(TempNameValueBuffer.Name), 1, StrLen(Format(DummyGuid))), Dir, Row1, Row2) +
+                  '|len=' + Format(TempBlob.Length()) + '|bytes of:' + Same + ']';
+            until TempNameValueBuffer.Next() = 0;
+        exit(Result);
+    end;
+
+    [Test]
+    procedure RJ_MediaSet_ExportFile_ConfigPackageShape()
+    var
+        Row1: Record "PZ OnPrem Media Row";
+        Row2: Record "PZ OnPrem Media Row";
+        FileManagement: Codeunit "File Management";
+        Jpg: Text;
+        Png: Text;
+        Dir: Text;
+        MediaFolder: Text;
+        Count1: Integer;
+        Count2: Integer;
+    begin
+        Row1.SetFilter(Code, 'LTRJ*');
+        Row1.DeleteAll();
+        Row1.Reset();
+        Jpg := TempName('.jpg');
+        Png := TempName('.png');
+        QxWriteJpeg(Jpg);
+        RdWriteBase64(Png, RdPngBase64());
+        Dir := TemporaryPath() + 'ltrjpkg' + DelChr(Format(CreateGuid()), '=', '{}-');
+        FileManagement.ServerCreateDirectory(Dir);
+        MediaFolder := FileManagement.CombinePath(Dir, 'Media');
+        FileManagement.ServerCreateDirectory(MediaFolder);
+        RjObserver.Observe('media folder', MediaFolder.Replace(Dir, '<dir>'));
+        Row1.Code := 'LTRJ1';
+        Row1.Set.ImportFile(Png, 'png item');
+        Row1.Insert();
+        Row2.Code := 'LTRJ2';
+        Row2.Set.ImportFile(Jpg, 'jpeg item');
+        Row2.Insert();
+        Row2.Set.ImportFile(Png, 'png item');
+        Row2.Modify();
+        Row1.Get('LTRJ1');
+        Row2.Get('LTRJ2');
+        RjObserver.Observe('set counts', Format(Row1.Set.Count()) + '|' + Format(Row2.Set.Count()));
+        RjObserver.Observe('format set length', Format(StrLen(Format(Row1.Set))));
+        RjObserver.Observe('format set is MediaId', Format(Format(Row1.Set) = Format(Row1.Set.MediaId())));
+        RjObserver.Observe('tenant item bytes same as files', Format(RjTenantBase64(Row1.Set.Item(1)) = RdPngBase64()) + '|' +
+          Format(RjTenantBase64(Row2.Set.Item(1)) = QxJpegBase64()) + '|' + Format(RjTenantBase64(Row2.Set.Item(2)) = RdPngBase64()));
+        Count1 := RjExportSet(Row1, MediaFolder);
+        RjObserver.Observe('export count one item', Format(Count1));
+        RjObserver.Observe('media folder after one', RjListFolder(MediaFolder, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('package folder after one', RjListFolder(Dir, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        Count2 := RjExportSet(Row2, MediaFolder);
+        RjObserver.Observe('export count two items', Format(Count2));
+        RjObserver.Observe('media folder after two', RjListFolder(MediaFolder, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('package folder after two', RjListFolder(Dir, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        Count1 := RjExportSet(Row1, MediaFolder);
+        RjObserver.Observe('export count one item again', Format(Count1));
+        RjObserver.Observe('media folder after again', RjListFolder(MediaFolder, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        FileManagement.ServerRemoveDirectory(Dir, true);
+        Row1.Reset();
+        Row1.SetFilter(Code, 'LTRJ*');
+        Row1.DeleteAll();
+        Cleanup(Jpg);
+        Cleanup(Png);
+        RjObserver.Finish();
+    end;
+
+    [Test]
+    procedure RJ_MediaSet_ExportFile_ConfigPackageShape_More1()
+    begin
+        RjObserver.More();
     end;
 }
