@@ -893,7 +893,12 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Expect('set counts', '1|2');
         RjObserver.Expect('format set length', '38');
         RjObserver.Expect('format set is MediaId', 'Yes');
+        // BC 29 keeps the bytes of an imported JPEG; BC 27 and 28 re-encode it too.
+#if BC29PLUS
         RjObserver.Expect('tenant item bytes same as files', 'No|Yes|No');
+#else
+        RjObserver.Expect('tenant item bytes same as files', 'No|No|No');
+#endif
         RjObserver.Expect('export count one item', '1');
         RjObserver.Expect('export count two items', '2');
         RjObserver.Expect('export count one item again', '1');
