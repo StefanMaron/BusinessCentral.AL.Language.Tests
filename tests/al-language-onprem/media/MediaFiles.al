@@ -771,6 +771,70 @@ codeunit 61286 "LT S Media Files"
         Result := RjListFolder(Folder, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64());
     end;
 
+    // The listing in a form that holds on every tier (no lengths, no item order): the count, the masked Name and Value of each file sorted by
+    // the masked name, whether each file equals the Tenant Media content of an item of its set (content=Yes), and whether the listing came in
+    // name order (case ignored).
+    local procedure RjListShape(Folder: Text; Recursive: Boolean; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row"): Text
+    var
+        TempNameValueBuffer: Record "Name/Value Buffer" temporary;
+        FileManagement: Codeunit "File Management";
+        TempBlob: Codeunit "Temp Blob";
+        Base64: Codeunit "Base64 Convert";
+        Entries: List of [Text];
+        InS: InStream;
+        B64: Text;
+        Entry: Text;
+        Swap: Text;
+        Previous: Text;
+        Content: Boolean;
+        InNameOrder: Boolean;
+        Result: Text;
+        i: Integer;
+        j: Integer;
+    begin
+        if Recursive then
+            FileManagement.GetServerDirectoryFilesListInclSubDirs(TempNameValueBuffer, Folder)
+        else
+            FileManagement.GetServerDirectoryFilesList(TempNameValueBuffer, Folder);
+        InNameOrder := true;
+        if TempNameValueBuffer.FindSet() then
+            repeat
+                if (Folder <> TemporaryPath()) or (StrPos(RjMaskAll(TempNameValueBuffer.Name, Dir, Row1, Row2), '<s') > 0) or (StrPos(TempNameValueBuffer.Name, 'ltrjpkg') > 0) then begin
+                    Clear(TempBlob);
+                    FileManagement.BLOBImportFromServerFile(TempBlob, TempNameValueBuffer.Name);
+                    TempBlob.CreateInStream(InS);
+                    B64 := Base64.ToBase64(InS);
+                    Content := false;
+                    if StrPos(TempNameValueBuffer.Name, Format(Row1.Set)) > 0 then
+                        Content := B64 = RjTenantBase64(Row1.Set.Item(1));
+                    if StrPos(TempNameValueBuffer.Name, Format(Row2.Set)) > 0 then
+                        Content := (B64 = RjTenantBase64(Row2.Set.Item(1))) or (B64 = RjTenantBase64(Row2.Set.Item(2)));
+                    if (Previous <> '') and (UpperCase(TempNameValueBuffer.Name) < Previous) then
+                        InNameOrder := false;
+                    Previous := UpperCase(TempNameValueBuffer.Name);
+                    Entries.Add('[' + RjMaskAll(TempNameValueBuffer.Name, Dir, Row1, Row2) + '|v=' + RjMaskAll(TempNameValueBuffer.Value, Dir, Row1, Row2) +
+                      '|content=' + Format(Content) + ']');
+                end;
+            until TempNameValueBuffer.Next() = 0;
+        for i := 1 to Entries.Count() do
+            for j := i + 1 to Entries.Count() do
+                if Entries.Get(j) < Entries.Get(i) then begin
+                    Swap := Entries.Get(i);
+                    Entries.Set(i, Entries.Get(j));
+                    Entries.Set(j, Swap);
+                end;
+        Result := Format(Entries.Count()) + ':';
+        foreach Entry in Entries do
+            Result += Entry;
+        exit(Result + '|name order=' + Format(InNameOrder));
+    end;
+
+    [TryFunction]
+    local procedure RjTryListShape(var Result: Text; Folder: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row")
+    begin
+        Result := RjListShape(Folder, true, Dir, Row1, Row2);
+    end;
+
     [Test]
     procedure RJ_MediaSet_ExportFile_ConfigPackageShape()
     var
@@ -823,6 +887,8 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Observe('export count one item', Format(Count1));
         RjObserver.Observe('media folder after one', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('package folder after one, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('media folder after one, shape', RjListShape(MediaFolder, false, Dir, Row1, Row2));
+        RjObserver.Observe('package folder after one, with sub folders, shape', RjListShape(Dir, true, Dir, Row1, Row2));
         Count2 := RjExportSet(Row2, MediaFolder);
         RjObserver.Observe('export count two items', Format(Count2));
         RjObserver.Observe('media folder after two', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
@@ -830,21 +896,32 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Observe('bytes of -1', RjBytesOf(MediaFolder + '\' + Format(Row2.Set) + '-1', Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('bytes of -2', RjBytesOf(MediaFolder + '\' + Format(Row2.Set) + '-2', Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('package folder after two, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('media folder after two, shape', RjListShape(MediaFolder, false, Dir, Row1, Row2));
+        RjObserver.Observe('package folder after two, with sub folders, shape', RjListShape(Dir, true, Dir, Row1, Row2));
         Count1 := RjExportSet(Row1, MediaFolder);
         RjObserver.Observe('export count one item again', Format(Count1));
         RjObserver.Observe('al file names after again', RjCandidates(MediaFolder + '\' + Format(Row1.Set), Dir, Row1, Row2));
         RjObserver.Observe('bytes of again -1', RjBytesOf(MediaFolder + '\' + Format(Row1.Set) + '-1', Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('again -1 and -2 exist', Format(File.Exists(MediaFolder + '\' + Format(Row1.Set) + '-1')) + '|' + Format(File.Exists(MediaFolder + '\' + Format(Row1.Set) + '-2')));
+        RjObserver.Observe('again -1 is the tenant content of its item', Format(RjFileB64(MediaFolder + '\' + Format(Row1.Set) + '-1') = RjTenantBase64(Row1.Set.Item(1))));
         RjObserver.Observe('media folder after again', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('media folder after again, shape', RjListShape(MediaFolder, false, Dir, Row1, Row2));
         if RjTryList(TempList, TemporaryPath(), Dir, Row1, Row2) then
             RjObserver.Observe('temporary path, with sub folders', TempList)
         else
             RjObserver.Observe('temporary path, with sub folders', 'error ' + GetLastErrorText());
+        if RjTryListShape(TempList, TemporaryPath(), Dir, Row1, Row2) then
+            RjObserver.Observe('temporary path, with sub folders, shape', TempList)
+        else
+            RjObserver.Observe('temporary path, with sub folders, shape', 'error ' + GetLastErrorText());
         // the same with a prefix that has no backslash: CombinePath(MediaFolder, Format(Set))
         Count2 := Row2.Set.ExportFile(FileManagement.CombinePath(MediaFolder, Format(Row2.Set)));
         RjObserver.Observe('slash prefix export count', Format(Count2));
         RjObserver.Observe('slash prefix al file names', RjCandidates(FileManagement.CombinePath(MediaFolder, Format(Row2.Set)), Dir, Row1, Row2));
         RjObserver.Observe('slash prefix media folder', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('slash prefix package folder, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('slash prefix media folder, shape', RjListShape(MediaFolder, false, Dir, Row1, Row2));
+        RjObserver.Observe('slash prefix package folder, with sub folders, shape', RjListShape(Dir, true, Dir, Row1, Row2));
         // Eight more sets of a JPEG then a PNG item: which item each numbered file holds, against the Tenant Media Set orders.
         for k := 1 to 8 do begin
             Clear(Row1);
@@ -871,8 +948,8 @@ codeunit 61286 "LT S Media Files"
         Row1.DeleteAll();
         Cleanup(Jpg);
         Cleanup(Png);
-        // Linux suspect, not asserted: File Management.GetServerDirectoryFilesList / ...InclSubDirs (DotNet Directory) list none of the files AL
-        // File.Exists finds (the QX GetFiles item: AL File and DotNet see different paths on the Linux tier); queued for the Windows check.
+        // The full listings carry file lengths and which item a file holds: not an oracle (a re-encoded image differs between the Windows and
+        // the Linux encoder, corpus issue 723; the item behind a number varies between runs). The ', shape' keys below assert what holds on both.
         RjObserver.Ignore('media folder');
         RjObserver.Ignore('media folder after one');
         RjObserver.Ignore('package folder after one, with sub folders');
@@ -896,18 +973,31 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Expect('set counts', '1|2');
         RjObserver.Expect('format set length', '38');
         RjObserver.Expect('format set is MediaId', 'Yes');
-        // BC 29 keeps the bytes of an imported JPEG; BC 27 and 28 re-encode it too.
-#if BC29PLUS
-        RjObserver.Expect('tenant item bytes same as files', 'No|Yes|No');
-#else
-        RjObserver.Expect('tenant item bytes same as files', 'No|No|No');
-#endif
+        // Whether the Tenant Media content keeps the bytes of the imported file is an image encoder output: Windows BC 29.0 re-encodes the JPEG
+        // (No|No|No), the Linux image keeps it on BC 29 (No|Yes|No). Not asserted (corpus issue 723).
+        RjObserver.Ignore('tenant item bytes same as files');
+        // File Management.GetServerDirectoryFilesList (DotNet Directory.GetFiles) lists the files ExportFile wrote: Name = the full path with
+        // backslashes, Value = the file name, no extension, in name order; each file is the Tenant Media content of an item of its set.
+        // Windows BC 29.0 (windows-check RJ item B, 2026-10-23); bc-linux dc007079 (bc-linux #181, #183). The older Linux image listed none.
+        // InclSubDirs on the package folder, the filtered TemporaryPath listing and a '/' prefix (CombinePath) give the same files.
         RjObserver.Expect('export count one item', '1');
+        RjObserver.Expect('media folder after one, shape', '1:[<media>\<set1>-1|v=<set1>-1|content=Yes]|name order=Yes');
+        RjObserver.Expect('package folder after one, with sub folders, shape', '1:[<media>\<set1>-1|v=<set1>-1|content=Yes]|name order=Yes');
         RjObserver.Expect('export count two items', '2');
+        RjObserver.Expect('media folder after two, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
+        RjObserver.Expect('package folder after two, with sub folders, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
         RjObserver.Expect('export count one item again', '1');
-        RjObserver.Expect('al file names after again', '[<media>\<set1>-1|len=108]');
-        RjObserver.Expect('bytes of again -1', 'len=108 bytes of: s2i2');
+        // The length of the re-encoded 1x1 PNG is an encoder output (Windows 103 bytes, Linux 108): only the names and the content are asserted
+        // (corpus issue 723).
+        RjObserver.Ignore('al file names after again');
+        RjObserver.Ignore('bytes of again -1');
+        RjObserver.Expect('again -1 and -2 exist', 'Yes|No');
+        RjObserver.Expect('again -1 is the tenant content of its item', 'Yes');
+        RjObserver.Expect('media folder after again, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
+        RjObserver.Expect('temporary path, with sub folders, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
         RjObserver.Expect('slash prefix export count', '2');
+        RjObserver.Expect('slash prefix media folder, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
+        RjObserver.Expect('slash prefix package folder, with sub folders, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
         RjObserver.Expect('set 1 export count', '2');
         RjObserver.Expect('set 2 export count', '2');
         RjObserver.Expect('set 3 export count', '2');
