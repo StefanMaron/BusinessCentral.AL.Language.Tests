@@ -9,6 +9,8 @@
 // Writer RJ (DemoTool, Export RapidStart Packages: Config. XML Exchange.ExportMediaSet, ConfigXMLExchange.Codeunit.al:1433-1457, then
 //   UpdateConfigPackageMediaSet and ImportMediaSetFromFile, :1505-1563): MediaSet.ExportFile(MediaFolder + '\' + Format(Set)) of a set with one
 //   and a set with two items, the files File Management.GetServerDirectoryFilesList lists (names, order), their bytes against the imported files.
+// Listing order (Windows check 7, 2026-10-23): GetServerDirectoryFilesList lists in name order, case ignored, also for ExportFile names
+//   (RJ_GetServerDirectoryFilesList_ListingOrder).
 // BC versions: 27, 28, 29
 codeunit 61286 "LT S Media Files"
 {
@@ -1011,5 +1013,144 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Expect('media index order', 'i1i2 i1i2 i1i2 i1i2 i1i2 i1i2 i1i2 i1i2 ');
         RjObserver.Expect('files follow the key order', 'Yes');
         RjObserver.Verify();
+    end;
+
+    // ---- Listing order (Windows check 7, 2026-10-23, BC 29.0): File Management.GetServerDirectoryFilesList lists a folder in NAME order,
+    // case ignored, never in creation order; Value is the file name without its extension. Each case writes its files in an order that
+    // differs from the name order (30 ms apart). The same cases through DotNet DirectoryInfo.GetFiles: QxDotNetDemoShapes.al,
+    // RJ_DirectoryInfo_GetFiles_ListingOrder. ----
+
+    local procedure RjLoNewDir(Tag: Text): Text
+    var
+        FileManagement: Codeunit "File Management";
+        Dir: Text;
+    begin
+        Dir := TemporaryPath() + 'ltlo' + Tag + CopyStr(DelChr(Format(CreateGuid()), '=', '{}-'), 1, 8);
+        FileManagement.ServerCreateDirectory(Dir);
+        exit(Dir);
+    end;
+
+    local procedure RjLoWrite(Name: Text)
+    var
+        F: File;
+    begin
+        F.Create(Name);
+        F.Write('x');
+        F.Close();
+        Sleep(30);
+    end;
+
+    local procedure RjLoList(Dir: Text; Set1Text: Text; Set2Text: Text): Text
+    var
+        TempNameValueBuffer: Record "Name/Value Buffer" temporary;
+        FileManagement: Codeunit "File Management";
+        Value: Text;
+        Result: Text;
+    begin
+        FileManagement.GetServerDirectoryFilesList(TempNameValueBuffer, Dir);
+        if TempNameValueBuffer.FindSet() then
+            repeat
+                Value := TempNameValueBuffer.Value;
+                if Set1Text <> '' then
+                    Value := Value.Replace(Set1Text, '<set1>');
+                if Set2Text <> '' then
+                    Value := Value.Replace(Set2Text, '<set2>');
+                Result += Value + ',';
+            until TempNameValueBuffer.Next() = 0;
+        FileManagement.ServerRemoveDirectory(Dir, true);
+        exit(Result);
+    end;
+
+    [Test]
+    procedure RJ_GetServerDirectoryFilesList_ListingOrder()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row1: Record "PZ OnPrem Media Row";
+        Row2: Record "PZ OnPrem Media Row";
+        FileManagement: Codeunit "File Management";
+        Dir: Text;
+        Png: Text;
+        Set1Text: Text;
+        Set2Text: Text;
+        Tries: Integer;
+    begin
+        // (a) written c, b, a
+        Dir := RjLoNewDir('a');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'c.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'b.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'a.txt'));
+        Observer.Observe('a written c,b,a', RjLoList(Dir, '', ''));
+        // (b) MediaSet.ExportFile(Dir + '\' + Format(Set)): set1 (two items) first, then set2 (one item) whose name sorts before set1
+        Row1.SetFilter(Code, 'LTLO*');
+        Row1.DeleteAll();
+        Row1.Reset();
+        Png := TempName('.png');
+        WritePng(Png);
+        Row1.Code := 'LTLO0';
+        Row1.Set.ImportFile(Png, 'p1');
+        Row1.Insert();
+        Row1.Set.ImportFile(Png, 'p2');
+        Row1.Modify();
+        Row1.Get('LTLO0');
+        Set1Text := Format(Row1.Set);
+        repeat
+            Tries += 1;
+            Clear(Row2);
+            Row2.Code := 'LTLO' + Format(Tries);
+            Row2.Set.ImportFile(Png, 'q');
+            Row2.Insert();
+            Row2.Get('LTLO' + Format(Tries));
+            Set2Text := Format(Row2.Set);
+        until (UpperCase(Set2Text) < UpperCase(Set1Text)) or (Tries >= 40);
+        Observer.Observe('b set2 sorts before set1', Format(UpperCase(Set2Text) < UpperCase(Set1Text)));
+        Dir := RjLoNewDir('b');
+        Observer.Observe('b export set1', Format(Row1.Set.ExportFile(Dir + '\' + Format(Row1.Set))));
+        Sleep(30);
+        Observer.Observe('b export set2', Format(Row2.Set.ExportFile(Dir + '\' + Format(Row2.Set))));
+        Observer.Observe('b exported set1 then set2', RjLoList(Dir, Set1Text, Set2Text));
+        Row1.Reset();
+        Row1.SetFilter(Code, 'LTLO*');
+        Row1.DeleteAll();
+        Cleanup(Png);
+        // (b2) Guid-shaped names, the high one written first
+        Dir := RjLoNewDir('b2');
+        RjLoWrite(FileManagement.CombinePath(Dir, '{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}-1'));
+        RjLoWrite(FileManagement.CombinePath(Dir, '{00000000-0000-0000-0000-000000000000}-1'));
+        Observer.Observe('b2 written FFFF then 0000', RjLoList(Dir, '', ''));
+        // (c) mixed case: written B, a
+        Dir := RjLoNewDir('c');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'B.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'a.txt'));
+        Observer.Observe('c written B,a', RjLoList(Dir, '', ''));
+        // (c2) written a, C, b: creation order a,C,b; name order with case ignored a,b,C; ordinal order C,a,b
+        Dir := RjLoNewDir('c2');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'a.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'C.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'b.txt'));
+        Observer.Observe('c2 written a,C,b', RjLoList(Dir, '', ''));
+        // (d) ten files written in shuffled order
+        Dir := RjLoNewDir('d');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f07.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f02.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f09.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f01.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f10.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f05.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f03.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f08.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f04.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f06.txt'));
+        Observer.Observe('d written 07,02,09,01,10,05,03,08,04,06', RjLoList(Dir, '', ''));
+        // Windows BC 29.0 (windows-check 7, 2026-10-23); bc-linux dc007079 lists in the same order (bc-linux #183).
+        Observer.Expect('a written c,b,a', 'a,b,c,');
+        Observer.Expect('b set2 sorts before set1', 'Yes');
+        Observer.Expect('b export set1', '2');
+        Observer.Expect('b export set2', '1');
+        Observer.Expect('b exported set1 then set2', '<set2>-1,<set1>-1,<set1>-2,');
+        Observer.Expect('b2 written FFFF then 0000', '{00000000-0000-0000-0000-000000000000}-1,{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}-1,');
+        Observer.Expect('c written B,a', 'a,B,');
+        Observer.Expect('c2 written a,C,b', 'a,b,C,');
+        Observer.Expect('d written 07,02,09,01,10,05,03,08,04,06', 'f01,f02,f03,f04,f05,f06,f07,f08,f09,f10,');
+        Observer.Verify();
     end;
 }
