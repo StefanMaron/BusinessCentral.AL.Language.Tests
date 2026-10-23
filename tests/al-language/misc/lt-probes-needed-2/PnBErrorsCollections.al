@@ -278,30 +278,30 @@ codeunit 70550 "LT PnB ErrorInfo"
     end;
 
     // The message goes last and on its own: the Probe Observer cuts a value after "Correlation ID: " up to the next backslash.
+    // Callstack: only the frames of this app, joined with a backslash (BC 27.5 also lists the frames of Microsoft's test runner
+    // below the test method, BC 28.5 and 29.0 do not).
     local procedure RoObserveInfo(var Obs: Codeunit "Probe Observer"; Name: Text; Info: ErrorInfo)
     var
         DimKey: Text;
         Dims: Text;
         Cr: Text[1];
         Lf: Text[1];
-        Lines: List of [Text];
         Line: Text;
-        N: Integer;
+        Frames: Text;
     begin
         foreach DimKey in Info.CustomDimensions.Keys() do
             Dims += DimKey + '=' + Info.CustomDimensions.Get(DimKey) + ',';
-        Obs.Observe(Name + ' type', Format(Info.ErrorType));
-        Obs.Observe(Name + ' dims', Format(Info.CustomDimensions.Count()) + ':' + Dims);
-        Obs.Observe(Name + ' detailed', Info.DetailedMessage);
-        Obs.Observe(Name + ' collectible', Format(Info.Collectible));
+        Obs.Observe(Name, 'type=' + Format(Info.ErrorType) + ';dims=' + Format(Info.CustomDimensions.Count()) + ':' + Dims +
+            ';detailed=' + Info.DetailedMessage + ';collectible=' + Format(Info.Collectible));
         Cr[1] := 13;
         Lf[1] := 10;
-        Lines := Info.Callstack.Replace(Cr, '').Split(Lf);
-        Obs.Observe(Name + ' callstack lines', Format(Lines.Count()));
-        foreach Line in Lines do begin
-            N += 1;
-            Obs.Observe(Name + ' callstack ' + Format(N), Line);
-        end;
+        foreach Line in Info.Callstack.Replace(Cr, '').Split(Lf) do
+            if Line.Contains('AL Language Coverage Tests by AL Language version') then begin
+                if Frames <> '' then
+                    Frames += '\';
+                Frames += Line;
+            end;
+        Obs.Observe(Name + ' callstack', Frames);
         Obs.Observe(Name + ' message', Info.Message);
     end;
 
@@ -356,7 +356,13 @@ codeunit 70550 "LT PnB ErrorInfo"
         Obs.ObserveError('kept: scope exit');
         asserterror RoCollectInternalAndLeave();
         Obs.ObserveError('left: scope exit');
-        Obs.Finish();
+        Obs.Expect('kept: count', '1');
+        Obs.Expect('kept: message', 'An error has occurred. If the error persists, please contact your system administrator.\r\nCorrelation ID: x');
+        Obs.Expect('kept: scope exit|text', 'An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Obs.Expect('kept: scope exit|code', 'Dialog');
+        Obs.Expect('left: scope exit|text', 'An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Obs.Expect('left: scope exit|code', 'Dialog');
+        Obs.Verify();
     end;
 }
 
