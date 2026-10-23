@@ -1074,7 +1074,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(10);
         RkMoves_DescKind_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|9|');
+        Observer.Expect('walk', '7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,end:9');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1084,7 +1090,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(40);
         RkMoves_DescKind_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|39|');
+        Observer.Expect('walk', '37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,end:39');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1094,9 +1106,16 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(42);
         RkMoves_DescKind_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|41|');
+        Observer.Expect('walk', '39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,end:41');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
+    // The reporter's case of AL Runner issue 5739: 50 rows, the view keeps the 25 odd Ids (on BC: open on 1 asking F(=><) once, then no call).
     [Test]
     procedure RK_DescKind_Find_25Rows()
     var
@@ -1104,7 +1123,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(50);
         RkMoves_DescKind_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|49|');
+        Observer.Expect('walk', '47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,end:49');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     local procedure RkMoves_DescKind_FindNext(Prefix: Text; var Observer: Codeunit "Probe Observer")
@@ -1146,7 +1171,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(10);
         RkMoves_DescKind_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=-1:7;N(-1)=-1:9;N(-1)=0:9;');
+        Observer.Expect('first', 'Yes|9|');
+        Observer.Expect('walk', '7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,end:9');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1156,7 +1187,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(40);
         RkMoves_DescKind_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=-1:7;N(-1)=-1:9;N(-1)=-1:11;N(-1)=-1:13;N(-1)=-1:15;N(-1)=-1:17;N(-1)=-1:19;N(-1)=-1:21;N(-1)=-1:23;N(-1)=-1:25;N(-1)=-1:27;N(-1)=-1:29;N(-1)=-1:31;N(-1)=-1:33;N(-1)=-1:35;N(-1)=-1:37;N(-1)=-1:39;N(-1)=0:39;');
+        Observer.Expect('first', 'Yes|39|');
+        Observer.Expect('walk', '37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,end:39');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1166,7 +1203,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(42);
         RkMoves_DescKind_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=-1:7;N(-1)=-1:9;N(-1)=-1:11;N(-1)=-1:13;N(-1)=-1:15;N(-1)=-1:17;N(-1)=-1:19;N(-1)=-1:21;N(-1)=-1:23;N(-1)=-1:25;N(-1)=-1:27;N(-1)=-1:29;N(-1)=-1:31;N(-1)=-1:33;N(-1)=-1:35;N(-1)=-1:37;N(-1)=-1:39;N(-1)=-1:41;');
+        Observer.Expect('first', 'Yes|41|N(-1)=0:41;');
+        Observer.Expect('walk', '39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,end:41');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1176,7 +1219,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(50);
         RkMoves_DescKind_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=-1:7;N(-1)=-1:9;N(-1)=-1:11;N(-1)=-1:13;N(-1)=-1:15;N(-1)=-1:17;N(-1)=-1:19;N(-1)=-1:21;N(-1)=-1:23;N(-1)=-1:25;N(-1)=-1:27;N(-1)=-1:29;N(-1)=-1:31;N(-1)=-1:33;N(-1)=-1:35;N(-1)=-1:37;N(-1)=-1:39;N(-1)=-1:41;');
+        Observer.Expect('first', 'Yes|49|N(-1)=-1:43;N(-1)=-1:45;N(-1)=-1:47;N(-1)=-1:49;N(-1)=0:49;');
+        Observer.Expect('walk', '47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,end:49');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     local procedure RkMoves_AscKind_Find(Prefix: Text; var Observer: Codeunit "Probe Observer")
@@ -1218,7 +1267,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(10);
         RkMoves_AscKind_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,end:9');
+        Observer.Expect('last', 'Yes|9|');
+        Observer.Expect('back', '7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1228,7 +1283,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(40);
         RkMoves_AscKind_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,end:39');
+        Observer.Expect('last', 'Yes|39|');
+        Observer.Expect('back', '37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1238,7 +1299,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(42);
         RkMoves_AscKind_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,end:41');
+        Observer.Expect('last', 'Yes|41|');
+        Observer.Expect('back', '39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1248,7 +1315,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(50);
         RkMoves_AscKind_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,end:49');
+        Observer.Expect('last', 'Yes|49|');
+        Observer.Expect('back', '47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     local procedure RkMoves_AscKind_FindNext(Prefix: Text; var Observer: Codeunit "Probe Observer")
@@ -1290,7 +1363,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(10);
         RkMoves_AscKind_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:3;N(1)=1:5;N(1)=1:7;N(1)=1:9;N(1)=0:9;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,end:9');
+        Observer.Expect('last', 'Yes|9|');
+        Observer.Expect('back', '7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1300,7 +1379,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(40);
         RkMoves_AscKind_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:3;N(1)=1:5;N(1)=1:7;N(1)=1:9;N(1)=1:11;N(1)=1:13;N(1)=1:15;N(1)=1:17;N(1)=1:19;N(1)=1:21;N(1)=1:23;N(1)=1:25;N(1)=1:27;N(1)=1:29;N(1)=1:31;N(1)=1:33;N(1)=1:35;N(1)=1:37;N(1)=1:39;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39[N(1)=0:39;],end:39');
+        Observer.Expect('last', 'Yes|39|');
+        Observer.Expect('back', '37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1310,7 +1395,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(42);
         RkMoves_AscKind_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:3;N(1)=1:5;N(1)=1:7;N(1)=1:9;N(1)=1:11;N(1)=1:13;N(1)=1:15;N(1)=1:17;N(1)=1:19;N(1)=1:21;N(1)=1:23;N(1)=1:25;N(1)=1:27;N(1)=1:29;N(1)=1:31;N(1)=1:33;N(1)=1:35;N(1)=1:37;N(1)=1:39;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39[N(1)=1:41;N(1)=0:41;],41,end:41');
+        Observer.Expect('last', 'Yes|41|');
+        Observer.Expect('back', '39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1320,7 +1411,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(50);
         RkMoves_AscKind_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:3;N(1)=1:5;N(1)=1:7;N(1)=1:9;N(1)=1:11;N(1)=1:13;N(1)=1:15;N(1)=1:17;N(1)=1:19;N(1)=1:21;N(1)=1:23;N(1)=1:25;N(1)=1:27;N(1)=1:29;N(1)=1:31;N(1)=1:33;N(1)=1:35;N(1)=1:37;N(1)=1:39;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39[N(1)=1:41;N(1)=1:43;N(1)=1:45;N(1)=1:47;N(1)=1:49;N(1)=0:49;],41,43,45,47,49,end:49');
+        Observer.Expect('last', 'Yes|49|');
+        Observer.Expect('back', '47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     local procedure RkMoves_Desc_Find(Prefix: Text; var Observer: Codeunit "Probe Observer")
@@ -1362,7 +1459,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(5);
         RkMoves_Desc_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|5|');
+        Observer.Expect('walk', '4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,end:5');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1372,7 +1475,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(20);
         RkMoves_Desc_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|20|');
+        Observer.Expect('walk', '19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,end:20');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1382,7 +1491,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(21);
         RkMoves_Desc_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|21|');
+        Observer.Expect('walk', '20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,end:21');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1392,7 +1507,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(25);
         RkMoves_Desc_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|25|');
+        Observer.Expect('walk', '24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,end:25');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     local procedure RkMoves_Desc_FindNext(Prefix: Text; var Observer: Codeunit "Probe Observer")
@@ -1434,7 +1555,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(5);
         RkMoves_Desc_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:2;N(-1)=-1:3;N(-1)=-1:4;N(-1)=-1:5;N(-1)=0:5;');
+        Observer.Expect('first', 'Yes|5|');
+        Observer.Expect('walk', '4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,end:5');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1444,7 +1571,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(20);
         RkMoves_Desc_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:2;N(-1)=-1:3;N(-1)=-1:4;N(-1)=-1:5;N(-1)=-1:6;N(-1)=-1:7;N(-1)=-1:8;N(-1)=-1:9;N(-1)=-1:10;N(-1)=-1:11;N(-1)=-1:12;N(-1)=-1:13;N(-1)=-1:14;N(-1)=-1:15;N(-1)=-1:16;N(-1)=-1:17;N(-1)=-1:18;N(-1)=-1:19;N(-1)=-1:20;N(-1)=0:20;');
+        Observer.Expect('first', 'Yes|20|');
+        Observer.Expect('walk', '19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,end:20');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1454,7 +1587,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(21);
         RkMoves_Desc_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:2;N(-1)=-1:3;N(-1)=-1:4;N(-1)=-1:5;N(-1)=-1:6;N(-1)=-1:7;N(-1)=-1:8;N(-1)=-1:9;N(-1)=-1:10;N(-1)=-1:11;N(-1)=-1:12;N(-1)=-1:13;N(-1)=-1:14;N(-1)=-1:15;N(-1)=-1:16;N(-1)=-1:17;N(-1)=-1:18;N(-1)=-1:19;N(-1)=-1:20;N(-1)=-1:21;');
+        Observer.Expect('first', 'Yes|21|N(-1)=0:21;');
+        Observer.Expect('walk', '20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,end:21');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1464,7 +1603,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(25);
         RkMoves_Desc_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:2;N(-1)=-1:3;N(-1)=-1:4;N(-1)=-1:5;N(-1)=-1:6;N(-1)=-1:7;N(-1)=-1:8;N(-1)=-1:9;N(-1)=-1:10;N(-1)=-1:11;N(-1)=-1:12;N(-1)=-1:13;N(-1)=-1:14;N(-1)=-1:15;N(-1)=-1:16;N(-1)=-1:17;N(-1)=-1:18;N(-1)=-1:19;N(-1)=-1:20;N(-1)=-1:21;');
+        Observer.Expect('first', 'Yes|25|N(-1)=-1:22;N(-1)=-1:23;N(-1)=-1:24;N(-1)=-1:25;N(-1)=0:25;');
+        Observer.Expect('walk', '24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,end:25');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     local procedure RkMoves_Asc_Find(Prefix: Text; var Observer: Codeunit "Probe Observer")
@@ -1506,7 +1651,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(5);
         RkMoves_Asc_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,end:5');
+        Observer.Expect('last', 'Yes|5|');
+        Observer.Expect('back', '4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1516,7 +1667,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(20);
         RkMoves_Asc_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,end:20');
+        Observer.Expect('last', 'Yes|20|');
+        Observer.Expect('back', '19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1526,7 +1683,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(21);
         RkMoves_Asc_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,end:21');
+        Observer.Expect('last', 'Yes|21|');
+        Observer.Expect('back', '20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1536,7 +1699,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(25);
         RkMoves_Asc_Find('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,end:25');
+        Observer.Expect('last', 'Yes|25|');
+        Observer.Expect('back', '24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     local procedure RkMoves_Asc_FindNext(Prefix: Text; var Observer: Codeunit "Probe Observer")
@@ -1578,7 +1747,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(5);
         RkMoves_Asc_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:2;N(1)=1:3;N(1)=1:4;N(1)=1:5;N(1)=0:5;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,end:5');
+        Observer.Expect('last', 'Yes|5|');
+        Observer.Expect('back', '4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1588,7 +1763,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(20);
         RkMoves_Asc_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:2;N(1)=1:3;N(1)=1:4;N(1)=1:5;N(1)=1:6;N(1)=1:7;N(1)=1:8;N(1)=1:9;N(1)=1:10;N(1)=1:11;N(1)=1:12;N(1)=1:13;N(1)=1:14;N(1)=1:15;N(1)=1:16;N(1)=1:17;N(1)=1:18;N(1)=1:19;N(1)=1:20;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20[N(1)=0:20;],end:20');
+        Observer.Expect('last', 'Yes|20|');
+        Observer.Expect('back', '19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1598,7 +1779,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(21);
         RkMoves_Asc_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:2;N(1)=1:3;N(1)=1:4;N(1)=1:5;N(1)=1:6;N(1)=1:7;N(1)=1:8;N(1)=1:9;N(1)=1:10;N(1)=1:11;N(1)=1:12;N(1)=1:13;N(1)=1:14;N(1)=1:15;N(1)=1:16;N(1)=1:17;N(1)=1:18;N(1)=1:19;N(1)=1:20;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20[N(1)=1:21;N(1)=0:21;],21,end:21');
+        Observer.Expect('last', 'Yes|21|');
+        Observer.Expect('back', '20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -1608,7 +1795,13 @@ codeunit 73874 "LT PnF Find List Moves"
     begin
         RkSeed(25);
         RkMoves_Asc_FindNext('', Observer);
-        Observer.Finish();
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:2;N(1)=1:3;N(1)=1:4;N(1)=1:5;N(1)=1:6;N(1)=1:7;N(1)=1:8;N(1)=1:9;N(1)=1:10;N(1)=1:11;N(1)=1:12;N(1)=1:13;N(1)=1:14;N(1)=1:15;N(1)=1:16;N(1)=1:17;N(1)=1:18;N(1)=1:19;N(1)=1:20;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20[N(1)=1:21;N(1)=1:22;N(1)=1:23;N(1)=1:24;N(1)=1:25;N(1)=0:25;],21,22,23,24,25,end:25');
+        Observer.Expect('last', 'Yes|25|');
+        Observer.Expect('back', '24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
     end;
 }
 
