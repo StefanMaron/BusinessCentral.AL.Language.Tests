@@ -705,6 +705,62 @@ codeunit 61286 "LT S Media Files"
         exit(Result);
     end;
 
+    // Which item of the set (i1 = Item(1), i2 = Item(2)) a Base64 text is the Tenant Media content of.
+    local procedure RjWhich(B64: Text; var Row: Record "PZ OnPrem Media Row"): Text
+    begin
+        if B64 = RjTenantBase64(Row.Set.Item(1)) then
+            exit('i1');
+        if B64 = RjTenantBase64(Row.Set.Item(2)) then
+            exit('i2');
+        exit('?');
+    end;
+
+    local procedure RjFileB64(Name: Text): Text
+    var
+        F: File;
+        Base64: Codeunit "Base64 Convert";
+        InS: InStream;
+        B64: Text;
+    begin
+        if not File.Exists(Name) then
+            exit('');
+        F.Open(Name);
+        F.CreateInStream(InS);
+        B64 := Base64.ToBase64(InS);
+        F.Close();
+        exit(B64);
+    end;
+
+    local procedure RjItemOf(MediaId: Guid; var Row: Record "PZ OnPrem Media Row"): Text
+    begin
+        if MediaId = Row.Set.Item(1) then
+            exit('i1');
+        if MediaId = Row.Set.Item(2) then
+            exit('i2');
+        exit('?');
+    end;
+
+    // For a set of two items: the items behind <prefix>-1 and -2, the items in the order of the Tenant Media Set primary key (ID, Media ID)
+    // and in the order of its Media Index.
+    local procedure RjOrders(var Row: Record "PZ OnPrem Media Row"; Prefix: Text; var FileOrder: Text; var KeyOrder: Text; var IndexOrder: Text)
+    var
+        TenantMediaSet: Record "Tenant Media Set";
+    begin
+        FileOrder := RjWhich(RjFileB64(Prefix + '-1'), Row) + RjWhich(RjFileB64(Prefix + '-2'), Row);
+        KeyOrder := '';
+        IndexOrder := '';
+        TenantMediaSet.SetRange(ID, Row.Set.MediaId());
+        if TenantMediaSet.FindSet() then
+            repeat
+                KeyOrder += RjItemOf(TenantMediaSet."Media ID".MediaId(), Row);
+            until TenantMediaSet.Next() = 0;
+        TenantMediaSet.SetCurrentKey("Media Index");
+        if TenantMediaSet.FindSet() then
+            repeat
+                IndexOrder += RjItemOf(TenantMediaSet."Media ID".MediaId(), Row);
+            until TenantMediaSet.Next() = 0;
+    end;
+
     [TryFunction]
     local procedure RjTryList(var Result: Text; Folder: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row")
     begin
@@ -724,6 +780,13 @@ codeunit 61286 "LT S Media Files"
         Count1: Integer;
         Count2: Integer;
         TempList: Text;
+        FileOrder: Text;
+        KeyOrder: Text;
+        IndexOrder: Text;
+        AllFiles: Text;
+        AllKey: Text;
+        AllIndex: Text;
+        k: Integer;
     begin
         Row1.SetFilter(Code, 'LTRJ*');
         Row1.DeleteAll();
@@ -778,6 +841,25 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Observe('slash prefix al file names', RjCandidates(FileManagement.CombinePath(MediaFolder, Format(Row2.Set)), Dir, Row1, Row2));
         RjObserver.Observe('slash prefix media folder', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('slash prefix package folder, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        // Eight more sets of a JPEG then a PNG item: which item each numbered file holds, against the Tenant Media Set orders.
+        for k := 1 to 8 do begin
+            Row1.Code := 'LTRJS' + Format(k);
+            Row1.Set.ImportFile(Jpg, 'jpeg item');
+            Row1.Insert();
+            Row1.Set.ImportFile(Png, 'png item');
+            Row1.Modify();
+            Row1.Get('LTRJS' + Format(k));
+            RjObserver.Observe('set ' + Format(k) + ' export count', Format(Row1.Set.ExportFile(FileManagement.CombinePath(MediaFolder, 'k' + Format(k)))));
+            RjOrders(Row1, FileManagement.CombinePath(MediaFolder, 'k' + Format(k)), FileOrder, KeyOrder, IndexOrder);
+            AllFiles += FileOrder + ' ';
+            AllKey += KeyOrder + ' ';
+            AllIndex += IndexOrder + ' ';
+        end;
+        RjObserver.Observe('files', AllFiles);
+        RjObserver.Observe('key order', AllKey);
+        RjObserver.Observe('media index order', AllIndex);
+        RjObserver.Observe('files follow the key order', Format(AllFiles = AllKey));
+        RjObserver.Observe('files follow the media index order', Format(AllFiles = AllIndex));
         FileManagement.ServerRemoveDirectory(Dir, true);
         Row1.Reset();
         Row1.SetFilter(Code, 'LTRJ*');
