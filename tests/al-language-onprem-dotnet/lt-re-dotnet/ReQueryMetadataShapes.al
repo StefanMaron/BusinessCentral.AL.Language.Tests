@@ -6,6 +6,8 @@
 //   that has a FlowField column, a nested data item and a Method = Count column: the entries of MetaData.Fields() (FieldNo, TableNo, FieldName,
 //   in order), and the Tenant Web Service Columns rows WebServiceManagement.CreateTenantWebServiceColumnForQuery gives for each column.
 //   One data item with normal fields is pinned in lt-qx-dotnet/QxDotNetDemoShapes.al (QX_QueryMetadataReader_TenantWebServiceColumns).
+// Writer RJ (DemoTool on BC 29): MetaData.Fields() of Method = Sum, Count, Average, Min and Max columns (queries 60760 and 86175 of the main
+//   app) and of Base Application's query 51 "Power BI Vendor List".
 // BC versions: 27, 28, 29
 table 99415 "LT RE QM Header"
 {
@@ -142,6 +144,42 @@ codeunit 99418 "LT RE Query Metadata Shapes"
         Observer.Expect('fields', '[1|99415|HeadId][2|99415|HeadName][3|99415|LineTotal][4|99415|LineCountFlow][4|99416|LineDescription][3|99416|LineAmount][0|99416|Lines]');
         // A field with no column (1 of the line table, 9 of the header) still gets a row, with a blank Field Name.
         Observer.Expect('columns', '[99415|1|HeadId|Yes][99415|2|HeadName|Yes][99415|3|LineTotal|Yes][99415|4|LineCountFlow|Yes][99416|4|LineDescription|Yes][99416|3|LineAmount|Yes][99416|0|Lines|Yes][99416|1||Yes][99415|9||Yes]');
+        Observer.Verify();
+    end;
+
+    // ---- Writer RJ (Microsoft's DemoTool, Create Web Services.CreatePowerBITenantWebServices and the other query web services): the entries
+    // of MetaData.Fields() for query columns with Method = Sum, Count, Average, Min and Max next to a plain column (query 60760 "QJ Order Sum",
+    // one data item), the same methods on a nested data item (query 86175), and Base Application's query 51 "Power BI Vendor List" (ReverseSign
+    // columns, a FlowField, a nested data item), read the way ODataUtility.GetTenantWebServiceMetadata reads them (no Tenant Web Service row). ----
+
+    local procedure RjFieldsOf(QueryId: Integer): Text
+    var
+        TenantWebService: Record "Tenant Web Service";
+        ODataUtility: Codeunit ODataUtility;
+        MetaData: DotNet QueryMetadataReader;
+    begin
+        TenantWebService.Init();
+        TenantWebService."Object Type" := TenantWebService."Object Type"::Query;
+        TenantWebService."Object ID" := QueryId;
+        ODataUtility.GetTenantWebServiceMetadata(TenantWebService, MetaData);
+        if IsNull(MetaData) then
+            exit('null');
+        exit(Format(MetaData.Fields().Count()) + ':' + FieldsText(MetaData));
+    end;
+
+    [Test]
+    procedure RJ_QueryMetadataReader_AggregateMethods()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Observer.Observe('one data item', RjFieldsOf(60760));
+        Observer.Observe('nested data item', RjFieldsOf(86175));
+        Observer.Observe('query 51', RjFieldsOf(51));
+        // Sum, Average, Min and Max columns carry the field number of their source field and the table of their data item, like a plain column;
+        // the Method = Count column has field number 0. FieldName is the column name. ReverseSign and FlowField columns are plain entries.
+        Observer.Expect('one data item', '6:[2|60862|CustNo][3|60862|TotalAmount][0|60862|CountAmount][3|60862|AverageAmount][3|60862|MinAmount][3|60862|MaxAmount]');
+        Observer.Expect('nested data item', '5:[1|74054|DocNo][4|74055|SumKind][4|74055|AvgKind][4|74055|MinKind][4|74055|MaxKind]');
+        Observer.Expect('query 51', '10:[1|23|Vendor_No][2|23|Vendor_Name][66|23|Balance_Due][4|380|Posting_Date][36|380|Applied_Vend_Ledger_Entry_No][7|380|Amount][8|380|Amount_LCY][13|380|Transaction_No][1|380|Entry_No][39|380|Remaining_Pmt_Disc_Possible]');
         Observer.Verify();
     end;
 }

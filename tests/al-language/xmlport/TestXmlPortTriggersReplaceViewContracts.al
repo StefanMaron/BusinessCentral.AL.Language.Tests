@@ -10,6 +10,10 @@
 // key error of a plain import, the rows and order of an export with SetTableView (also with another key
 // and a descending order), the VariableText export bytes, and nested table elements (export, and the
 // link field of the second imported child).
+// Writer RJ (Microsoft's DemoTool: Base Application xmlport 1225 "Imp / Exp Data Exch Def & Map" imports ECBExchangeRateService.xml, three
+// nested table elements whose LinkFields are primary key fields of the child): tables 88063..88065 and xmlports 88066, 88067; which link
+// fields the second and later child rows under one parent keep, inside and outside the child's primary key, with fieldattribute and
+// fieldelement, and a later row whose document carries the link field itself.
 // BC versions: 27.5
 
 codeunit 68206 "Probe XmlPort Log"
@@ -176,6 +180,143 @@ xmlport 68204 "Probe XP Nested"
 
                     fieldelement(CNo; C."Entry No.") { }
                     fieldelement(CCode; C.Code) { }
+                }
+            }
+        }
+    }
+}
+
+table 88063 "LT RJ XP Group"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Code; Code[20]) { }
+    }
+
+    keys
+    {
+        key(PK; Code) { Clustered = true; }
+    }
+}
+
+table 88064 "LT RJ XP Head"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; GCode; Code[20]) { }
+        field(2; Code; Code[20]) { }
+        field(3; GRef; Code[20]) { }
+    }
+
+    keys
+    {
+        key(PK; GCode, Code) { Clustered = true; }
+    }
+}
+
+table 88065 "LT RJ XP Line"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; GCode; Code[20]) { }
+        field(2; HCode; Code[20]) { }
+        field(3; LineNo; Integer) { }
+        field(4; HRef; Code[20]) { }
+        field(5; Descr; Text[30]) { }
+    }
+
+    keys
+    {
+        key(PK; GCode, HCode, LineNo) { Clustered = true; }
+    }
+}
+
+// The shape of xmlport 1225: attributes, three levels, the child links two primary key fields to its parent (one the parent got from its own
+// parent) and, here, one field outside the key.
+xmlport 88066 "LT RJ XP Attr Link"
+{
+    Direction = Import;
+    Format = Xml;
+    FormatEvaluate = Xml;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(root)
+        {
+            tableelement(G; "LT RJ XP Group")
+            {
+                MinOccurs = Zero;
+                fieldattribute(Code; G.Code) { }
+                tableelement(H; "LT RJ XP Head")
+                {
+                    LinkFields = GCode = field(Code), GRef = field(Code);
+                    LinkTable = G;
+                    MinOccurs = Zero;
+                    fieldattribute(Code; H.Code) { }
+                    tableelement(L; "LT RJ XP Line")
+                    {
+                        LinkFields = GCode = field(GCode), HCode = field(Code), HRef = field(Code);
+                        LinkTable = H;
+                        MinOccurs = Zero;
+                        fieldattribute(LineNo; L.LineNo) { }
+                        fieldattribute(Descr; L.Descr) { }
+
+                        trigger OnBeforeInsertRecord()
+                        var
+                            XmlLog: Codeunit "Probe XmlPort Log";
+                        begin
+                            XmlLog.Add('L ' + L.GCode + '/' + L.HCode + '/' + Format(L.LineNo) + '/' + L.HRef);
+                        end;
+                    }
+
+                    trigger OnBeforeInsertRecord()
+                    var
+                        XmlLog: Codeunit "Probe XmlPort Log";
+                    begin
+                        XmlLog.Add('H ' + H.GCode + '/' + H.Code + '/' + H.GRef);
+                    end;
+                }
+            }
+        }
+    }
+}
+
+// Elements, two levels: the child links one primary key field and one field outside the key; a child element may carry the key link itself.
+xmlport 88067 "LT RJ XP Elem Link"
+{
+    Direction = Import;
+    Format = Xml;
+    UseRequestPage = false;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(H; "LT RJ XP Head")
+            {
+                fieldelement(HCode; H.Code) { }
+                tableelement(L; "LT RJ XP Line")
+                {
+                    LinkFields = HCode = field(Code), HRef = field(Code);
+                    LinkTable = H;
+                    MinOccurs = Zero;
+                    fieldelement(LineNo; L.LineNo) { }
+                    fieldelement(LHCode; L.HCode) { MinOccurs = Zero; }
+                    fieldelement(Descr; L.Descr) { }
+
+                    trigger OnBeforeInsertRecord()
+                    var
+                        XmlLog: Codeunit "Probe XmlPort Log";
+                    begin
+                        XmlLog.Add('L ' + L.GCode + '/' + L.HCode + '/' + Format(L.LineNo) + '/' + L.HRef);
+                    end;
                 }
             }
         }
@@ -469,5 +610,84 @@ codeunit 68205 "Probe XmlPort More"
             Children += Format(ALTChild."Entry No.") + '/parent=' + Format(ALTChild."Parent Entry No.") + '/' + ALTChild.Code + ' ';
         until ALTChild.Next() = 0;
         Assert.AreEqual('50/parent=5/X 51/parent=0/Y ', Children, 'children');
+    end;
+
+    // ---- Writer RJ: link fields of later child rows (see the header). ----
+
+    local procedure RjRows(): Text
+    var
+        Head: Record "LT RJ XP Head";
+        Line: Record "LT RJ XP Line";
+        Result: Text;
+    begin
+        if Head.FindSet() then
+            repeat
+                Result += 'H ' + Head.GCode + '/' + Head.Code + '/' + Head.GRef + ';';
+            until Head.Next() = 0;
+        if Line.FindSet() then
+            repeat
+                Result += 'L ' + Line.GCode + '/' + Line.HCode + '/' + Format(Line.LineNo) + '/' + Line.HRef + '/' + Line.Descr + ';';
+            until Line.Next() = 0;
+        exit(Result);
+    end;
+
+    local procedure RjClear()
+    var
+        Group: Record "LT RJ XP Group";
+        Head: Record "LT RJ XP Head";
+        Line: Record "LT RJ XP Line";
+    begin
+        Group.DeleteAll();
+        Head.DeleteAll();
+        Line.DeleteAll();
+        Commit();
+        XmlLog.Take();
+    end;
+
+    [Test]
+    procedure RJ_Nested_Import_LaterChildren_KeyLinkFields()
+    var
+        Observer: Codeunit "Probe Observer";
+        TempBlob: Codeunit "Temp Blob";
+        AttrLink: XmlPort "LT RJ XP Attr Link";
+        ElemLink: XmlPort "LT RJ XP Elem Link";
+        InStr: InStream;
+    begin
+        RjClear();
+        Feed('<root><G Code="D1"><H Code="L1"><L LineNo="1" Descr="a"/><L LineNo="2" Descr="b"/><L LineNo="3" Descr="c"/></H>' +
+          '<H Code="L2"><L LineNo="1" Descr="d"/><L LineNo="2" Descr="e"/></H></G><G Code="D2"><H Code="L3"><L LineNo="5" Descr="f"/></H></G></root>', TempBlob);
+        TempBlob.CreateInStream(InStr, TextEncoding::UTF8);
+        AttrLink.SetSource(InStr);
+        if AttrLink.Import() then
+            Observer.Observe('attr import', 'ok')
+        else
+            Observer.Observe('attr import', 'error ' + GetLastErrorText());
+        Commit();
+        Observer.Observe('attr log', XmlLog.Take());
+        Observer.Observe('attr rows', RjRows());
+
+        RjClear();
+        Feed('<Root><H><HCode>A</HCode><L><LineNo>1</LineNo><Descr>a</Descr></L><L><LineNo>2</LineNo><Descr>b</Descr></L>' +
+          '<L><LineNo>3</LineNo><LHCode>A</LHCode><Descr>c</Descr></L><L><LineNo>4</LineNo><Descr>d</Descr></L></H>' +
+          '<H><HCode>B</HCode><L><LineNo>1</LineNo><Descr>e</Descr></L></H></Root>', TempBlob);
+        TempBlob.CreateInStream(InStr, TextEncoding::UTF8);
+        ElemLink.SetSource(InStr);
+        if ElemLink.Import() then
+            Observer.Observe('elem import', 'ok')
+        else
+            Observer.Observe('elem import', 'error ' + GetLastErrorText());
+        Commit();
+        Observer.Observe('elem log', XmlLog.Take());
+        Observer.Observe('elem rows', RjRows());
+        RjClear();
+        // The first child row under a parent row gets every link field. A later child row under the same parent keeps the link fields that are part
+        // of its primary key (GCode, HCode), already in OnBeforeInsertRecord, and has the link field outside the key (GRef, HRef) blank.
+        Observer.Expect('attr import', 'ok');
+        Observer.Expect('attr log', 'H D1/L1/D1;L D1/L1/1/L1;L D1/L1/2/;L D1/L1/3/;H D1/L2/;L D1/L2/1/L2;L D1/L2/2/;H D2/L3/D2;L D2/L3/5/L3;');
+        Observer.Expect('attr rows', 'H D1/L1/D1;H D1/L2/;H D2/L3/D2;L D1/L1/1/L1/a;L D1/L1/2//b;L D1/L1/3//c;L D1/L2/1/L2/d;L D1/L2/2//e;L D2/L3/5/L3/f;');
+        Observer.Expect('elem import', 'ok');
+        Observer.Expect('elem log', 'L /A/1/A;L /A/2/;L /A/3/;L /A/4/;L /B/1/B;');
+        Observer.Expect('elem rows', 'H /A/;H /B/;L /A/1/A/a;L /A/2//b;L /A/3//c;L /A/4//d;L /B/1/B/e;');
+        Observer.Verify();
     end;
 }

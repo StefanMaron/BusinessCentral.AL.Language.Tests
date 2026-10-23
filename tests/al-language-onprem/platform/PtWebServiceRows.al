@@ -5,6 +5,8 @@
 // Writer QX (Microsoft's DemoTool): System Application Web Service Management.CreateWebService and CreateTenantWebService on page 42.
 // Writer RD (DemoTool round 2): CreateTenantWebService calls of Create Web Services on rows the fresh tenant has (no row changes), Published = false,
 //   an empty name (the object name without spaces, a new row), a new name (a new row); Tenant Web Service Columns / OData counts unchanged.
+// Writer RJ (DemoTool, CreateJobWebServices and CreateTenantWebServiceOData on page 89 "Job List" as 'Job List'): the columns and OData row the
+//   calls add to the fresh row, GenerateSelectText and GenerateODataV3/V4FilterText of a page service with no Tenant Web Service Filter rows.
 
 codeunit 61281 "LT PT Web Service Rows"
 {
@@ -275,6 +277,149 @@ codeunit 61281 "LT PT Web Service Rows"
         Observer.Expect('counts after empty name', '17|65|402|29');
         Observer.Expect('job list new name call', '[3=Page;9=Job List;6=89;12=No;13=No;14=No;][3=Page;9=JobList;6=89;12=Yes;13=No;14=No;][3=Page;9=LTRDJobList;6=89;12=Yes;13=No;14=No;]');
         Observer.Expect('counts after new name', '17|66|402|29');
+        Observer.Expect('restored: all rows as before', 'Yes');
+        Observer.Expect('counts restored', '17|64|402|29');
+        Observer.Verify();
+    end;
+
+    // ---- Writer RJ (Microsoft's DemoTool, Create Web Services.CreateJobWebServices, CreateWebServices.Codeunit.al:125-142, and its
+    // CreateTenantWebServiceOData, :198-210): the seven CreateTenantWebServiceColumnForPage calls for 'Job List', the OData row, GenerateSelectText,
+    // then GenerateODataV3FilterText and GenerateODataV4FilterText of that page service (no Tenant Web Service Filter rows; the query case is
+    // RJ_CreateSegmentWebService_FilterTexts in lt-qx-dotnet/QxDotNetDemoShapes.al). The test then removes what it added. ----
+
+    local procedure RjFindOData(var OData: Record "Tenant Web Service OData"; Id: RecordId): Boolean
+    begin
+        OData.Reset();
+        OData.SetRange(TenantWebServiceID, Id);
+        exit(OData.FindFirst());
+    end;
+
+    local procedure RjRowsOf(Id: RecordId; FromEntry: Integer): Text
+    var
+        Columns: Record "Tenant Web Service Columns";
+        OData: Record "Tenant Web Service OData";
+        Filters: Record "Tenant Web Service Filter";
+        Result: Text;
+    begin
+        Columns.SetRange(TenantWebServiceID, Id);
+        Result := 'columns ' + Format(Columns.Count());
+        Columns.SetFilter("Entry ID", '>%1', FromEntry);
+        Result += ' new ' + Format(Columns.Count()) + ':';
+        if Columns.FindSet() then
+            repeat
+                Result += '[' + Format(Columns."Data Item") + '|' + Format(Columns."Field Number") + '|' + Columns."Field Name" + '|' + Format(Columns.Include) + ']';
+            until Columns.Next() = 0;
+        OData.SetRange(TenantWebServiceID, Id);
+        Filters.SetRange(TenantWebServiceID, Id);
+        exit(Result + ' odata ' + Format(OData.Count()) + ' filters ' + Format(Filters.Count()));
+    end;
+
+    local procedure RjClauses(var OData: Record "Tenant Web Service OData"): Text
+    var
+        WebServiceManagement: Codeunit "Web Service Management";
+    begin
+        exit('[' + WebServiceManagement.GetODataSelectClause(OData) + '][' + WebServiceManagement.GetODataFilterClause(OData) + '][' +
+          WebServiceManagement.GetODataV4FilterClause(OData) + ']');
+    end;
+
+    [Test]
+    procedure RJ_CreateJobWebServices_PageFilterTexts()
+    var
+        TenantWebService: Record "Tenant Web Service";
+        TenantWebServiceOData: Record "Tenant Web Service OData";
+        Columns: Record "Tenant Web Service Columns";
+        WebServiceManagement: Codeunit "Web Service Management";
+        ODataUtility: Codeunit ODataUtility;
+        Observer: Codeunit "Probe Observer";
+        Before: Text;
+        SelectText: Text;
+        ODataV3FilterText: Text;
+        ODataV4FilterText: Text;
+        OldSelect: Text;
+        OldV3: Text;
+        OldV4: Text;
+        MaxEntry: Integer;
+        ODataExisted: Boolean;
+        Ok: Boolean;
+    begin
+        Before := RdAllRows();
+        Observer.Observe('counts before', RdCounts());
+        TenantWebService.Get(TenantWebService."Object Type"::Page, 'Job List');
+        Columns.SetCurrentKey("Entry ID");
+        if Columns.FindLast() then
+            MaxEntry := Columns."Entry ID";
+        Observer.Observe('rows before', RjRowsOf(TenantWebService.RecordId, MaxEntry));
+        ODataExisted := RjFindOData(TenantWebServiceOData, TenantWebService.RecordId);
+        if ODataExisted then begin
+            Observer.Observe('clauses before', RjClauses(TenantWebServiceOData));
+            OldSelect := WebServiceManagement.GetODataSelectClause(TenantWebServiceOData);
+            OldV3 := WebServiceManagement.GetODataFilterClause(TenantWebServiceOData);
+            OldV4 := WebServiceManagement.GetODataV4FilterClause(TenantWebServiceOData);
+        end;
+
+        WebServiceManagement.CreateTenantWebService(TenantWebService."Object Type"::Page, Page::"Job List", 'Job List', true);
+        TenantWebService.Get(TenantWebService."Object Type"::Page, 'Job List');
+        WebServiceManagement.CreateTenantWebServiceColumnForPage(TenantWebService.RecordId, 1, Database::Job);
+        WebServiceManagement.CreateTenantWebServiceColumnForPage(TenantWebService.RecordId, 3, Database::Job);
+        WebServiceManagement.CreateTenantWebServiceColumnForPage(TenantWebService.RecordId, 5, Database::Job);
+        WebServiceManagement.CreateTenantWebServiceColumnForPage(TenantWebService.RecordId, 19, Database::Job);
+        WebServiceManagement.CreateTenantWebServiceColumnForPage(TenantWebService.RecordId, 20, Database::Job);
+        WebServiceManagement.CreateTenantWebServiceColumnForPage(TenantWebService.RecordId, 2, Database::Job);
+        WebServiceManagement.CreateTenantWebServiceColumnForPage(TenantWebService.RecordId, 1036, Database::Job);
+        Observer.Observe('rows after columns', RjRowsOf(TenantWebService.RecordId, MaxEntry));
+
+        TenantWebServiceOData.Init();
+        TenantWebServiceOData.TenantWebServiceID := TenantWebService.RecordId;
+        Observer.Observe('odata insert', Format(TenantWebServiceOData.Insert()));
+        Ok := ODataUtility.GenerateSelectText(TenantWebService."Service Name", TenantWebService."Object Type", SelectText);
+        Observer.Observe('select ok', Format(Ok));
+        WebServiceManagement.SetODataSelectClause(TenantWebServiceOData, SelectText);
+        TenantWebServiceOData.Modify();
+        Ok := ODataUtility.GenerateODataV3FilterText(TenantWebService."Service Name", TenantWebService."Object Type", ODataV3FilterText);
+        Observer.Observe('v3 ok', Format(Ok));
+        if not Ok then
+            Observer.Observe('v3 error', GetLastErrorText());
+        Ok := ODataUtility.GenerateODataV4FilterText(TenantWebService."Service Name", TenantWebService."Object Type", ODataV4FilterText);
+        Observer.Observe('v4 ok', Format(Ok));
+        if not Ok then
+            Observer.Observe('v4 error', GetLastErrorText());
+        Observer.Observe('select text', '[' + SelectText + ']');
+        Observer.Observe('v3 text', '[' + ODataV3FilterText + ']');
+        Observer.Observe('v4 text', '[' + ODataV4FilterText + ']');
+        RjFindOData(TenantWebServiceOData, TenantWebService.RecordId);
+        Observer.Observe('clauses after', RjClauses(TenantWebServiceOData));
+        Observer.Observe('rows after', RjRowsOf(TenantWebService.RecordId, MaxEntry));
+        Observer.Observe('counts after', RdCounts());
+
+        Columns.Reset();
+        Columns.SetRange(TenantWebServiceID, TenantWebService.RecordId);
+        Columns.SetFilter("Entry ID", '>%1', MaxEntry);
+        Columns.DeleteAll();
+        if ODataExisted then begin
+            WebServiceManagement.SetODataSelectClause(TenantWebServiceOData, OldSelect);
+            WebServiceManagement.SetODataFilterClause(TenantWebServiceOData, OldV3);
+            WebServiceManagement.SetODataV4FilterClause(TenantWebServiceOData, OldV4);
+            TenantWebServiceOData.Modify();
+        end else
+            TenantWebServiceOData.Delete();
+        Observer.Observe('restored: all rows as before', Format(RdAllRows() = Before));
+        Observer.Observe('counts restored', RdCounts());
+        // The fresh tenant already has 'Job List' with 14 columns (the seven fields twice) and an OData row: the calls add seven columns, the
+        // OData Insert fails, GenerateSelectText lists every column row, and both filter texts of a page service without filter rows are empty.
+        Observer.Expect('counts before', '17|64|402|29');
+        Observer.Expect('rows before', 'columns 14 new 0: odata 1 filters 0');
+        Observer.Expect('clauses before', '[$select=No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager][][]');
+        Observer.Expect('rows after columns', 'columns 21 new 7:[167|1|No|Yes][167|3|Description|Yes][167|5|Bill_to_Customer_No|Yes][167|19|Status|Yes][167|20|Person_Responsible|Yes][167|2|Search_Description|Yes][167|1036|Project_Manager|Yes] odata 1 filters 0');
+        Observer.Expect('odata insert', 'No');
+        Observer.Expect('select ok', 'Yes');
+        Observer.Expect('v3 ok', 'Yes');
+        Observer.Expect('v4 ok', 'Yes');
+        Observer.Expect('select text', '[$select=No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager]');
+        Observer.Expect('v3 text', '[]');
+        Observer.Expect('v4 text', '[]');
+        Observer.Expect('clauses after', '[$select=No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager,No,Description,Bill_to_Customer_No,Status,Person_Responsible,Search_Description,Project_Manager][][]');
+        Observer.Expect('rows after', 'columns 21 new 7:[167|1|No|Yes][167|3|Description|Yes][167|5|Bill_to_Customer_No|Yes][167|19|Status|Yes][167|20|Person_Responsible|Yes][167|2|Search_Description|Yes][167|1036|Project_Manager|Yes] odata 1 filters 0');
+        Observer.Expect('counts after', '17|64|409|29');
         Observer.Expect('restored: all rows as before', 'Yes');
         Observer.Expect('counts restored', '17|64|402|29');
         Observer.Verify();
