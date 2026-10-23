@@ -1007,7 +1007,7 @@ codeunit 73874 "LT PnF Find List Moves"
 
     // Writer RK (AL Runner issue 5739, reporter's page shape; extends the QV probes of issue 5682): a List with OnFindRecord (with and without
     // OnNextRecord) and no row trigger, over a SourceTableView that is descending or ascending, with or without a WHERE on the non-key field
-    // Kind, holding 5, 20, 21 and 25 rows (the client window holds 20). Each test opens the page with OpenView, calls First, Next until it
+    // Kind, holding 1 (AL Runner issue 5738), 5, 20, 21 and 25 rows (the client window holds 20). Each test opens the page with OpenView, calls First, Next until it
     // answers false, Last, then Previous until it answers false. Observed: open = Id shown|log; first and last = result|Id|log; walk and back =
     // the Id after each move that answered true, followed by [log] when the move called the page, then end:<Id shown after the move that
     // answered false>[log]; close = log of Close. Log entries: F(which)=found:Id = OnFindRecord, N(steps)=moved:Id = OnNextRecord.
@@ -1065,6 +1065,17 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe(Prefix + 'back', Walk);
         P.Close();
         Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    // The reporter's case of AL Runner issue 5738: Id 1 (Kind A) and Id 2 (Kind B), the view keeps one row.
+    [Test]
+    procedure RK_DescKind_Find_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(2);
+        RkMoves_DescKind_Find('', Observer);
+        Observer.Finish();
     end;
 
     [Test]
@@ -1165,6 +1176,16 @@ codeunit 73874 "LT PnF Find List Moves"
     end;
 
     [Test]
+    procedure RK_DescKind_FindNext_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(2);
+        RkMoves_DescKind_FindNext('', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure RK_DescKind_FindNext_5Rows()
     var
         Observer: Codeunit "Probe Observer";
@@ -1258,6 +1279,16 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe(Prefix + 'back', Walk);
         P.Close();
         Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_AscKind_Find_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(2);
+        RkMoves_AscKind_Find('', Observer);
+        Observer.Finish();
     end;
 
     [Test]
@@ -1357,6 +1388,16 @@ codeunit 73874 "LT PnF Find List Moves"
     end;
 
     [Test]
+    procedure RK_AscKind_FindNext_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(2);
+        RkMoves_AscKind_FindNext('', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure RK_AscKind_FindNext_5Rows()
     var
         Observer: Codeunit "Probe Observer";
@@ -1450,6 +1491,16 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe(Prefix + 'back', Walk);
         P.Close();
         Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_Desc_Find_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(1);
+        RkMoves_Desc_Find('', Observer);
+        Observer.Finish();
     end;
 
     [Test]
@@ -1549,6 +1600,16 @@ codeunit 73874 "LT PnF Find List Moves"
     end;
 
     [Test]
+    procedure RK_Desc_FindNext_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(1);
+        RkMoves_Desc_FindNext('', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure RK_Desc_FindNext_5Rows()
     var
         Observer: Codeunit "Probe Observer";
@@ -1645,6 +1706,16 @@ codeunit 73874 "LT PnF Find List Moves"
     end;
 
     [Test]
+    procedure RK_Asc_Find_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(1);
+        RkMoves_Asc_Find('', Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
     procedure RK_Asc_Find_5Rows()
     var
         Observer: Codeunit "Probe Observer";
@@ -1738,6 +1809,16 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Observe(Prefix + 'back', Walk);
         P.Close();
         Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_Asc_FindNext_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(1);
+        RkMoves_Asc_FindNext('', Observer);
+        Observer.Finish();
     end;
 
     [Test]
