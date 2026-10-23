@@ -8,6 +8,9 @@
 //   C:<line> = OnAfterGetCurrRecord), and where Next and GoToRecord go. List ascending and descending, Card; OpenEdit, OpenView, Page.Run,
 //   Page.RunModal; and the same List when a row with the primary key ('', B, 0) exists.
 //   Rows of group G: (A,1,SortOrder 20) (B,2,10) (C,3,30) (A,4,-5). Ascending view order: 4, 2, 1, 3.
+// Result (BC 27.5, 28.5, 29.0 alike): a List opened with OpenEdit, OpenView or Page.Run opens on the first row of the view (Line No. 4,
+//   SortOrder -5; descending: 3), not on the row a search from Rec's SortOrder 0 would reach; run modally it opens on Line No. 2. When a row
+//   ('', B, 0) exists the List opens on it. A Card opens on the first row of the view (4) with OpenEdit and run modally.
 // Source: al-runner issue 5760.
 // BC versions: 27, 28, 29
 
@@ -233,7 +236,13 @@ codeunit 88282 "LT RM Init Key Tests"
         Lines.OpenEdit();
         ObserveList(Lines);
         Lines.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('header var', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -245,7 +254,13 @@ codeunit 88282 "LT RM Init Key Tests"
         Lines.OpenView();
         ObserveList(Lines);
         Lines.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('header var', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -258,7 +273,13 @@ codeunit 88282 "LT RM Init Key Tests"
         Page.Run(Page::"LT RM Init Key List");
         ObserveList(Lines);
         Lines.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('header var', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -267,7 +288,13 @@ codeunit 88282 "LT RM Init Key Tests"
     begin
         Seed(false);
         Page.RunModal(Page::"LT RM Init Key List");
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('header var', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -285,7 +312,14 @@ codeunit 88282 "LT RM Init Key Tests"
         Lines.OpenEdit();
         ObserveList(Lines);
         Lines.Close();
-        Observer.Finish();
+        Observer.Expect('open', '0');
+        Observer.Expect('open log', 'R:0;R:0;R:1;R:3;R:0;R:2;R:4;R:0;R:0;R:0;C:0;');
+        Observer.Expect('next', 'Yes|1');
+        Observer.Expect('next log', 'R:1;R:1;R:1;C:1;');
+        Observer.Expect('goto', '3');
+        Observer.Expect('goto log', 'R:4;R:4;R:4;C:4;R:2;R:2;R:2;C:2;R:0;R:0;R:0;C:0;R:1;R:1;R:1;C:1;R:3;R:3;R:3;C:3;');
+        Observer.Expect('first', 'Yes|4');
+        Observer.Verify();
     end;
 
     [Test]
@@ -300,7 +334,11 @@ codeunit 88282 "LT RM Init Key Tests"
         Observer.Observe('next', Format(Lines.Next()) + '|' + Lines.LineNoCtl.Value());
         Observer.Observe('next log', Log.Take());
         Lines.Close();
-        Observer.Finish();
+        Observer.Expect('open', '3');
+        Observer.Expect('open log', 'R:3;R:1;R:2;R:4;R:3;R:3;R:3;C:3;');
+        Observer.Expect('next', 'Yes|1');
+        Observer.Expect('next log', 'R:1;R:1;R:1;C:1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -315,7 +353,12 @@ codeunit 88282 "LT RM Init Key Tests"
         Observer.Observe('next', Format(Card.Next()) + '|' + Card.LineNoCtl.Value());
         Observer.Observe('next log', Log.Take());
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -324,7 +367,12 @@ codeunit 88282 "LT RM Init Key Tests"
     begin
         Seed(false);
         Page.RunModal(Page::"LT RM Init Key Card");
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]

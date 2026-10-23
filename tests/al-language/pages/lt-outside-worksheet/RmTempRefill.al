@@ -7,6 +7,10 @@
 //   and without CurrPage.Update(false). It holds 27 rows (A1..A25 B1 B2), more than the client reads at once; the filter B leaves two rows.
 //   What the page shows afterwards (the current row, the rows First/Next read, where Next/Previous go from the row the client stood on),
 //   and which triggers ran (log: R:<name> = OnAfterGetRecord, C:<name> = OnAfterGetCurrRecord).
+// Result (BC 27.5, 28.5, 29.0 alike): after a filter OnValidate or an action that refills Rec (no CurrPage.Update needed) the page shows the
+//   row the refill left Rec on (B1, A1) and lists exactly the new rows (B1 B2, or all 27), wherever the client stood (row 2 or row 23).
+//   An action first reads the row the client stood on (R:A23), then reads from Rec's row; a filter OnValidate does not. The next Next/Previous
+//   moves from the new current row (A1 -> A2; Previous from A1 answers No).
 // Source: al-runner issues 5779 (filter OnValidate refill) and 5780 (action refill after the client stood past row 20).
 // BC versions: 27, 28, 29
 
@@ -220,7 +224,11 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('shown after filter', Ws.Name.Value());
         Observer.Observe('rows', ReadRows(Ws));
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('open shown', 'A1');
+        Observer.Expect('validate log', 'R:B1;R:B2;R:B1;R:B1;C:B1;');
+        Observer.Expect('shown after filter', 'B1');
+        Observer.Expect('rows', 'B1 B2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -236,7 +244,10 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('shown after filter', Ws.Name.Value());
         Observer.Observe('rows', ReadRows(Ws));
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('validate log', 'R:B1;R:B2;R:B1;R:B1;C:B1;');
+        Observer.Expect('shown after filter', 'B1');
+        Observer.Expect('rows', 'B1 B2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -255,7 +266,13 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('next log', Log.Take());
         Observer.Observe('rows', ReadRows(Ws));
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('before', 'A23');
+        Observer.Expect('validate log', 'R:B1;R:B2;R:B1;R:B1;C:B1;');
+        Observer.Expect('shown after filter', 'B1');
+        Observer.Expect('next', 'Yes|B2');
+        Observer.Expect('next log', 'R:B2;R:B2;C:B2;');
+        Observer.Expect('rows', 'B1 B2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -273,7 +290,12 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('next2', Format(Ws.Next()) + '|' + Ws.Name.Value());
         Observer.Observe('moves log', Log.Take());
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('shown after filter', 'B2');
+        Observer.Expect('previous', 'Yes|B1');
+        Observer.Expect('next', 'Yes|B2');
+        Observer.Expect('next2', 'No|B2');
+        Observer.Expect('moves log', 'R:B2;R:B2;R:B1;R:B2;R:B2;C:B2;R:B1;R:B1;C:B1;R:B2;R:B2;C:B2;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -290,7 +312,11 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('row count', Format(CountRows(Ws)));
         Observer.Observe('last', Format(Ws.Last()) + '|' + Ws.Name.Value());
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('validate log', 'R:A1;R:A2;R:A3;R:A4;R:A5;R:A6;R:A7;R:A8;R:A9;R:A10;R:A11;R:A12;R:A13;R:A14;R:A15;R:A16;R:A17;R:A18;R:A19;R:A20;R:A1;R:A1;C:A1;');
+        Observer.Expect('shown after clear', 'A1');
+        Observer.Expect('row count', '27');
+        Observer.Expect('last', 'Yes|B2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -307,7 +333,11 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('shown after action', Ws.Name.Value());
         Observer.Observe('rows', ReadRows(Ws));
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('before', 'A23');
+        Observer.Expect('action log', 'R:A23;R:A1;R:A1;R:A2;R:A3;R:A4;R:A5;R:A6;R:A7;R:A8;R:A9;R:A10;R:A11;R:A12;R:A13;R:A14;R:A15;R:A16;R:A17;R:A18;R:A19;R:A20;R:A1;R:A1;C:A1;');
+        Observer.Expect('shown after action', 'A1');
+        Observer.Expect('rows', 'A1 A2 A3 A4 A5 A6 A7 A8 A9 A10 A11 A12 A13 A14 A15 A16 A17 A18 A19 A20 A21 A22 A23 A24 A25 B1 B2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -325,7 +355,12 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('previous2', Format(Ws.Previous()) + '|' + Ws.Name.Value());
         Observer.Observe('previous log', Log.Take());
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('next', 'Yes|A2');
+        Observer.Expect('next log', 'R:A2;R:A2;C:A2;');
+        Observer.Expect('previous', 'Yes|A1');
+        Observer.Expect('previous2', 'No|A1');
+        Observer.Expect('previous log', 'R:A1;R:A1;C:A1;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -342,7 +377,11 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('next', Format(Ws.Next()) + '|' + Ws.Name.Value());
         Observer.Observe('rows', ReadRows(Ws));
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('action log', 'R:A23;R:A1;R:A1;R:A2;R:A3;R:A4;R:A5;R:A6;R:A7;R:A8;R:A9;R:A10;R:A11;R:A12;R:A13;R:A14;R:A15;R:A16;R:A17;R:A18;R:A19;R:A20;R:A1;R:A1;C:A1;');
+        Observer.Expect('shown after action', 'A1');
+        Observer.Expect('next', 'Yes|A2');
+        Observer.Expect('rows', 'A1 A2 A3 A4 A5 A6 A7 A8 A9 A10 A11 A12 A13 A14 A15 A16 A17 A18 A19 A20 A21 A22 A23 A24 A25 B1 B2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -358,7 +397,10 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('shown after action', Ws.Name.Value());
         Observer.Observe('next', Format(Ws.Next()) + '|' + Ws.Name.Value());
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('action log', 'R:A2;R:A1;R:A1;R:A2;R:A3;R:A4;R:A5;R:A6;R:A7;R:A8;R:A9;R:A10;R:A11;R:A12;R:A13;R:A14;R:A15;R:A16;R:A17;R:A18;R:A19;R:A20;R:A1;R:A1;C:A1;');
+        Observer.Expect('shown after action', 'A1');
+        Observer.Expect('next', 'Yes|A2');
+        Observer.Verify();
     end;
 
     [Test]
@@ -375,6 +417,9 @@ codeunit 88269 "LT RM Refill Tests"
         Observer.Observe('shown after action', Ws.Name.Value());
         Observer.Observe('rows', ReadRows(Ws));
         Ws.Close();
-        Observer.Finish();
+        Observer.Expect('action log', 'R:B2;R:B1;R:B1;R:B2;R:B1;R:B1;C:B1;');
+        Observer.Expect('shown after action', 'B1');
+        Observer.Expect('rows', 'B1 B2');
+        Observer.Verify();
     end;
 }

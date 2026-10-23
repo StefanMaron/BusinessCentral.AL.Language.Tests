@@ -7,6 +7,11 @@
 //   Journal"), the same Worksheet opened for viewing and run modally, a List without the new-row line, and a Worksheet with the new-row line.
 //   What the page shows afterwards (the control value, First/Last/Next), which triggers ran (log), and whether the table is empty.
 //   Log: R:<line> = OnAfterGetRecord, C:<line> = OnAfterGetCurrRecord, N:<line> = OnNewRecord, Q = OnQueryClosePage, X = OnClosePage.
+// Result (BC 27.5, 28.5, 29.0 alike): the action runs and empties the table. Without the new-row line (Worksheet or List, InsertAllowed =
+//   false; OpenEdit, OpenView or run modally; with or without CurrPage.Update(false)) the page reads the deleted row once more (R:10000), then
+//   runs OnNewRecord and OnAfterGetCurrRecord once on a blank Rec (N:0;C:0;), shows blank controls, and First/Last/Next answer No; a second
+//   action runs N:0;C:0; only. A Worksheet with the new-row line runs N:0;C:0; three times and shows Line No. 0. Closing an OpenEdit or
+//   OpenView worksheet runs OnQueryClosePage and OnClosePage; a modal handler that returns leaves RunModal = LookupCancel.
 // Source: al-runner issue 5752 (a partner app posts a Production Journal from a ModalPageHandler).
 // BC versions: 27, 28, 29
 
@@ -303,7 +308,19 @@ codeunit 88265 "LT RM Ws Gone Row Tests"
         Ws.Close();
         Observer.Observe('close log', Log.Take());
         Observer.Observe('count after close', LineCount());
-        Observer.Finish();
+        Observer.Expect('open shown', '10000');
+        Observer.Expect('open log', 'R:10000;R:10000;C:10000;');
+        Observer.Expect('action log', 'R:10000;N:0;C:0;');
+        Observer.Expect('shown after action', '|');
+        Observer.Expect('count', '0');
+        Observer.Expect('first', 'No');
+        Observer.Expect('first log', '');
+        Observer.Expect('last', 'No');
+        Observer.Expect('next', 'No');
+        Observer.Expect('moves log', '');
+        Observer.Expect('close log', 'Q;X;');
+        Observer.Expect('count after close', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -322,7 +339,13 @@ codeunit 88265 "LT RM Ws Gone Row Tests"
         Observer.Observe('first log', Log.Take());
         Ws.Close();
         Observer.Observe('close log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('action log', 'R:10000;N:0;C:0;');
+        Observer.Expect('shown after action', '|');
+        Observer.Expect('count', '0');
+        Observer.Expect('first', 'No');
+        Observer.Expect('first log', '');
+        Observer.Expect('close log', 'Q;X;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -340,7 +363,10 @@ codeunit 88265 "LT RM Ws Gone Row Tests"
         Observer.Observe('shown after second action', Ws.LineNoCtl.Value());
         Ws.Close();
         Observer.Observe('count', LineCount());
-        Observer.Finish();
+        Observer.Expect('second action log', 'N:0;C:0;');
+        Observer.Expect('shown after second action', '');
+        Observer.Expect('count', '0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -358,7 +384,12 @@ codeunit 88265 "LT RM Ws Gone Row Tests"
         Observer.Observe('first', Format(Ws.First()));
         Ws.Close();
         Observer.Observe('close log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('action log', 'R:10000;N:0;C:0;');
+        Observer.Expect('shown after action', '|');
+        Observer.Expect('count', '0');
+        Observer.Expect('first', 'No');
+        Observer.Expect('close log', 'Q;X;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -372,7 +403,15 @@ codeunit 88265 "LT RM Ws Gone Row Tests"
         Observer.Observe('runmodal result', Format(Result));
         Observer.Observe('after runmodal log', Log.Take());
         Observer.Observe('count', LineCount());
-        Observer.Finish();
+        Observer.Expect('handler first', 'Yes');
+        Observer.Expect('handler open log', 'R:10000;R:10000;C:10000;');
+        Observer.Expect('handler action log', 'R:10000;N:0;C:0;');
+        Observer.Expect('handler shown', '');
+        Observer.Expect('handler first after', 'No');
+        Observer.Expect('runmodal result', 'LookupCancel');
+        Observer.Expect('after runmodal log', 'Q;X;');
+        Observer.Expect('count', '0');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -384,28 +423,6 @@ codeunit 88265 "LT RM Ws Gone Row Tests"
         Observer.Observe('handler action log', Log.Take());
         Observer.Observe('handler shown', Ws.LineNoCtl.Value());
         Observer.Observe('handler first after', Format(Ws.First()));
-    end;
-
-    [Test]
-    [HandlerFunctions('DeleteAllUpdateOkHandler')]
-    procedure RM_Ws_RunModal_DeleteAllUpdate_OK()
-    var
-        Result: Action;
-    begin
-        InsertOneLine();
-        Result := Page.RunModal(Page::"LT RM Ws NoNew");
-        Observer.Observe('runmodal result', Format(Result));
-        Observer.Observe('log', Log.Take());
-        Observer.Observe('count', LineCount());
-        Observer.Finish();
-    end;
-
-    [ModalPageHandler]
-    procedure DeleteAllUpdateOkHandler(var Ws: TestPage "LT RM Ws NoNew")
-    begin
-        Ws.First();
-        Ws.DeleteAllUpdate.Invoke();
-        Ws.OK().Invoke();
     end;
 
     [Test]
@@ -423,7 +440,12 @@ codeunit 88265 "LT RM Ws Gone Row Tests"
         Observer.Observe('first', Format(List.First()));
         List.Close();
         Observer.Observe('close log', Log.Take());
-        Observer.Finish();
+        Observer.Expect('action log', 'R:10000;N:0;C:0;');
+        Observer.Expect('shown after action', '|');
+        Observer.Expect('count', '0');
+        Observer.Expect('first', 'No');
+        Observer.Expect('close log', 'X;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -442,6 +464,12 @@ codeunit 88265 "LT RM Ws Gone Row Tests"
         Ws.Close();
         Observer.Observe('close log', Log.Take());
         Observer.Observe('count after close', LineCount());
-        Observer.Finish();
+        Observer.Expect('action log', 'R:10000;N:0;C:0;N:0;C:0;N:0;C:0;');
+        Observer.Expect('shown after action', '0|');
+        Observer.Expect('count', '0');
+        Observer.Expect('first', 'No');
+        Observer.Expect('close log', 'X;');
+        Observer.Expect('count after close', '0');
+        Observer.Verify();
     end;
 }

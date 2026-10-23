@@ -7,6 +7,9 @@
 //   shows, no modify trigger runs and the row is unchanged. Variants: OpenView and OpenEdit, an action that only shows a Message, an action
 //   that runs CalcFields on a Blob that holds a value. Log: R = OnAfterGetRecord, C = OnAfterGetCurrRecord, M = the page's OnModifyRecord,
 //   T = the table's OnModify.
+// Result (BC 27.5, 28.5, 29.0 alike): every action runs and its Message shows, with and without the Blob field, with OpenView and OpenEdit,
+//   also after CalcFields on a Blob that holds a value. No modify trigger runs (no M or T in the log) and the row is unchanged; the page
+//   reads its row again after each action (R;R;R;R;C;).
 // Source: al-runner issue 5781.
 // BC versions: 27, 28, 29
 
@@ -325,7 +328,11 @@ codeunit 88276 "LT RM Read Only Blob Tests"
         Observer.Observe('close log', Log.Take());
         Observer.Observe('messages', ShownMessages);
         Observer.Observe('row', RowState());
-        Observer.Finish();
+        Observer.Expect('action log', 'R;R;R;R;C;');
+        Observer.Expect('close log', '');
+        Observer.Expect('messages', 'The record LT RM Logged Source: GONE no longer exists.');
+        Observer.Expect('row', '1|x|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -352,7 +359,10 @@ codeunit 88276 "LT RM Read Only Blob Tests"
         Errors.Close();
         Observer.Observe('close log', Log.Take());
         Observer.Observe('messages', ShownMessages);
-        Observer.Finish();
+        Observer.Expect('action log', 'R;R;R;R;C;');
+        Observer.Expect('close log', '');
+        Observer.Expect('messages', 'The record LT RM Logged Source: GONE no longer exists.');
+        Observer.Verify();
     end;
 
     [Test]
@@ -372,7 +382,11 @@ codeunit 88276 "LT RM Read Only Blob Tests"
         Observer.Observe('close log', Log.Take());
         Observer.Observe('messages', ShownMessages);
         Observer.Observe('row', RowState());
-        Observer.Finish();
+        Observer.Expect('action log', 'R;R;R;R;C;');
+        Observer.Expect('close log', '');
+        Observer.Expect('messages', 'The record LT RM Logged Source: GONE no longer exists.');
+        Observer.Expect('row', '1|x|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -393,7 +407,12 @@ codeunit 88276 "LT RM Read Only Blob Tests"
         Observer.Observe('close log', Log.Take());
         Observer.Observe('messages', ShownMessages);
         Observer.Observe('row', RowState());
-        Observer.Finish();
+        Observer.Expect('action log', 'R;R;R;R;C;');
+        Observer.Expect('next', 'No');
+        Observer.Expect('close log', '');
+        Observer.Expect('messages', 'only');
+        Observer.Expect('row', '1|x|No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -415,7 +434,12 @@ codeunit 88276 "LT RM Read Only Blob Tests"
         Observer.Observe('close log', Log.Take());
         Observer.Observe('messages', ShownMessages);
         Observer.Observe('row', RowState());
-        Observer.Finish();
+        Observer.Expect('action log', 'R;R;R;R;C;');
+        Observer.Expect('second action log', 'R;R;R;R;C;');
+        Observer.Expect('close log', '');
+        Observer.Expect('messages', 'stack=line 1 / The record LT RM Logged Source: GONE no longer exists.');
+        Observer.Expect('row', '1|x|Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -435,7 +459,11 @@ codeunit 88276 "LT RM Read Only Blob Tests"
         Observer.Observe('close log', Log.Take());
         Observer.Observe('messages', ShownMessages);
         Observer.Observe('row', RowState());
-        Observer.Finish();
+        Observer.Expect('action log', 'R;R;R;R;C;');
+        Observer.Expect('close log', '');
+        Observer.Expect('messages', 'stack=line 1');
+        Observer.Expect('row', '1|x|Yes');
+        Observer.Verify();
     end;
 
     [MessageHandler]

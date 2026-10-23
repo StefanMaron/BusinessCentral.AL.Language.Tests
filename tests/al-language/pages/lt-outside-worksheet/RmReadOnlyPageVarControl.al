@@ -6,6 +6,9 @@
 //   control over a global variable without an Editable property, a control over a global variable with Editable = true, and a control over a
 //   global variable in a group outside the repeater. A List (repeater) and a Card; opened with OpenEdit, OpenView, Page.Run and
 //   Page.RunModal. Compare handlers/TestPageReadOnlySetValue.al:365 (an editable Card opened with OpenView: its variable control stays editable).
+// Result (BC 27.5, 28.5, 29.0 alike): on a page with Editable = false every control answers Editable() = No: the table field, the global
+//   variable without Editable, the global variable with Editable = true, and the variable in a group outside the repeater; on a List and a
+//   Card, with OpenEdit, OpenView, Page.Run and Page.RunModal, and on an empty List.
 // Source: al-runner issue 5755.
 // BC versions: 27, 28, 29
 
@@ -149,7 +152,13 @@ codeunit 88286 "LT RM Ro Var Control Tests"
         List.First();
         ObserveList(List);
         List.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('header var', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -162,7 +171,13 @@ codeunit 88286 "LT RM Ro Var Control Tests"
         List.First();
         ObserveList(List);
         List.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('header var', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -175,7 +190,13 @@ codeunit 88286 "LT RM Ro Var Control Tests"
         Page.Run(Page::"LT RM Ro List");
         ObserveList(List);
         List.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('header var', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -184,7 +205,13 @@ codeunit 88286 "LT RM Ro Var Control Tests"
     begin
         InsertRow();
         Page.RunModal(Page::"LT RM Ro List");
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('header var', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
@@ -205,7 +232,10 @@ codeunit 88286 "LT RM Ro Var Control Tests"
         Observer.Observe('var', Format(List.NameText.Editable()));
         Observer.Observe('header var', Format(List.HeaderText.Editable()));
         List.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('header var', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -217,7 +247,12 @@ codeunit 88286 "LT RM Ro Var Control Tests"
         Card.OpenEdit();
         ObserveCard(Card);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -229,7 +264,12 @@ codeunit 88286 "LT RM Ro Var Control Tests"
         Card.OpenView();
         ObserveCard(Card);
         Card.Close();
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [Test]
@@ -238,7 +278,12 @@ codeunit 88286 "LT RM Ro Var Control Tests"
     begin
         InsertRow();
         Page.RunModal(Page::"LT RM Ro Card");
-        Observer.Finish();
+        Observer.Expect('page', 'No');
+        Observer.Expect('field', 'No');
+        Observer.Expect('var', 'No');
+        Observer.Expect('var editable true', 'No');
+        Observer.Expect('var value', 'Row A');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]
