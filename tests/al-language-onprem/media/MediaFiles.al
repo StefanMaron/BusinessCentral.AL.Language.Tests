@@ -843,6 +843,7 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Observe('slash prefix package folder, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         // Eight more sets of a JPEG then a PNG item: which item each numbered file holds, against the Tenant Media Set orders.
         for k := 1 to 8 do begin
+            Clear(Row1);
             Row1.Code := 'LTRJS' + Format(k);
             Row1.Set.ImportFile(Jpg, 'jpeg item');
             Row1.Insert();
