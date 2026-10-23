@@ -17,14 +17,12 @@ codeunit 88210 "LT RL WorkDate Start Tests"
     TestPermissions = Disabled;
 
     var
-        OnRunWorkDateIsToday: Boolean;
         OnRunWorkDateIsLastGL: Boolean;
         OnRunDone: Boolean;
 
     trigger OnRun()
     begin
         OnRunDone := true;
-        OnRunWorkDateIsToday := WorkDate() = Today();
         OnRunWorkDateIsLastGL := WorkDate() = LastGLDate();
     end;
 
@@ -40,14 +38,19 @@ codeunit 88210 "LT RL WorkDate Start Tests"
         else
             Observer.Observe('Demo Company', '<no Company Information row>');
         Observer.Observe('G/L entries exist', Format(not GLEntry.IsEmpty()));
-        Observer.Observe('last G/L date is Today', Format(LastGLDate() = Today()));
         Observer.Observe('OnRun ran', Format(OnRunDone));
-        Observer.Observe('OnRun: WorkDate = Today', Format(OnRunWorkDateIsToday));
         Observer.Observe('OnRun: WorkDate = NormalDate(last G/L Posting Date)', Format(OnRunWorkDateIsLastGL));
-        Observer.Observe('test: WorkDate = Today', Format(WorkDate() = Today()));
         Observer.Observe('test: WorkDate = NormalDate(last G/L Posting Date)', Format(WorkDate() = LastGLDate()));
         Observer.Observe('test: WorkDate = 0D', Format(WorkDate() = 0D));
-        Observer.Finish();
+        // Values of the CI legs 27.5, 28.5 and 29.0 (Linux), the same on all three. On those runs the last G/L entry was not dated today, so
+        // WorkDate() was not today either; that comparison is left out because it would fail on the one day the two dates meet.
+        Observer.Expect('Demo Company', 'Yes');
+        Observer.Expect('G/L entries exist', 'Yes');
+        Observer.Expect('OnRun ran', 'Yes');
+        Observer.Expect('OnRun: WorkDate = NormalDate(last G/L Posting Date)', 'Yes');
+        Observer.Expect('test: WorkDate = NormalDate(last G/L Posting Date)', 'Yes');
+        Observer.Expect('test: WorkDate = 0D', 'No');
+        Observer.Verify();
     end;
 
     local procedure LastGLDate(): Date

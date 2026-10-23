@@ -50,6 +50,7 @@ codeunit 88202 "LT RL Install Ui Subs"
         Add('WORKDATE IS 0D', Format(WorkDate() = 0D));
         // The reporter's shape: a write, then a plain Message, then more code.
         Add('BEFORE MESSAGE', 'reached');
+        ClearLastError();
         Message('LT RL install message %1', 1);
         Add('AFTER MESSAGE', 'reached');
         Add('LAST ERROR AFTER MESSAGE', GetLastErrorText());
@@ -205,7 +206,26 @@ codeunit 88204 "LT RL Install Ui Tests"
         Observer.Observe('Notification.Send', Seed('NOTIFICATION.SEND'));
         Observer.Observe('Error in try', Seed('ERROR IN TRY'));
         Observer.Observe('end', Seed('END'));
-        Observer.Finish();
+        // Values of the CI legs 27.5, 28.5 and 29.0 (Linux), the same on all three. 'last error after Message': ClearLastError() runs just before the Message.
+        Observer.Expect('GuiAllowed', 'No');
+        Observer.Expect('CurrentClientType', 'SOAP');
+        Observer.Expect('WorkDate = Today', 'Yes');
+        Observer.Expect('WorkDate = 0D', 'No');
+        Observer.Expect('before Message', 'reached');
+        Observer.Expect('after Message', 'reached');
+        Observer.Expect('last error after Message', '');
+        Observer.Expect('after second Message', 'reached');
+        Observer.Expect('if GuiAllowed() branch', 'skipped');
+        Observer.Expect('StrMenu', 'error: Microsoft Dynamics 365 Business Central Data Services attempted to issue a client callback to show a selection menu: LT RL install strmenu (CodeUnit 88202 LT RL Install Ui Subs). Client callbacks are not supported on Microsoft Dynamics 365 Business Central Data Services. | code: CallbackNotAllowed');
+        Observer.Expect('Dialog.Open', 'ok');
+        Observer.Expect('Dialog.Update', 'ok');
+        Observer.Expect('Dialog.Close', 'ok');
+        Observer.Expect('Page.Run', 'error: Microsoft Dynamics 365 Business Central Data Services attempted to issue a client callback to run page 88203 LT RL Install Ui Page. Client callbacks are not supported on Microsoft Dynamics 365 Business Central Data Services. | code: CallbackNotAllowed');
+        Observer.Expect('Hyperlink', 'ok');
+        Observer.Expect('Notification.Send', 'ok');
+        Observer.Expect('Error in try', 'error: LT RL install error in try | code: Dialog');
+        Observer.Expect('end', 'reached');
+        Observer.Verify();
     end;
 
     [Test]
@@ -216,7 +236,10 @@ codeunit 88204 "LT RL Install Ui Tests"
         Observer.Observe('GuiAllowed', SeedDb('GUIALLOWED'));
         Observer.Observe('WorkDate = Today', SeedDb('WORKDATE IS TODAY'));
         Observer.Observe('after Message', SeedDb('AFTER MESSAGE'));
-        Observer.Finish();
+        Observer.Expect('GuiAllowed', 'No');
+        Observer.Expect('WorkDate = Today', 'Yes');
+        Observer.Expect('after Message', 'reached');
+        Observer.Verify();
     end;
 
     local procedure Seed(Code: Code[30]): Text
