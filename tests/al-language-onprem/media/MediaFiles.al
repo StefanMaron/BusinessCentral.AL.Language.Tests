@@ -678,6 +678,33 @@ codeunit 61286 "LT S Media Files"
         exit(Result);
     end;
 
+    // The length of a file AL File opens, and which source its bytes equal: the written files, or the Tenant Media content of an item.
+    local procedure RjBytesOf(Name: Text; var Row2: Record "PZ OnPrem Media Row"; JpgB64: Text; PngB64: Text): Text
+    var
+        F: File;
+        Base64: Codeunit "Base64 Convert";
+        InS: InStream;
+        B64: Text;
+        Result: Text;
+    begin
+        if not File.Exists(Name) then
+            exit('missing');
+        F.Open(Name);
+        Result := 'len=' + Format(F.Len()) + ' bytes of:';
+        F.CreateInStream(InS);
+        B64 := Base64.ToBase64(InS);
+        F.Close();
+        if B64 = JpgB64 then
+            Result += ' jpg';
+        if B64 = PngB64 then
+            Result += ' png';
+        if B64 = RjTenantBase64(Row2.Set.Item(1)) then
+            Result += ' s2i1';
+        if B64 = RjTenantBase64(Row2.Set.Item(2)) then
+            Result += ' s2i2';
+        exit(Result);
+    end;
+
     [TryFunction]
     local procedure RjTryList(var Result: Text; Folder: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row")
     begin
@@ -733,9 +760,13 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Observe('export count two items', Format(Count2));
         RjObserver.Observe('media folder after two', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('al file names after two', RjCandidates(MediaFolder + '\' + Format(Row2.Set), Dir, Row1, Row2));
+        RjObserver.Observe('bytes of -1', RjBytesOf(MediaFolder + '\' + Format(Row2.Set) + '-1', Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('bytes of -2', RjBytesOf(MediaFolder + '\' + Format(Row2.Set) + '-2', Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('package folder after two, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         Count1 := RjExportSet(Row1, MediaFolder);
         RjObserver.Observe('export count one item again', Format(Count1));
+        RjObserver.Observe('al file names after again', RjCandidates(MediaFolder + '\' + Format(Row1.Set), Dir, Row1, Row2));
+        RjObserver.Observe('bytes of again -1', RjBytesOf(MediaFolder + '\' + Format(Row1.Set) + '-1', Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('media folder after again', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         if RjTryList(TempList, TemporaryPath(), Dir, Row1, Row2) then
             RjObserver.Observe('temporary path, with sub folders', TempList)

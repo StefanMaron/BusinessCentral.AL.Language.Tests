@@ -546,6 +546,25 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
             TenantWebService.Delete();
         end;
         Observer.Observe('counts restored', RjCounts());
-        Observer.Finish();
+        // The fresh tenant already has 'SegmentLines' (16 columns: the eight fields twice, an OData row, no filter rows): the calls add eight
+        // columns named by the query metadata, the OData Insert fails, and both filter texts of a query service without filter rows are empty;
+        // the three TryFunctions return true.
+        Observer.Expect('row before', 'Yes');
+        Observer.Expect('counts before', '64|402|29|0');
+        Observer.Expect('row', 'Query|SegmentLines|106|Yes');
+        Observer.Expect('rows before columns', 'columns 16 new 0: odata 1 filters 0');
+        Observer.Expect('metadata is null', 'No');
+        Observer.Expect('odata insert', 'No');
+        Observer.Expect('select ok', 'Yes');
+        Observer.Expect('v3 ok', 'Yes');
+        Observer.Expect('v4 ok', 'Yes');
+        Observer.Expect('select text', '[$select=Segment_No,Contact_No,Salesperson_Code,Correspondence_Type,Contact_Name,Contact_Company_Name,Language_Code,Contact_Company_No,Segment_No,Contact_No,Salesperson_Code,Correspondence_Type,Contact_Name,Contact_Company_Name,Language_Code,Contact_Company_No,Segment_No,Contact_No,Salesperson_Code,Correspondence_Type,Contact_Name,Contact_Company_Name,Language_Code,Contact_Company_No]');
+        Observer.Expect('v3 text', '[]');
+        Observer.Expect('v4 text', '[]');
+        Observer.Expect('clauses read back', '[$select=Segment_No,Contact_No,Salesperson_Code,Correspondence_Type,Contact_Name,Contact_Company_Name,Language_Code,Contact_Company_No,Segment_No,Contact_No,Salesperson_Code,Correspondence_Type,Contact_Name,Contact_Company_Name,Language_Code,Contact_Company_No,Segment_No,Contact_No,Salesperson_Code,Correspondence_Type,Contact_Name,Contact_Company_Name,Language_Code,Contact_Company_No][][]');
+        Observer.Expect('rows after', 'columns 24 new 8:[5077|1|Segment_No|Yes][5077|3|Contact_No|Yes][5077|5|Salesperson_Code|Yes][5077|6|Correspondence_Type|Yes][5077|12|Contact_Name|Yes][5077|18|Contact_Company_Name|Yes][5077|19|Language_Code|Yes][5077|27|Contact_Company_No|Yes] odata 1 filters 0');
+        Observer.Expect('counts after', '64|410|29|0');
+        Observer.Expect('counts restored', '64|402|29|0');
+        Observer.Verify();
     end;
 }
