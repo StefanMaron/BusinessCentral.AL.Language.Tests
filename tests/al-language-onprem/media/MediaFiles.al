@@ -863,7 +863,9 @@ codeunit 61286 "LT S Media Files"
         Png := TempName('.png');
         QxWriteJpeg(Jpg);
         RdWriteBase64(Png, RdPngBase64());
-        Dir := TemporaryPath() + 'ltrjpkg' + DelChr(Format(CreateGuid()), '=', '{}-');
+        // A short folder name: on the Linux tier TemporaryPath() is about 45 characters longer than on Windows, and a listed full path over 250
+        // characters does not fit the Name of the Name/Value Buffer (error in GetServerDirectoryFilesList).
+        Dir := TemporaryPath() + 'ltrjpkg' + CopyStr(DelChr(Format(CreateGuid()), '=', '{}-'), 1, 8);
         FileManagement.ServerCreateDirectory(Dir);
         MediaFolder := FileManagement.CombinePath(Dir, 'Media');
         FileManagement.ServerCreateDirectory(MediaFolder);
