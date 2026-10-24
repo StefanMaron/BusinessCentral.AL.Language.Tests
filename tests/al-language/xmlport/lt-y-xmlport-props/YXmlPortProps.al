@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-xmlport-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), LT Y XP State (75568); own tables 75550-75551, xmlports 75552-75567 and 88570-88571, codeunits 75513 (import runner) and 75514 (tests)
+// Fixtures used: Probe Observer (codeunit 69160), LT Y XP State (75568); own tables 75550-75551, xmlports 75552-75567 and 88570-88571, codeunits 88572 (Modify through Codeunit.Run), 75513 (import runner) and 75514 (tests)
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced.
 // Facts: XmlPort properties FileName, InlineSchema, UseLax, XmlVersionNo, InherentEntitlements, InherentPermissions; field/text node properties XmlName, NamespacePrefix, Unbound, AutoCalcField, Width;
 // table element properties RequestFilterHeading(ML), Unbound, Width. Width out of Integer range, an invalid XmlName and RequestFilterHeading with RequestFilterHeadingML are must-not-compile cases 0814-0825.
@@ -450,8 +450,10 @@ xmlport 88570 "LT RS XP Rec"
         Seen: Codeunit "LT Y XP State";
     begin
         Seen.Put('xp_pre_rec', RecText() + ' filters=[' + Rec.GetFilters() + '] count=' + Format(Rec.Count()) + ' temporary=' + Format(Rec.IsTemporary()) + ' table=' + Rec.TableName());
+        // Not a TryFunction: a TryFunction may not write to the database (TryFunctionWrite).
+        Seen.Put('xp_modify_bool', Format(Rec.Modify()));
         ClearLastError();
-        if TryModify(Rec) then
+        if Codeunit.Run(Codeunit::"LT RS Modify Item", Rec) then
             Seen.Put('xp_modify', 'ok')
         else
             Seen.Put('xp_modify', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
@@ -472,11 +474,15 @@ xmlport 88570 "LT RS XP Rec"
     begin
         exit('[' + Format(Rec.Id) + '/' + Rec.Name + ']');
     end;
+}
 
-    [TryFunction]
-    local procedure TryModify(var Item: Record "LT Y Item")
+codeunit 88572 "LT RS Modify Item"
+{
+    TableNo = "LT Y Item";
+
+    trigger OnRun()
     begin
-        Item.Modify();
+        Rec.Modify();
     end;
 }
 
@@ -850,6 +856,7 @@ codeunit 75514 "LT Y XmlPort Tests"
         Seen.Put('xp_open', '-');
         Seen.Put('xp_pre_rec', '-');
         Seen.Put('xp_modify', '-');
+        Seen.Put('xp_modify_bool', '-');
         Seen.Put('xp_insert', '-');
         Seen.Put('xp_post_rec', '-');
     end;
@@ -858,6 +865,7 @@ codeunit 75514 "LT Y XmlPort Tests"
     begin
         Observer.Observe('xp_open', Seen.Get('xp_open'));
         Observer.Observe('xp_pre_rec', Seen.Get('xp_pre_rec'));
+        Observer.Observe('xp_modify_bool', Seen.Get('xp_modify_bool'));
         Observer.Observe('xp_modify', Seen.Get('xp_modify'));
         Observer.Observe('xp_insert', Seen.Get('xp_insert'));
         Observer.Observe('xp_post_rec', Seen.Get('xp_post_rec'));
@@ -908,6 +916,10 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer.Observe('xp_insert', Seen.Get('xp_insert'));
         Observer.Observe('xp_pre_rec', Seen.Get('xp_pre_rec'));
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Rw>|    <Id>1</Id>|  </Rw>|  <Rw>|    <Id>2</Id>|  </Rw>|</Root>|');
+        Observer.Expect('xp_insert', 'Yes');
+        Observer.Expect('xp_pre_rec', '[51/temp] count=1 temporary=Yes');
+        Observer.Expect('rows', '1/one/5;2/two/6;');
+        Observer.Verify();
     end;
 }

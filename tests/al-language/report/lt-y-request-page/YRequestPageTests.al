@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-request-page
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), LT Y Helper (75500), LT Y Seen (75501), YRequestPage.al (table 75530, reports 75531-75540), RsRequestPageRec.al (reports 88560-88564)
+// Fixtures used: Probe Observer (codeunit 69160), LT Y Helper (75500), LT Y Seen (75501), YRequestPage.al (table 75530, reports 75531-75540), RsRequestPageRec.al (reports 88560-88566, codeunit 88565)
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced.
 // Facts: see YRequestPage.al.
 // BC versions: 27-29
@@ -444,7 +444,13 @@ codeunit 75512 "LT Y Request Page Tests"
         Report.RunModal(Report::"LT RS RP Modify Found", true, false);
         ObserveSeen(Observer, 'modify,insert,open_rec,docno,descr');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('modify', 'Yes');
+        Observer.Expect('insert', 'Yes');
+        Observer.Expect('open_rec', '[N/1/inserted] count=4');
+        Observer.Expect('docno', 'N');
+        Observer.Expect('descr', 'inserted');
+        Observer.Expect('rows', 'A/10000/first;A/20000/second;B/10000/modified;N/1/inserted;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -464,7 +470,7 @@ codeunit 75512 "LT Y Request Page Tests"
     begin
         Seed();
         Report.RunModal(Report::"LT RS RP Rec In Report", true, false);
-        ObserveSeen(Observer, 'init_rec,open_rec,docno,descr,pre_rec,dataitem_rec,post_rec,proc_rec');
+        ObserveSeen(Observer, 'open_rec,docno,descr,pre_rec,dataitem_rec,post_rec,proc_rec');
         Observer.Observe('rows', Rows());
         Observer.Finish();
     end;
@@ -476,13 +482,13 @@ codeunit 75512 "LT Y Request Page Tests"
     begin
         Seed();
         Report.RunModal(Report::"LT RS RP Rec In Report", false, false);
-        ObserveSeen(Observer, 'init_rec,open_rec,pre_rec,dataitem_rec,post_rec,proc_rec');
+        ObserveSeen(Observer, 'open_rec,pre_rec,dataitem_rec,post_rec,proc_rec');
         Observer.Observe('rows', Rows());
         Observer.Finish();
     end;
 
     [Test]
-    procedure RS_RequestPageRec_BareModifyInOnOpenPage_Raises()
+    procedure RS_RequestPageRec_NoHandler_FailsBeforeOnOpenPage()
     var
         Observer: Codeunit "Probe Observer";
     begin
@@ -491,7 +497,11 @@ codeunit 75512 "LT Y Request Page Tests"
         Observer.Observe('error', GetLastErrorText() + '|' + GetLastErrorCode());
         ObserveSeen(Observer, 'before_modify,after_modify');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('error', 'Unhandled UI: RequestPage 88563|MissingUIHandler');
+        Observer.Expect('before_modify', '<none>');
+        Observer.Expect('after_modify', '<none>');
+        Observer.Expect('rows', 'A/10000/first;A/20000/second;B/10000/other;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]
@@ -511,6 +521,23 @@ codeunit 75512 "LT Y Request Page Tests"
         Report.RunModal(Report::"LT RS RP Temp Rec In Report", true, false);
         ObserveSeen(Observer, 'modify,insert,docno,pre_rec');
         Observer.Observe('rows', Rows());
+        Observer.Expect('modify', 'error:The LT Y Line does not exist. Identification fields and values: DocNo='''',LineNo=''0''|DB:RecordNotFound');
+        Observer.Expect('insert', 'Yes');
+        Observer.Expect('docno', 'T');
+        Observer.Expect('pre_rec', '[T/1] count=1 temporary=Yes');
+        Observer.Expect('rows', 'A/10000/first;A/20000/second;B/10000/other;');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RS_RequestPageRec_ReadInOnInitReport_Raises()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        asserterror Report.RunModal(Report::"LT RS RP Rec In Init", false, false);
+        Observer.Observe('error', GetLastErrorText() + '|' + GetLastErrorCode());
+        ObserveSeen(Observer, 'init_before,init_rec,init_after');
         Observer.Finish();
     end;
 }
