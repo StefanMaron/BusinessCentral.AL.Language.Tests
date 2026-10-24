@@ -236,12 +236,13 @@ codeunit 88282 "LT RM Init Key Tests"
         Lines.OpenEdit();
         ObserveList(Lines);
         Lines.Close();
-        Observer.Expect('page', 'No');
-        Observer.Expect('field', 'No');
-        Observer.Expect('var', 'No');
-        Observer.Expect('var editable true', 'No');
-        Observer.Expect('header var', 'No');
-        Observer.Expect('var value', 'Row A');
+        Observer.Expect('open', '4');
+        Observer.Expect('open log', 'R:4;R:2;R:1;R:3;R:4;R:4;R:4;C:4;');
+        Observer.Expect('next', 'Yes|2');
+        Observer.Expect('next log', 'R:2;R:2;R:2;C:2;');
+        Observer.Expect('goto', '3');
+        Observer.Expect('goto log', 'R:4;R:4;R:4;C:4;R:2;R:2;R:2;C:2;R:1;R:1;R:1;C:1;R:3;R:3;R:3;C:3;');
+        Observer.Expect('first', 'Yes|4');
         Observer.Verify();
     end;
 
@@ -254,12 +255,13 @@ codeunit 88282 "LT RM Init Key Tests"
         Lines.OpenView();
         ObserveList(Lines);
         Lines.Close();
-        Observer.Expect('page', 'No');
-        Observer.Expect('field', 'No');
-        Observer.Expect('var', 'No');
-        Observer.Expect('var editable true', 'No');
-        Observer.Expect('header var', 'No');
-        Observer.Expect('var value', 'Row A');
+        Observer.Expect('open', '4');
+        Observer.Expect('open log', 'R:4;R:2;R:1;R:3;R:4;R:4;R:4;C:4;');
+        Observer.Expect('next', 'Yes|2');
+        Observer.Expect('next log', 'R:2;R:2;R:2;C:2;');
+        Observer.Expect('goto', '3');
+        Observer.Expect('goto log', 'R:4;R:4;R:4;C:4;R:2;R:2;R:2;C:2;R:1;R:1;R:1;C:1;R:3;R:3;R:3;C:3;');
+        Observer.Expect('first', 'Yes|4');
         Observer.Verify();
     end;
 
@@ -273,12 +275,13 @@ codeunit 88282 "LT RM Init Key Tests"
         Page.Run(Page::"LT RM Init Key List");
         ObserveList(Lines);
         Lines.Close();
-        Observer.Expect('page', 'No');
-        Observer.Expect('field', 'No');
-        Observer.Expect('var', 'No');
-        Observer.Expect('var editable true', 'No');
-        Observer.Expect('header var', 'No');
-        Observer.Expect('var value', 'Row A');
+        Observer.Expect('open', '4');
+        Observer.Expect('open log', 'R:4;R:2;R:1;R:3;R:4;R:4;R:4;C:4;');
+        Observer.Expect('next', 'Yes|2');
+        Observer.Expect('next log', 'R:2;R:2;R:2;C:2;');
+        Observer.Expect('goto', '3');
+        Observer.Expect('goto log', 'R:4;R:4;R:4;C:4;R:2;R:2;R:2;C:2;R:1;R:1;R:1;C:1;R:3;R:3;R:3;C:3;');
+        Observer.Expect('first', 'Yes|4');
         Observer.Verify();
     end;
 
@@ -288,12 +291,13 @@ codeunit 88282 "LT RM Init Key Tests"
     begin
         Seed(false);
         Page.RunModal(Page::"LT RM Init Key List");
-        Observer.Expect('page', 'No');
-        Observer.Expect('field', 'No');
-        Observer.Expect('var', 'No');
-        Observer.Expect('var editable true', 'No');
-        Observer.Expect('header var', 'No');
-        Observer.Expect('var value', 'Row A');
+        Observer.Expect('open', '2');
+        Observer.Expect('open log', 'R:2;R:1;R:3;R:2;R:4;R:2;R:2;R:2;C:2;');
+        Observer.Expect('next', 'Yes|1');
+        Observer.Expect('next log', 'R:1;R:1;R:1;C:1;');
+        Observer.Expect('goto', '3');
+        Observer.Expect('goto log', 'R:4;R:4;R:4;C:4;R:2;R:2;R:2;C:2;R:1;R:1;R:1;C:1;R:3;R:3;R:3;C:3;');
+        Observer.Expect('first', 'Yes|4');
         Observer.Verify();
     end;
 
@@ -353,11 +357,10 @@ codeunit 88282 "LT RM Init Key Tests"
         Observer.Observe('next', Format(Card.Next()) + '|' + Card.LineNoCtl.Value());
         Observer.Observe('next log', Log.Take());
         Card.Close();
-        Observer.Expect('page', 'No');
-        Observer.Expect('field', 'No');
-        Observer.Expect('var', 'No');
-        Observer.Expect('var editable true', 'No');
-        Observer.Expect('var value', 'Row A');
+        Observer.Expect('open', '4');
+        Observer.Expect('open log', 'R:4;C:4;');
+        Observer.Expect('next', 'Yes|2');
+        Observer.Expect('next log', 'R:2;C:2;');
         Observer.Verify();
     end;
 
@@ -367,11 +370,9 @@ codeunit 88282 "LT RM Init Key Tests"
     begin
         Seed(false);
         Page.RunModal(Page::"LT RM Init Key Card");
-        Observer.Expect('page', 'No');
-        Observer.Expect('field', 'No');
-        Observer.Expect('var', 'No');
-        Observer.Expect('var editable true', 'No');
-        Observer.Expect('var value', 'Row A');
+        Observer.Expect('open', '4');
+        Observer.Expect('open log', 'R:4;C:4;');
+        Observer.Expect('next', 'Yes|2');
         Observer.Verify();
     end;
 
