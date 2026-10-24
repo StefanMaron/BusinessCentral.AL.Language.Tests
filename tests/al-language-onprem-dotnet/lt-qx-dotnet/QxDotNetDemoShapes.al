@@ -13,6 +13,7 @@
 //   deleted through DotNet on the Linux tier (DotNet File.Exists: No): a Linux suspect, those lines are Ignore'd.
 // Writer RJ (DemoTool on BC 29, Create Web Services.CreateSegmentWebService): ODataUtility.GenerateSelectText, GenerateODataV3FilterText and
 //   GenerateODataV4FilterText of the 'SegmentLines' query service with no Tenant Web Service Filter rows, and the rows the calls add.
+// Listing order (Windows check 7, 2026-10-23): DirectoryInfo.GetFiles() lists in name order, case ignored (RJ_DirectoryInfo_GetFiles_ListingOrder).
 // BC versions: 27, 28, 29
 dotnet
 {
@@ -98,6 +99,7 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Visited: Text;
         Sorted: Text;
         FullNameOk: Boolean;
+        FullNameBackslashOk: Boolean;
         Count: Integer;
         Name: Text;
     begin
@@ -113,6 +115,7 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         DirectoryInfo := DirectoryInfo.DirectoryInfo(Path);
         Observer.Observe('created exists', Format(DirectoryInfo.Exists));
         FullNameOk := true;
+        FullNameBackslashOk := true;
         Enumerator := DirectoryInfo.GetFiles('*.xml').GetEnumerator();
         while Enumerator.MoveNext() do begin
             FileInfo := Enumerator.Current;
@@ -120,9 +123,12 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
             Names.Add(FileInfo.Name);
             if FileInfo.FullName <> Path + '/' + FileInfo.Name then
                 FullNameOk := false;
+            if FileInfo.FullName <> Path + '\' + FileInfo.Name then
+                FullNameBackslashOk := false;
         end;
         Observer.Observe('count', Format(Count));
         Observer.Observe('fullname is path + / + name', Format(FullNameOk));
+        Observer.Observe('fullname is path + \ + name', Format(FullNameBackslashOk));
         foreach Name in Names do
             if Name = 'a.xml' then
                 Sorted += 'a.xml,';
@@ -142,10 +148,14 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Directory.Delete(Path, true);
         Observer.Expect('missing exists', 'No');
         Observer.Expect('created exists', 'Yes');
-        Observer.Ignore('count');
-        Observer.Ignore('fullname is path + / + name');
-        Observer.Ignore('names (fixed order)');
-        Observer.Ignore('enumeration order');
+        // Windows BC 27.5, 28.5 and 29.0 (windows-check QX item 14, 2026-10-22) and bc-linux dc007079 (bc-linux #175, #183): the pattern
+        // matches case-insensitively (b.XML; not e.xml.bak or d.txt), the files come in name order, and FullName joins with a backslash.
+        // The older Linux image listed no file.
+        Observer.Expect('count', '3');
+        Observer.Expect('fullname is path + / + name', 'No');
+        Observer.Expect('fullname is path + \ + name', 'Yes');
+        Observer.Expect('names (fixed order)', 'a.xml,b.XML,c.xml,');
+        Observer.Expect('enumeration order', 'a.xml,b.XML,c.xml,');
         Observer.Verify();
     end;
 
@@ -568,5 +578,89 @@ codeunit 99402 "LT QX DotNet Demo Shapes"
         Observer.Expect('counts after', '64|410|29|0');
         Observer.Expect('counts restored', '64|402|29|0');
         Observer.Verify();
+    end;
+
+    // ---- Listing order through DotNet (Windows check 7, 2026-10-23, BC 29.0): DirectoryInfo.GetFiles() lists a folder in NAME order, case
+    // ignored, never in creation order (the same order as File Management.GetServerDirectoryFilesList: MediaFiles.al,
+    // RJ_GetServerDirectoryFilesList_ListingOrder, which also covers MediaSet.ExportFile names). ----
+
+    local procedure RjLoNewDir(Tag: Text): Text
+    var
+        FileManagement: Codeunit "File Management";
+        Dir: Text;
+    begin
+        Dir := TemporaryPath() + 'ltlo' + Tag + CopyStr(DelChr(Format(CreateGuid()), '=', '{}-'), 1, 8);
+        FileManagement.ServerCreateDirectory(Dir);
+        exit(Dir);
+    end;
+
+    local procedure RjLoWrite(Name: Text)
+    begin
+        WriteFile(Name);
+        Sleep(30);
+    end;
+
+    local procedure RjLoList(Dir: Text): Text
+    var
+        DirectoryInfo: DotNet LtQxDirectoryInfo;
+        FileInfo: DotNet LtQxFileInfo;
+        Enumerator: DotNet LtQxEnumerator;
+        FileManagement: Codeunit "File Management";
+        Result: Text;
+    begin
+        DirectoryInfo := DirectoryInfo.DirectoryInfo(Dir);
+        Enumerator := DirectoryInfo.GetFiles().GetEnumerator();
+        while Enumerator.MoveNext() do begin
+            FileInfo := Enumerator.Current;
+            Result += FileInfo.Name + ',';
+        end;
+        FileManagement.ServerRemoveDirectory(Dir, true);
+        exit(Result);
+    end;
+
+    [Test]
+    procedure RJ_DirectoryInfo_GetFiles_ListingOrder()
+    var
+        LoObserver: Codeunit "Probe Observer";
+        FileManagement: Codeunit "File Management";
+        Dir: Text;
+    begin
+        Dir := RjLoNewDir('a');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'c.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'b.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'a.txt'));
+        LoObserver.Observe('a written c,b,a', RjLoList(Dir));
+        Dir := RjLoNewDir('b2');
+        RjLoWrite(FileManagement.CombinePath(Dir, '{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}-1'));
+        RjLoWrite(FileManagement.CombinePath(Dir, '{00000000-0000-0000-0000-000000000000}-1'));
+        LoObserver.Observe('b2 written FFFF then 0000', RjLoList(Dir));
+        Dir := RjLoNewDir('c');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'B.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'a.txt'));
+        LoObserver.Observe('c written B,a', RjLoList(Dir));
+        Dir := RjLoNewDir('c2');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'a.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'C.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'b.txt'));
+        LoObserver.Observe('c2 written a,C,b', RjLoList(Dir));
+        Dir := RjLoNewDir('d');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f07.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f02.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f09.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f01.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f10.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f05.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f03.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f08.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f04.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f06.txt'));
+        LoObserver.Observe('d written 07,02,09,01,10,05,03,08,04,06', RjLoList(Dir));
+        // Windows BC 29.0 (windows-check 7, 2026-10-23); bc-linux dc007079 lists in the same order (bc-linux #183).
+        LoObserver.Expect('a written c,b,a', 'a.txt,b.txt,c.txt,');
+        LoObserver.Expect('b2 written FFFF then 0000', '{00000000-0000-0000-0000-000000000000}-1,{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}-1,');
+        LoObserver.Expect('c written B,a', 'a.txt,B.txt,');
+        LoObserver.Expect('c2 written a,C,b', 'a.txt,b.txt,C.txt,');
+        LoObserver.Expect('d written 07,02,09,01,10,05,03,08,04,06', 'f01.txt,f02.txt,f03.txt,f04.txt,f05.txt,f06.txt,f07.txt,f08.txt,f09.txt,f10.txt,');
+        LoObserver.Verify();
     end;
 }

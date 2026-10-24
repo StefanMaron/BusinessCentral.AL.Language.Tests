@@ -154,6 +154,8 @@ codeunit 79255 "LT AM Report Output Tests"
                     ZipFacts(TempBlob, Entries, WithReq, WithMark, Unreadable);
                     Observer.Observe('main_part', Format(Entries.Contains('word/document.xml,')) + '/' + Format(Entries.Contains('xl/workbook.xml,')));
                     Observer.Observe('entries_with_request_value', WithReq);
+                    if Entries.Contains('xl/workbook.xml,') then
+                        Observer.Observe('request_value_in_sheet1', Format(WithReq.Contains('xl/worksheets/sheet1.xml,')));
                     Observer.Observe('entries_with_constant_column', WithMark);
                     Observer.Observe('unreadable_parts', Unreadable);
                 end;
@@ -241,7 +243,11 @@ codeunit 79255 "LT AM Report Output Tests"
         Observer.Expect('has_output', 'Yes');
         Observer.Expect('kind', 'zip');
         Observer.Expect('main_part', 'No/Yes');
-        Observer.Expect('entries_with_request_value', 'xl/worksheets/sheet1.xml,');
+        // The full list depends on the platform build: BC 28.5 build 54151.56840 also writes the request value into
+        // xl/worksheets/sheet4.xml (the layout's "Request Page" option/value sheet), build 54151.56561 and BC 29.0 do not.
+        // Only the data sheet is asserted.
+        Observer.Ignore('entries_with_request_value'); // depends on the platform build: observed, not asserted
+        Observer.Expect('request_value_in_sheet1', 'Yes');
         Observer.Expect('entries_with_constant_column', 'xl/worksheets/sheet1.xml,');
         Observer.Expect('unreadable_parts', '');
         Observer.Verify();
