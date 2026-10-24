@@ -18,6 +18,27 @@
 //
 // One pair of test codeunits per isolation: A (OnRun writes, tests write and observe) and B (the next codeunit id, reads what
 // A left). Every key has the prefix of its pair. Writers delete before they insert, so a rerun of a codeunit reads the same.
+// The first test of each hub A codeunit writes and never fails; what it saw goes to a SingleInstance log the second test reads.
+//
+// Measured on BC 27.5, 28.5 and 29.0 (Linux legs):
+//   - OnRun of a test codeunit runs once, before its first test, under every isolation and both runners (onrun_calls 1 in
+//     the first and the second test), with no write transaction open at its start. The test codeunit is one instance for
+//     all its tests: globals set by OnRun and by an earlier test are still set in a later test, under Function isolation too.
+//   - OnRun's writes, the committed one and the one left open, are seen by the tests of the codeunit (every isolation).
+//   - Hub, Codeunit isolation: the later tests see everything; the next codeunit sees nothing, OnRun's committed write
+//     included (C11). Hub, Function isolation: OnRun's writes survive into every test, a test's own write does not reach
+//     the next test (F02), and the next codeunit sees none of it, OnRun's committed write included (F11). Hub, Disabled
+//     isolation: everything persists into the later tests and the next codeunit (D11).
+//   - Session.StartSession inside a test: allowed only under Disabled isolation on the hub (the session runs, ends and its
+//     row is seen by the test, the next test and the next codeunit: D03, D04, D11). Under Codeunit and Function isolation,
+//     and under the 130450 runner whatever RequiredTestIsolation says, it fails with "Sessions can only be started in
+//     tests that are run by a TestRunner that has TestIsolation set to Disabled." (TestStartSessionNotAllowed).
+//   - Under the 130450 runner, RequiredTestIsolation = Function and = Disabled change nothing, on BC 28+ too, and raise no
+//     error: a later test sees the earlier tests' writes, committed or not (WF03, WD03), the next codeunit sees none of
+//     them (WF11, WD11), StartSession is refused (WF04, WD04). MessageHandler and ConfirmHandler work as usual.
+//   - BC 27 legs (130450 for every codeunit): OnRun runs outside the codeunit isolation, so its writes, committed and
+//     open, reach the next codeunit (C11, F11, D11 #else branches); the hub on BC 28+ rolls them back (Codeunit, Function).
+//     The BC28PLUS guards mark this difference of the test HARNESS (130450 against the hub), not of the platform version.
 // Object ids 88500-88515.
 // BC versions: 27.5, 28.5, 29.0
 
@@ -276,7 +297,21 @@ codeunit 88506 "LT RQ Codeunit A"
         Observer.Observe('test_global', Format(TestGlobal));
         Probe.ObserveOnRunRows('RC', Observer);
         Observer.Observe('first_test_row', Probe.Has('RC-T1'));
-        Observer.Finish();
+        Observer.Expect('notes', '6');
+        Observer.Expect('onrun_tx_at_start', 'No');
+        Observer.Expect('t1_tx_at_start', 'No');
+        Observer.Expect('t1_onrun_calls', '1');
+        Observer.Expect('t1_onrun_global', '1');
+        Observer.Expect('t1_onrun_committed_row', 'Yes');
+        Observer.Expect('t1_onrun_open_row', 'Yes');
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_calls', '1');
+        Observer.Expect('onrun_global', '1');
+        Observer.Expect('test_global', '1');
+        Observer.Expect('onrun_committed_row', 'Yes');
+        Observer.Expect('onrun_open_row', 'Yes');
+        Observer.Expect('first_test_row', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -285,7 +320,11 @@ codeunit 88506 "LT RQ Codeunit A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveStartSession('RC', Observer);
-        Observer.Finish();
+        Observer.Expect('start_ok', 'No');
+        Observer.Expect('start|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('start|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('session_id_positive', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -294,7 +333,8 @@ codeunit 88506 "LT RQ Codeunit A"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('session_row', Probe.Has('RC-SES'));
-        Observer.Finish();
+        Observer.Expect('session_row', 'No');
+        Observer.Verify();
     end;
 }
 
@@ -314,7 +354,20 @@ codeunit 88507 "LT RQ Codeunit B"
         Probe.ObserveOnRunRows('RC', Observer);
         Observer.Observe('first_test_row', Probe.Has('RC-T1'));
         Observer.Observe('session_row', Probe.Has('RC-SES'));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_committed_row', 'No');
+        Observer.Expect('onrun_open_row', 'No');
+        Observer.Expect('first_test_row', 'No');
+        Observer.Expect('session_row', 'No');
+#else
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_committed_row', 'Yes');
+        Observer.Expect('onrun_open_row', 'Yes');
+        Observer.Expect('first_test_row', 'No');
+        Observer.Expect('session_row', 'No');
+#endif
+        Observer.Verify();
     end;
 }
 
@@ -363,7 +416,38 @@ codeunit 88508 "LT RQ Function A"
         Observer.Observe('test_global', Format(TestGlobal));
         Probe.ObserveOnRunRows('RF', Observer);
         Observer.Observe('first_test_row', Probe.Has('RF-T1'));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('notes', '6');
+        Observer.Expect('onrun_tx_at_start', 'No');
+        Observer.Expect('t1_tx_at_start', 'No');
+        Observer.Expect('t1_onrun_calls', '1');
+        Observer.Expect('t1_onrun_global', '1');
+        Observer.Expect('t1_onrun_committed_row', 'Yes');
+        Observer.Expect('t1_onrun_open_row', 'Yes');
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_calls', '1');
+        Observer.Expect('onrun_global', '1');
+        Observer.Expect('test_global', '1');
+        Observer.Expect('onrun_committed_row', 'Yes');
+        Observer.Expect('onrun_open_row', 'Yes');
+        Observer.Expect('first_test_row', 'No');
+#else
+        Observer.Expect('notes', '6');
+        Observer.Expect('onrun_tx_at_start', 'No');
+        Observer.Expect('t1_tx_at_start', 'No');
+        Observer.Expect('t1_onrun_calls', '1');
+        Observer.Expect('t1_onrun_global', '1');
+        Observer.Expect('t1_onrun_committed_row', 'Yes');
+        Observer.Expect('t1_onrun_open_row', 'Yes');
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_calls', '1');
+        Observer.Expect('onrun_global', '1');
+        Observer.Expect('test_global', '1');
+        Observer.Expect('onrun_committed_row', 'Yes');
+        Observer.Expect('onrun_open_row', 'Yes');
+        Observer.Expect('first_test_row', 'Yes');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -372,7 +456,11 @@ codeunit 88508 "LT RQ Function A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveStartSession('RF', Observer);
-        Observer.Finish();
+        Observer.Expect('start_ok', 'No');
+        Observer.Expect('start|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('start|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('session_id_positive', 'No');
+        Observer.Verify();
     end;
 
     [Test]
@@ -381,7 +469,8 @@ codeunit 88508 "LT RQ Function A"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('session_row', Probe.Has('RF-SES'));
-        Observer.Finish();
+        Observer.Expect('session_row', 'No');
+        Observer.Verify();
     end;
 }
 
@@ -401,7 +490,20 @@ codeunit 88509 "LT RQ Function B"
         Probe.ObserveOnRunRows('RF', Observer);
         Observer.Observe('first_test_row', Probe.Has('RF-T1'));
         Observer.Observe('session_row', Probe.Has('RF-SES'));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_committed_row', 'No');
+        Observer.Expect('onrun_open_row', 'No');
+        Observer.Expect('first_test_row', 'No');
+        Observer.Expect('session_row', 'No');
+#else
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_committed_row', 'Yes');
+        Observer.Expect('onrun_open_row', 'Yes');
+        Observer.Expect('first_test_row', 'No');
+        Observer.Expect('session_row', 'No');
+#endif
+        Observer.Verify();
     end;
 }
 
@@ -450,7 +552,21 @@ codeunit 88510 "LT RQ Disabled A"
         Observer.Observe('test_global', Format(TestGlobal));
         Probe.ObserveOnRunRows('RD', Observer);
         Observer.Observe('first_test_row', Probe.Has('RD-T1'));
-        Observer.Finish();
+        Observer.Expect('notes', '6');
+        Observer.Expect('onrun_tx_at_start', 'No');
+        Observer.Expect('t1_tx_at_start', 'No');
+        Observer.Expect('t1_onrun_calls', '1');
+        Observer.Expect('t1_onrun_global', '1');
+        Observer.Expect('t1_onrun_committed_row', 'Yes');
+        Observer.Expect('t1_onrun_open_row', 'Yes');
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_calls', '1');
+        Observer.Expect('onrun_global', '1');
+        Observer.Expect('test_global', '1');
+        Observer.Expect('onrun_committed_row', 'Yes');
+        Observer.Expect('onrun_open_row', 'Yes');
+        Observer.Expect('first_test_row', 'Yes');
+        Observer.Verify();
     end;
 
     [Test]
@@ -459,7 +575,20 @@ codeunit 88510 "LT RQ Disabled A"
         Observer: Codeunit "Probe Observer";
     begin
         Probe.ObserveStartSession('RD', Observer);
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('start_ok', 'Yes');
+        Observer.Expect('start|text', '');
+        Observer.Expect('start|code', '');
+        Observer.Expect('session_id_positive', 'Yes');
+        Observer.Expect('session_ended', 'Yes');
+        Observer.Expect('session_row', 'Yes');
+#else
+        Observer.Expect('start_ok', 'No');
+        Observer.Expect('start|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('start|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('session_id_positive', 'No');
+#endif
+        Observer.Verify();
     end;
 
     [Test]
@@ -468,7 +597,12 @@ codeunit 88510 "LT RQ Disabled A"
         Observer: Codeunit "Probe Observer";
     begin
         Observer.Observe('session_row', Probe.Has('RD-SES'));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('session_row', 'Yes');
+#else
+        Observer.Expect('session_row', 'No');
+#endif
+        Observer.Verify();
     end;
 }
 
@@ -488,7 +622,20 @@ codeunit 88511 "LT RQ Disabled B"
         Probe.ObserveOnRunRows('RD', Observer);
         Observer.Observe('first_test_row', Probe.Has('RD-T1'));
         Observer.Observe('session_row', Probe.Has('RD-SES'));
-        Observer.Finish();
+#if BC28PLUS
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_committed_row', 'Yes');
+        Observer.Expect('onrun_open_row', 'Yes');
+        Observer.Expect('first_test_row', 'Yes');
+        Observer.Expect('session_row', 'Yes');
+#else
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('onrun_committed_row', 'Yes');
+        Observer.Expect('onrun_open_row', 'Yes');
+        Observer.Expect('first_test_row', 'No');
+        Observer.Expect('session_row', 'No');
+#endif
+        Observer.Verify();
     end;
 }
 
@@ -533,7 +680,13 @@ codeunit 88512 "LT RQ Handlers Function A"
         Observer.Observe('message_hits_before', Format(MessageHits));
         Observer.Observe('confirm', Format(Confirm('LT RQ confirm?', false)));
         Observer.Observe('confirm_hits', Format(ConfirmHits));
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('no_commit_row', 'Yes');
+        Observer.Expect('committed_row', 'Yes');
+        Observer.Expect('message_hits_before', '2');
+        Observer.Expect('confirm', 'Yes');
+        Observer.Expect('confirm_hits', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -544,7 +697,11 @@ codeunit 88512 "LT RQ Handlers Function A"
     begin
         Message('LT RQ message');
         Probe.ObserveStartSession('WF', Observer);
-        Observer.Finish();
+        Observer.Expect('start_ok', 'No');
+        Observer.Expect('start|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('start|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('session_id_positive', 'No');
+        Observer.Verify();
     end;
 
     [MessageHandler]
@@ -579,7 +736,11 @@ codeunit 88513 "LT RQ Handlers Function B"
         Observer.Observe('no_commit_row', Probe.Has('WF-NC'));
         Observer.Observe('committed_row', Probe.Has('WF-CM'));
         Observer.Observe('session_row', Probe.Has('WF-SES'));
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('no_commit_row', 'No');
+        Observer.Expect('committed_row', 'No');
+        Observer.Expect('session_row', 'No');
+        Observer.Verify();
     end;
 
     [MessageHandler]
@@ -629,7 +790,13 @@ codeunit 88514 "LT RQ Handlers Disabled A"
         Observer.Observe('message_hits_before', Format(MessageHits));
         Observer.Observe('confirm', Format(Confirm('LT RQ confirm?', false)));
         Observer.Observe('confirm_hits', Format(ConfirmHits));
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('no_commit_row', 'Yes');
+        Observer.Expect('committed_row', 'Yes');
+        Observer.Expect('message_hits_before', '2');
+        Observer.Expect('confirm', 'Yes');
+        Observer.Expect('confirm_hits', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -640,7 +807,11 @@ codeunit 88514 "LT RQ Handlers Disabled A"
     begin
         Message('LT RQ message');
         Probe.ObserveStartSession('WD', Observer);
-        Observer.Finish();
+        Observer.Expect('start_ok', 'No');
+        Observer.Expect('start|text', 'Sessions can only be started in tests that are run by a TestRunner that has TestIsolation set to Disabled.');
+        Observer.Expect('start|code', 'TestStartSessionNotAllowed');
+        Observer.Expect('session_id_positive', 'No');
+        Observer.Verify();
     end;
 
     [MessageHandler]
@@ -675,7 +846,11 @@ codeunit 88515 "LT RQ Handlers Disabled B"
         Observer.Observe('no_commit_row', Probe.Has('WD-NC'));
         Observer.Observe('committed_row', Probe.Has('WD-CM'));
         Observer.Observe('session_row', Probe.Has('WD-SES'));
-        Observer.Finish();
+        Observer.Expect('tx_at_start', 'No');
+        Observer.Expect('no_commit_row', 'No');
+        Observer.Expect('committed_row', 'No');
+        Observer.Expect('session_row', 'No');
+        Observer.Verify();
     end;
 
     [MessageHandler]
