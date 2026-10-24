@@ -393,4 +393,65 @@ codeunit 73563 "LT P130 Transfer Types"
         Observer.Expect('code20_to_code20_other_name', 'ok id=1 value=ABCDEFGHIJKLMNOPQRST');
         Observer.Verify();
     end;
+
+    // Writer RN (al-runner issue 5773): Text[100] into Text[10] by the length of the value (empty, 5, 10, 11 and 20
+    // characters), the target's earlier value after a failure, TransferFields(Src, false), and the asserterror form.
+    // Measured (BC 29.0; 27.5 and 28.5 by CI): up to 10 characters copy; 11 and more raise DB:TypeMisMatch with the size text, the
+    // target field keeps its earlier value, the key is copied before the failure (TransferFields(Src, false) keeps the target key).
+    local procedure RnRun8(var Observer: Codeunit "Probe Observer"; Name: Text; Value: Text)
+    var
+        Src: Record "LT P130 Tf Src";
+        Dst: Record "LT P130 Tf Dst8";
+    begin
+        Src.Init();
+        Src.Id := 1;
+        Src.TextLong := CopyStr(Value, 1, MaxStrLen(Src.TextLong));
+        Dst.Id := 5;
+        Dst.Short := 'old';
+        if Try8(Dst, Src) then
+            Observer.Observe(Name, 'ok id=' + Format(Dst.Id) + ' value=' + Dst.Short)
+        else
+            Observer.Observe(Name, Failed() + ' id=' + Format(Dst.Id) + ' value=' + Dst.Short);
+    end;
+
+    [TryFunction]
+    local procedure RnTry8NoKey(var Dst: Record "LT P130 Tf Dst8"; var Src: Record "LT P130 Tf Src")
+    begin
+        Dst.TransferFields(Src, false);
+    end;
+
+    [Test]
+    procedure RN_Transfer_Text100ToText10_ByValueLength()
+    var
+        Observer: Codeunit "Probe Observer";
+        Src: Record "LT P130 Tf Src";
+        Dst: Record "LT P130 Tf Dst8";
+    begin
+        RnRun8(Observer, 'len0', '');
+        RnRun8(Observer, 'len5', 'abcde');
+        RnRun8(Observer, 'len10', 'abcdefghij');
+        RnRun8(Observer, 'len11', 'abcdefghijk');
+        RnRun8(Observer, 'len20', 'abcdefghijklmnopqrst');
+        Src.Init();
+        Src.Id := 1;
+        Src.TextLong := 'abcdefghijk';
+        Dst.Id := 5;
+        Dst.Short := 'old';
+        if RnTry8NoKey(Dst, Src) then
+            Observer.Observe('nokey_len11', 'ok id=' + Format(Dst.Id) + ' value=' + Dst.Short)
+        else
+            Observer.Observe('nokey_len11', Failed() + ' id=' + Format(Dst.Id) + ' value=' + Dst.Short);
+        Clear(Dst);
+        asserterror Dst.TransferFields(Src);
+        Observer.ObserveError('asserterror_len11');
+        Observer.Expect('len0', 'ok id=1 value=');
+        Observer.Expect('len5', 'ok id=1 value=abcde');
+        Observer.Expect('len10', 'ok id=1 value=abcdefghij');
+        Observer.Expect('len11', 'error:The contents of the TextLong field cannot be copied to the Short field because the size of the Short field is too small.\\Type: Text10 <-- Text100\Field: Short <-- TextLong\Table: LT P130 Tf Dst8 <-- LT P130 Tf Src|DB:TypeMisMatch id=1 value=old');
+        Observer.Expect('len20', 'error:The contents of the TextLong field cannot be copied to the Short field because the size of the Short field is too small.\\Type: Text10 <-- Text100\Field: Short <-- TextLong\Table: LT P130 Tf Dst8 <-- LT P130 Tf Src|DB:TypeMisMatch id=1 value=old');
+        Observer.Expect('nokey_len11', 'error:The contents of the TextLong field cannot be copied to the Short field because the size of the Short field is too small.\\Type: Text10 <-- Text100\Field: Short <-- TextLong\Table: LT P130 Tf Dst8 <-- LT P130 Tf Src|DB:TypeMisMatch id=5 value=old');
+        Observer.Expect('asserterror_len11|text', 'The contents of the TextLong field cannot be copied to the Short field because the size of the Short field is too small.\\Type: Text10 <-- Text100\Field: Short <-- TextLong\Table: LT P130 Tf Dst8 <-- LT P130 Tf Src');
+        Observer.Expect('asserterror_len11|code', 'DB:TypeMisMatch');
+        Observer.Verify();
+    end;
 }
