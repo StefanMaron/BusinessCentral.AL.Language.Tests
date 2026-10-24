@@ -1,11 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-testhttprequestpolicy-property
 // Scope: in-scope (OnPrem app: the [HttpClientHandler] attribute is Scope = OnPrem)
 // Fixtures used: Probe Observer (69160), from the AL Language Coverage Tests app; self-contained codeunit 61298
-// Probe: written against a real BC 29.0 service tier (29.0.54011.55816). Other BC versions were not measured.
+// Probe: written against a real BC 29.0 service tier (29.0.54011.55816). BC 27.5 and 28.5: Windows service tiers (Windows check 2026-10-22).
 //
 // TestHttpRequestPolicy = BlockOutboundRequests: a request with no handler raises "Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to
 // 'BlockOutboundRequests'. Please ensure that an HTTP client handler is configured." (code TestCodeunitUnhandledHttpRequest); with a handler the request is answered.
-// BC versions: 29.0
+// BC versions: 27-29 (the handler answers on Windows 27.5 and 28.5 too)
 codeunit 61298 "PZ Http Block"
 {
     Subtype = Test;
@@ -49,11 +49,8 @@ codeunit 61298 "PZ Http Block"
     begin
         Ok := TryGet('https://example.invalid/handled');
         Observer.Observe('handled', Format(Ok) + ' ' + GetLastErrorText() + '|' + GetLastErrorCode());
-#if BC29PLUS
+        // BC 27.5 and 28.5 on Windows call the handler too (Windows check 2026-10-22, al-runner issue 5777).
         Observer.Expect('handled', 'Yes |');
-#else
-        Observer.Expect('handled', 'No Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''BlockOutboundRequests''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest');
-#endif
         Observer.Verify();
     end;
 }
