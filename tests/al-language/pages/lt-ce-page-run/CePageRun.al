@@ -46,6 +46,9 @@ codeunit 84362 "LT CE Page Run Tests"
         NewKind: Text;
         NewOpt: Text;
         FilterSeen: Text;
+        RpSeen: Text;
+        RpGoTo: Text;
+        RpMode: Integer;
 
     local procedure Seed()
     var
@@ -459,4 +462,305 @@ codeunit 84362 "LT CE Page Run Tests"
     begin
         Seen := 'LT CE List current=' + L.Id.Value();
     end;
+
+    // Writer RP (al-runner issue 5759): Page.RunModal / Page.Run with a Variant that holds a RecordRef AND a field argument,
+    // the call codeunit 700 "Page Management".PageRunAtField makes (PAGE.RunModal(PageID, RecordRefVariant, FieldNumber)),
+    // and the public Page Management procedures on that path. Objects: LT RP CE * (88381-88384) at the end of this file.
+    [ModalPageHandler]
+    procedure RpCardModalHandler(var C: TestPage "LT RP CE Card")
+    begin
+        RpNote('card=' + C."Code".Value() + '|' + C.Name.Value());
+        case RpMode of
+            1:
+                C.OK().Invoke();
+            2:
+                begin
+                    C.Name.SetValue('Edited');
+                    C.OK().Invoke();
+                end;
+        end;
+    end;
+
+    [PageHandler]
+    procedure RpCardHandler(var C: TestPage "LT RP CE Card")
+    begin
+        RpNote('card=' + C."Code".Value() + '|' + C.Name.Value());
+    end;
+
+    [ModalPageHandler]
+    procedure RpListModalHandler(var L: TestPage "LT RP CE List")
+    var
+        Codes: Text;
+    begin
+        RpNote('cur=' + L."Code".Value());
+        if L.First() then
+            repeat
+                Codes += L."Code".Value();
+            until not L.Next();
+        RpNote('rows=' + Codes);
+        if RpGoTo <> '' then
+            RpNote('goto=' + Format(L.GoToKey(RpGoTo)));
+        L.OK().Invoke();
+    end;
+
+    local procedure RpNote(T: Text)
+    begin
+        if RpSeen <> '' then
+            RpSeen += ';';
+        RpSeen += T;
+    end;
+
+    local procedure RpTake(): Text
+    var
+        T: Text;
+    begin
+        T := RpSeen;
+        RpSeen := '';
+        exit(T);
+    end;
+
+    local procedure RpSeed()
+    var
+        Row: Record "LT RP CE Row";
+    begin
+        Row.DeleteAll();
+        Row."Code" := 'A';
+        Row.Name := 'Alpha';
+        Row.Insert();
+        Row."Code" := 'B';
+        Row.Name := 'Bravo';
+        Row.Insert();
+        Row."Code" := 'C';
+        Row.Name := 'Charlie';
+        Row.Insert();
+        RpSeen := '';
+        RpGoTo := '';
+        RpMode := 0;
+    end;
+
+    local procedure RpRefCode(var RecRef: RecordRef): Text
+    begin
+        exit(Format(RecRef.Field(1).Value()) + '/' + Format(RecRef.Field(2).Value()));
+    end;
+
+    [Test]
+    [HandlerFunctions('RpCardModalHandler')]
+    procedure RP_RunModal_VariantRecRef_FieldZero_Card()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT RP CE Row";
+        RecRef: RecordRef;
+        Back: RecordRef;
+        V: Variant;
+        Act: Action;
+    begin
+        RpSeed();
+        Row.Get('B');
+        RecRef.GetTable(Row);
+        V := RecRef;
+        RpMode := 0;
+        Act := Page.RunModal(Page::"LT RP CE Card", V, 0);
+        Observer.Observe('none_action', Format(Act));
+        Observer.Observe('none_seen', RpTake());
+        RpMode := 1;
+        Act := Page.RunModal(Page::"LT RP CE Card", V, 0);
+        Observer.Observe('ok_action', Format(Act));
+        Observer.Observe('ok_seen', RpTake());
+        RpMode := 2;
+        Act := Page.RunModal(Page::"LT RP CE Card", V, Row.FieldNo(Name));
+        Observer.Observe('edit_action', Format(Act));
+        Observer.Observe('edit_seen', RpTake());
+        Observer.Observe('edit_recref', RpRefCode(RecRef));
+        Back := V;
+        Observer.Observe('edit_variant', RpRefCode(Back));
+        Observer.Observe('edit_row', Row."Code" + '/' + Row.Name);
+        Row.Get('B');
+        Observer.Observe('edit_stored', Row.Name);
+        Observer.Expect('none_action', 'LookupCancel');
+        Observer.Expect('none_seen', 'card=B|Bravo');
+        Observer.Expect('ok_action', 'LookupOK');
+        Observer.Expect('ok_seen', 'card=B|Bravo');
+        Observer.Expect('edit_action', 'LookupOK');
+        Observer.Expect('edit_seen', 'card=B|Bravo');
+        Observer.Expect('edit_recref', 'B/Edited');
+        Observer.Expect('edit_variant', 'B/Edited');
+        Observer.Expect('edit_row', 'B/Bravo');
+        Observer.Expect('edit_stored', 'Edited');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpListModalHandler')]
+    procedure RP_RunModal_VariantRecRef_FieldNo_ListPick()
+    var
+        Observer: Codeunit "Probe Observer";
+        RecRef: RecordRef;
+        Back: RecordRef;
+        CodeRef: FieldRef;
+        V: Variant;
+        Act: Action;
+    begin
+        RpSeed();
+        RecRef.Open(Database::"LT RP CE Row");
+        CodeRef := RecRef.Field(1);
+        CodeRef.SetFilter('A|B');
+        RecRef.FindFirst();
+        V := RecRef;
+        RpGoTo := 'B';
+        Act := Page.RunModal(Page::"LT RP CE List", V, 2);
+        Observer.Observe('pick_action', Format(Act));
+        Observer.Observe('pick_seen', RpTake());
+        Observer.Observe('pick_recref', RpRefCode(RecRef));
+        Back := V;
+        Observer.Observe('pick_variant', RpRefCode(Back));
+        Observer.Observe('pick_filters', RecRef.GetFilters());
+        RpGoTo := '';
+        Act := Page.RunModal(Page::"LT RP CE List", V, 0);
+        Observer.Observe('zero_action', Format(Act));
+        Observer.Observe('zero_seen', RpTake());
+        Observer.Expect('pick_action', 'LookupOK');
+        Observer.Expect('pick_seen', 'cur=A;rows=AB;goto=Yes');
+        Observer.Expect('pick_recref', 'B/Bravo');
+        Observer.Expect('pick_variant', 'B/Bravo');
+        Observer.Expect('pick_filters', 'Code: A|B');
+        Observer.Expect('zero_action', 'LookupOK');
+        Observer.Expect('zero_seen', 'cur=B;rows=AB');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpCardHandler')]
+    procedure RP_Run_VariantRecRef_FieldZero_Card()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT RP CE Row";
+        RecRef: RecordRef;
+        V: Variant;
+    begin
+        RpSeed();
+        Row.Get('C');
+        RecRef.GetTable(Row);
+        V := RecRef;
+        Page.Run(Page::"LT RP CE Card", V, 0);
+        Observer.Observe('run_seen', RpTake());
+        Page.Run(Page::"LT RP CE Card", V, Row.FieldNo(Name));
+        Observer.Observe('run_field_seen', RpTake());
+        Observer.Expect('run_seen', 'card=C|Charlie');
+        Observer.Expect('run_field_seen', 'card=C|Charlie');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RP_RunModal_VariantNotARecord_FieldZero()
+    var
+        Observer: Codeunit "Probe Observer";
+        V: Variant;
+        Act: Action;
+    begin
+        RpSeed();
+        V := 7;
+        asserterror Act := Page.RunModal(Page::"LT RP CE Card", V, 0);
+        Observer.ObserveError('int');
+        V := 'B';
+        asserterror Act := Page.RunModal(Page::"LT RP CE Card", V, 0);
+        Observer.ObserveError('text');
+        Observer.Expect('int|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavInteger to Microsoft.Dynamics.Nav.Runtime.INavRecordHandle.');
+        Observer.Expect('int|code', 'Conversion');
+        Observer.Expect('text|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavChar to Microsoft.Dynamics.Nav.Runtime.INavRecordHandle.');
+        Observer.Expect('text|code', 'Conversion');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpCardModalHandler,RpListModalHandler')]
+    procedure RP_PageManagement_PageRunModal_OpensTheCard()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT RP CE Row";
+        Empty: Record "LT RP CE Row";
+        PageManagement: Codeunit "Page Management";
+    begin
+        RpSeed();
+        Observer.Observe('guiallowed', Format(GuiAllowed()));
+        Observer.Observe('card_page_id', Format(PageManagement.GetDefaultCardPageID(Database::"LT RP CE Row") = Page::"LT RP CE Card"));
+        Observer.Observe('lookup_page_id', Format(PageManagement.GetDefaultLookupPageID(Database::"LT RP CE Row") = Page::"LT RP CE List"));
+        Row.Get('B');
+        Observer.Observe('page_id_card', Format(PageManagement.GetPageID(Row) = Page::"LT RP CE Card"));
+        Observer.Observe('page_id_empty_list', Format(PageManagement.GetPageID(Empty) = Page::"LT RP CE List"));
+        Observer.Observe('modal_ran', Format(PageManagement.PageRunModal(Row)));
+        Observer.Observe('modal_seen', RpTake());
+        Observer.Observe('modal_row', Row."Code" + '/' + Row.Name);
+        Observer.Observe('list_ran', Format(PageManagement.PageRunListModal(Row)));
+        Observer.Observe('list_seen', RpTake());
+        Observer.Observe('list_row', Row."Code" + '/' + Row.Name);
+        Observer.Expect('guiallowed', 'Yes');
+        Observer.Expect('card_page_id', 'Yes');
+        Observer.Expect('lookup_page_id', 'Yes');
+        Observer.Expect('page_id_card', 'Yes');
+        Observer.Expect('page_id_empty_list', 'Yes');
+        Observer.Expect('modal_ran', 'Yes');
+        Observer.Expect('modal_seen', 'card=B|Bravo');
+        Observer.Expect('modal_row', 'B/Bravo');
+        Observer.Expect('list_ran', 'Yes');
+        Observer.Expect('list_seen', 'cur=B;rows=ABC');
+        Observer.Expect('list_row', 'B/Bravo');
+        Observer.Verify();
+    end;
+}
+
+// Writer RP (al-runner issue 5759): a table whose LookupPageId is a List with CardPageId, the shape Page Management resolves.
+table 88381 "LT RP CE Row"
+{
+    DataClassification = SystemMetadata;
+    LookupPageId = "LT RP CE List";
+
+    fields
+    {
+        field(1; "Code"; Code[20]) { }
+        field(2; Name; Text[30]) { }
+    }
+
+    keys
+    {
+        key(PK; "Code") { Clustered = true; }
+    }
+}
+
+page 88382 "LT RP CE List"
+{
+    PageType = List;
+    SourceTable = "LT RP CE Row";
+    CardPageId = "LT RP CE Card";
+    Editable = false;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 88383 "LT RP CE Card"
+{
+    PageType = Card;
+    SourceTable = "LT RP CE Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("Code"; Rec."Code") { ApplicationArea = All; }
+            field(Name; Rec.Name) { ApplicationArea = All; }
+        }
+    }
 }
