@@ -32,6 +32,7 @@ codeunit 72410 "LT P106 Run Static"
         Log: Codeunit "LT P106 Log";
         H: Text;
         Mode: Integer;
+        RpGoTo: Code[20];
 
     local procedure Note(T: Text)
     begin
@@ -700,5 +701,232 @@ codeunit 72410 "LT P106 Run Static"
                     Act := Page.RunModal(Page::"LT P106 List", Item, I);
                 end;
         end;
+    end;
+
+    // Writer RP (al-runner issue 5753, the shape of codeunit 7321 "Create Inventory Put-away".GetWhseRequest): a filter set in
+    // FilterGroup 2, then Page.RunModal(Number, Record, Field) on an Editable = false List; the handler walks the rows, moves with
+    // GoToRecord and closes with OK or Cancel. Also Page.Run with a field argument and a PageHandler that moves with GoToRecord.
+    [ModalPageHandler]
+    procedure RpRoListH(var P: TestPage "LT RP P106 RO List")
+    var
+        Item: Record "LT P106 Item";
+        Nos: Text;
+    begin
+        Note('cur=' + P.NoCtl.Value());
+        Note('editable=' + Format(P.Editable()));
+        if P.First() then
+            repeat
+                Nos += P.NoCtl.Value();
+            until not P.Next();
+        Note('rows=' + Nos);
+        if RpGoTo <> '' then begin
+            Item.Get(RpGoTo);
+            Note('goto=' + Format(P.GoToRecord(Item)) + '/' + P.NoCtl.Value());
+        end;
+        case Mode of
+            0:
+                P.OK().Invoke();
+            1:
+                P.Cancel().Invoke();
+        end;
+    end;
+
+    [PageHandler]
+    procedure RpRoListPlainH(var P: TestPage "LT RP P106 RO List")
+    var
+        Item: Record "LT P106 Item";
+    begin
+        Note('cur=' + P.NoCtl.Value());
+        Item.Get(RpGoTo);
+        Note('goto=' + Format(P.GoToRecord(Item)) + '/' + P.NoCtl.Value());
+    end;
+
+    local procedure RpFilters(var Item: Record "LT P106 Item"): Text
+    var
+        Group: Integer;
+        Result: Text;
+    begin
+        Group := Item.FilterGroup();
+        Result := 'group=' + Format(Group);
+        Item.FilterGroup(0);
+        Result += ';fg0=' + Item.GetFilters();
+        Item.FilterGroup(2);
+        Result += ';fg2=' + Item.GetFilters();
+        Item.FilterGroup(Group);
+        exit(Result);
+    end;
+
+    [Test]
+    [HandlerFunctions('RpRoListH')]
+    procedure RP_RunModal_FieldArg_FilterGroup2_GoToRecord()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT P106 Item";
+        Act: Action;
+    begin
+        Log.Seed();
+        Item.FilterGroup := 2;
+        Item.SetRange(Qty, 3);
+        Item.FilterGroup := 0;
+        Mode := 0;
+        RpGoTo := 'D';
+        Act := Page.RunModal(Page::"LT RP P106 RO List", Item, Item."No.");
+        Report(Observer, 'ok', Act);
+        Observer.Observe('ok_rec', Item."No." + '/' + Item.Name);
+        Observer.Observe('ok_filters', RpFilters(Item));
+        Observer.Observe('ok_count', Format(Item.Count()));
+        Item.Get('C');
+        RpGoTo := 'D';
+        Mode := 1;
+        Act := Page.RunModal(Page::"LT RP P106 RO List", Item, Item."No.");
+        Report(Observer, 'cancel', Act);
+        Observer.Observe('cancel_rec', Item."No." + '/' + Item.Name);
+        Observer.Observe('cancel_filters', RpFilters(Item));
+        Observer.Expect('ok_action', 'LookupOK');
+        Observer.Expect('ok_h', 'cur=C;editable=No;rows=CD;goto=Yes/D');
+        Observer.Expect('ok_log', 'RO OnOpenPage group=0 fg0= fg2=Qty: 3;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('ok_rec', 'D/Delta');
+        Observer.Expect('ok_filters', 'group=0;fg0=;fg2=Qty: 3');
+        Observer.Expect('ok_count', '2');
+        Observer.Expect('cancel_action', 'LookupCancel');
+        Observer.Expect('cancel_h', 'cur=C;editable=No;rows=CD;goto=Yes/D');
+        Observer.Expect('cancel_log', 'RO OnOpenPage group=0 fg0= fg2=Qty: 3;RO OnQueryClosePage(LookupCancel)');
+        Observer.Expect('cancel_rec', 'D/Delta');
+        Observer.Expect('cancel_filters', 'group=0;fg0=;fg2=Qty: 3');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpRoListH')]
+    procedure RP_RunModal_FieldArg_FilterGroup2_GoToRecordOutsideFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT P106 Item";
+        Act: Action;
+    begin
+        Log.Seed();
+        Item.FilterGroup := 2;
+        Item.SetRange(Qty, 3);
+        Item.FilterGroup := 0;
+        Mode := 0;
+        RpGoTo := 'A';
+        ClearLastError();
+        Act := Page.RunModal(Page::"LT RP P106 RO List", Item, Item."No.");
+        Report(Observer, 'outside', Act);
+        Observer.Observe('outside_rec', Item."No." + '/' + Item.Name);
+        Observer.Observe('outside_err', GetLastErrorText());
+        Observer.Expect('outside_action', 'LookupOK');
+        Observer.Expect('outside_h', 'cur=C;editable=No;rows=CD;goto=No/D');
+        Observer.Expect('outside_log', 'RO OnOpenPage group=0 fg0= fg2=Qty: 3;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('outside_rec', 'D/Delta');
+        Observer.Expect('outside_err', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpRoListH')]
+    procedure RP_RunModal_FieldArg_ReadOnlyList_NoFilter()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT P106 Item";
+        Act: Action;
+    begin
+        Log.Seed();
+        Mode := 0;
+        RpGoTo := 'C';
+        Item.Get('A');
+        Act := Page.RunModal(Page::"LT RP P106 RO List", Item, Item.Name);
+        Report(Observer, 'field', Act);
+        Observer.Observe('field_rec', Item."No." + '/' + Item.Name);
+        RpGoTo := 'B';
+        Act := Page.RunModal(Page::"LT RP P106 RO List", Item, Item.FieldNo(Qty));
+        Report(Observer, 'fieldno', Act);
+        Observer.Observe('fieldno_rec', Item."No." + '/' + Item.Name);
+        RpGoTo := 'D';
+        Act := Page.RunModal(Page::"LT RP P106 RO List", Item);
+        Report(Observer, 'norec_field', Act);
+        Observer.Observe('norec_field_rec', Item."No." + '/' + Item.Name);
+        Observer.Expect('field_action', 'LookupOK');
+        Observer.Expect('field_h', 'cur=A;editable=No;rows=ABCD;goto=Yes/C');
+        Observer.Expect('field_log', 'RO OnOpenPage group=0 fg0= fg2=;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('field_rec', 'C/Gamma');
+        Observer.Expect('fieldno_action', 'LookupOK');
+        Observer.Expect('fieldno_h', 'cur=C;editable=No;rows=ABCD;goto=Yes/B');
+        Observer.Expect('fieldno_log', 'RO OnOpenPage group=0 fg0= fg2=;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('fieldno_rec', 'B/Beta');
+        Observer.Expect('norec_field_action', 'LookupOK');
+        Observer.Expect('norec_field_h', 'cur=B;editable=No;rows=ABCD;goto=Yes/D');
+        Observer.Expect('norec_field_log', 'RO OnOpenPage group=0 fg0= fg2=;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('norec_field_rec', 'D/Delta');
+        Observer.Verify();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpRoListPlainH')]
+    procedure RP_Run_FieldArg_FilterGroup2_GoToRecord()
+    var
+        Observer: Codeunit "Probe Observer";
+        Item: Record "LT P106 Item";
+    begin
+        Log.Seed();
+        Item.FilterGroup := 2;
+        Item.SetRange(Qty, 3);
+        Item.FilterGroup := 0;
+        RpGoTo := 'D';
+        Page.Run(Page::"LT RP P106 RO List", Item, Item."No.");
+        ReportNoAction(Observer, 'run');
+        Observer.Observe('run_rec', Item."No." + '/' + Item.Name);
+        Observer.Observe('run_filters', RpFilters(Item));
+        Observer.Expect('run_h', 'cur=C;goto=Yes/D');
+        Observer.Expect('run_log', 'RO OnOpenPage group=0 fg0= fg2=Qty: 3;RO OnQueryClosePage(OK)');
+        Observer.Expect('run_rec', '/');
+        Observer.Expect('run_filters', 'group=0;fg0=;fg2=Qty: 3');
+        Observer.Verify();
+    end;
+
+}
+
+// Writer RP (al-runner issue 5753): a read-only List like page 5793 "Source Documents"; OnOpenPage logs the filters of
+// FilterGroup 0 and 2 it sees, OnQueryClosePage the close action.
+page 88380 "LT RP P106 RO List"
+{
+    PageType = List;
+    SourceTable = "LT P106 Item";
+    Editable = false;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(NoCtl; Rec."No.") { ApplicationArea = All; }
+                field(NameCtl; Rec.Name) { ApplicationArea = All; }
+                field(QtyCtl; Rec.Qty) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        Log: Codeunit "LT P106 Log";
+        Group: Integer;
+        Fg2: Text;
+    begin
+        Group := Rec.FilterGroup();
+        Rec.FilterGroup(2);
+        Fg2 := Rec.GetFilters();
+        Rec.FilterGroup(Group);
+        Log.Add('RO OnOpenPage group=' + Format(Group) + ' fg0=' + Rec.GetFilters() + ' fg2=' + Fg2);
+    end;
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    var
+        Log: Codeunit "LT P106 Log";
+    begin
+        Log.Add('RO OnQueryClosePage(' + Format(CloseAction) + ')');
+        exit(true);
     end;
 }
