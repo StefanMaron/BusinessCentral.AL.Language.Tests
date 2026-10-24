@@ -407,4 +407,111 @@ codeunit 72507 "LT SyT Round"
         Observer.Expect('2^53+1 to biginteger', '9007199254740993');
         Observer.Verify();
     end;
+
+    // Writer RO (al-runner issue 5746): more invalid direction texts, the direction returned by a procedure, and the error trapped by a
+    // TryFunction and by Codeunit.Run (the other invalid texts 'x', '' and '>>' are pinned in Round_InvalidDirection).
+    local procedure RoDir(Dir: Text): Text
+    begin
+        exit(Dir);
+    end;
+
+    [TryFunction]
+    local procedure RoTryRound(Value: Decimal; Dir: Text; var R: Decimal)
+    begin
+        R := Round(Value, 1, Dir);
+    end;
+
+    local procedure RoRnd(Value: Decimal; Dir: Text): Text
+    var
+        R: Decimal;
+    begin
+        ClearLastError();
+        if RoTryRound(Value, Dir, R) then
+            exit(Format(R, 0, 9));
+        exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    [Test]
+    procedure RO_Round_InvalidDirection_Texts()
+    var
+        Observer: Codeunit "Probe Observer";
+        Dirs: List of [Text];
+        Dir: Text;
+        Result: Decimal;
+        I: Integer;
+        Big: BigInteger;
+    begin
+        asserterror Result := Round(1.5, 1, RoDir('q'));
+        Observer.ObserveError('q from a procedure');
+        Dirs.Add('q');
+        Dirs.Add('Q');
+        Dirs.Add('X');
+        Dirs.Add(' ');
+        Dirs.Add('  ');
+        Dirs.Add('<>');
+        Dirs.Add('==');
+        Dirs.Add('<<');
+        Dirs.Add('=<');
+        Dirs.Add('< ');
+        Dirs.Add(' <');
+        Dirs.Add(' = ');
+        Dirs.Add('1');
+        Dirs.Add('0');
+        Dirs.Add('up');
+        foreach Dir in Dirs do
+            Observer.Observe('try [' + Dir + ']', RoRnd(1.5, Dir));
+        I := 5;
+        asserterror I := Round(I, 1, 'q');
+        Observer.ObserveError('integer q');
+        Big := 5;
+        asserterror Big := Round(Big, 1, 'q');
+        Observer.ObserveError('biginteger q');
+        Observer.Expect('q from a procedure|text', 'The supplied value is not valid.');
+        Observer.Expect('q from a procedure|code', 'InvalidValue');
+        Observer.Expect('try [q]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [Q]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [X]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [ ]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [  ]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [<>]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [==]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [<<]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [=<]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [< ]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [ <]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [ = ]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [1]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [0]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('try [up]', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('integer q|text', 'The supplied value is not valid.');
+        Observer.Expect('integer q|code', 'InvalidValue');
+        Observer.Expect('biginteger q|text', 'The supplied value is not valid.');
+        Observer.Expect('biginteger q|code', 'InvalidValue');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RO_Round_InvalidDirection_CodeunitRun()
+    var
+        Observer: Codeunit "Probe Observer";
+        Runner: Codeunit "LT RO Round Bad Direction";
+    begin
+        ClearLastError();
+        Observer.Observe('codeunit.run', Format(Runner.Run()));
+        Observer.Observe('last error', GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Expect('codeunit.run', 'No');
+        Observer.Expect('last error', 'The supplied value is not valid.|InvalidValue');
+        Observer.Verify();
+    end;
+}
+
+// Writer RO: OnRun rounds with the direction 'q' (al-runner issue 5746).
+codeunit 88446 "LT RO Round Bad Direction"
+{
+    trigger OnRun()
+    var
+        R: Decimal;
+    begin
+        R := Round(1.5, 1, 'q');
+    end;
 }

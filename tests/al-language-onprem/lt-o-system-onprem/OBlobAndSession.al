@@ -116,6 +116,17 @@ codeunit 61236 "LT O Blob File"
         ClearLastError();
     end;
 
+    local procedure ObserveMissingFolderError(var Observer: Codeunit "Probe Observer"; Tag: Text)
+    var
+        Text: Text;
+    begin
+        Text := GetLastErrorText();
+        Observer.Observe(Tag + '|starts', Format(Text.StartsWith('Could not find a part of the path ''')));
+        Observer.Observe(Tag + '|ends', Format(Text.EndsWith('file.bin''.')));
+        Observer.Observe(Tag + '|code', GetLastErrorCode());
+        ClearLastError();
+    end;
+
     [Test]
     procedure O_Blob_Export_InvalidPath_Import_MissingFile()
     var
@@ -129,7 +140,7 @@ codeunit 61236 "LT O Blob File"
         if TryExport(Row, TemporaryPath() + 'lt-o-no-such-folder/sub/file.bin', Result) then
             Observer.Observe('export invalid path', 'return ends with file name=' + Format(Result.EndsWith('file.bin')))
         else
-            Observer.ObserveError('export invalid path');
+            ObserveMissingFolderError(Observer, 'export invalid path');
         if TryImport(Row, TemporaryPath() + 'lt-o-missing-file.bin', Result) then
             Observer.Observe('import missing', 'return=' + Result)
         else
@@ -139,7 +150,12 @@ codeunit 61236 "LT O Blob File"
             Observer.Observe('export blank', 'return=' + Result)
         else
             Observer.ObserveError('export blank');
-        Observer.Expect('export invalid path', 'return ends with file name=Yes');
+        // Windows BC 29.0 (corpus probe branch al-runtime-rs-winprobe-63c, cu 98998): the export fails, the folder is not created.
+        // Windows text: "Could not find a part of the path '<TemporaryPath>lt-o-no-such-folder\sub\file.bin'." The Linux image keeps
+        // the '/' separators of the path as passed, so only the start, the end and the code are asserted.
+        Observer.Expect('export invalid path|starts', 'Yes');
+        Observer.Expect('export invalid path|ends', 'Yes');
+        Observer.Expect('export invalid path|code', 'InvalidPath');
         Observer.Expect('import missing|starts', 'File ');
         Observer.Expect('import missing|ends', '.bin was not found.');
         Observer.Expect('import missing|code', 'FileNotFound');

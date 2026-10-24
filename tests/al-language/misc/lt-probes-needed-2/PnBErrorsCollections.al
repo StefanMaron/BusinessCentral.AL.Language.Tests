@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/methods-auto/errorinfo/errorinfo-data-type
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), PnBObjects.al (tables 70527, log 70531), self-contained codeunits 70550-70553
+// Fixtures used: Probe Observer (codeunit 69160), PnBObjects.al (tables 70527, log 70531), self-contained codeunits 70550-70553; writer RO: tests RO_* in 70550
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 //   70550: "ErrorInfo | ErrorType() before one was set is refused..." (153); "ErrorInfo | ErrorInfo.Create with 3 arguments..." (154);
 //          "Error collection | the scope-exit text for several collected errors is Multiple errors occurred..." (194)
@@ -255,6 +255,124 @@ codeunit 70550 "LT PnB ErrorInfo"
         Obs.Expect('outsideClearCount', '0');
         Obs.Expect('noErrorsFlow', '[none]');
         Obs.Expect('noErrorsLast', '');
+        Obs.Verify();
+    end;
+
+    // Writer RO (al-runner issue 5766): an ErrorInfo with ErrorType::Internal (or Client) that is collected, read back through
+    // GetCollectedErrors: Message, ErrorType, CustomDimensions, DetailedMessage, Collectible and Callstack.
+    local procedure RoRaiseFull(ErrType: ErrorType; IsCollectible: Boolean)
+    var
+        Info: ErrorInfo;
+    begin
+        Info.Message := 'Full message';
+        Info.DetailedMessage := 'Detailed message';
+        Info.ErrorType := ErrType;
+        Info.CustomDimensions.Add('Dim1', 'Val1');
+        Info.Collectible := IsCollectible;
+        Error(Info);
+    end;
+
+    local procedure RoRaiseNested(ErrType: ErrorType)
+    begin
+        RoRaiseFull(ErrType, true);
+    end;
+
+    // The message goes last and on its own: the Probe Observer cuts a value after "Correlation ID: " up to the next backslash.
+    // Callstack: only the frames of this app, joined with a backslash (BC 27.5 also lists the frames of Microsoft's test runner
+    // below the test method, BC 28.5 and 29.0 do not).
+    local procedure RoObserveInfo(var Obs: Codeunit "Probe Observer"; Name: Text; Info: ErrorInfo)
+    var
+        DimKey: Text;
+        Dims: Text;
+        Cr: Text[1];
+        Lf: Text[1];
+        Line: Text;
+        Frames: Text;
+    begin
+        foreach DimKey in Info.CustomDimensions.Keys() do
+            Dims += DimKey + '=' + Info.CustomDimensions.Get(DimKey) + ',';
+        Obs.Observe(Name, 'type=' + Format(Info.ErrorType) + ';dims=' + Format(Info.CustomDimensions.Count()) + ':' + Dims +
+            ';detailed=' + Info.DetailedMessage + ';collectible=' + Format(Info.Collectible));
+        Cr[1] := 13;
+        Lf[1] := 10;
+        foreach Line in Info.Callstack.Replace(Cr, '').Split(Lf) do
+            if Line.Contains('AL Language Coverage Tests by AL Language version') then begin
+                if Frames <> '' then
+                    Frames += '\';
+                Frames += Line;
+            end;
+        Obs.Observe(Name + ' callstack', Frames);
+        Obs.Observe(Name + ' message', Info.Message);
+    end;
+
+    [ErrorBehavior(ErrorBehavior::Collect)]
+    local procedure RoCollect(ErrType: ErrorType; Nested: Boolean; Clear: Boolean; var Count: Integer; var Info: ErrorInfo)
+    var
+        Errors: List of [ErrorInfo];
+    begin
+        if Nested then
+            RoRaiseNested(ErrType)
+        else
+            RoRaiseFull(ErrType, true);
+        Errors := GetCollectedErrors(Clear);
+        Count := Errors.Count();
+        Errors.Get(1, Info);
+    end;
+
+    [ErrorBehavior(ErrorBehavior::Collect)]
+    local procedure RoCollectInternalAndLeave()
+    begin
+        RoRaiseFull(ErrorType::Internal, true);
+    end;
+
+    [Test]
+    procedure RO_CollectedErrorInfo_Internal_And_Client()
+    var
+        Obs: Codeunit "Probe Observer";
+        Info: ErrorInfo;
+        Count: Integer;
+    begin
+        RoCollect(ErrorType::Internal, false, true, Count, Info);
+        Obs.Observe('internal count', Format(Count));
+        RoObserveInfo(Obs, 'internal', Info);
+        RoCollect(ErrorType::Client, false, true, Count, Info);
+        Obs.Observe('client count', Format(Count));
+        RoObserveInfo(Obs, 'client', Info);
+        RoCollect(ErrorType::Internal, true, true, Count, Info);
+        RoObserveInfo(Obs, 'internal nested', Info);
+        Obs.Expect('internal count', '1');
+        Obs.Expect('internal', 'type=Internal;dims=1:Dim1=Val1,;detailed=Detailed message;collectible=Yes');
+        Obs.Expect('internal callstack', '"LT PnB ErrorInfo"(CodeUnit 70550).RoRaiseFull line 9 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RoCollect line 7 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RO_CollectedErrorInfo_Internal_And_Client line 6 - AL Language Coverage Tests by AL Language version x');
+        Obs.Expect('internal message', 'An error has occurred. If the error persists, please contact your system administrator.\r\nCorrelation ID: x');
+        Obs.Expect('client count', '1');
+        Obs.Expect('client', 'type=Client;dims=1:Dim1=Val1,;detailed=Detailed message;collectible=Yes');
+        Obs.Expect('client callstack', '"LT PnB ErrorInfo"(CodeUnit 70550).RoRaiseFull line 9 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RoCollect line 7 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RO_CollectedErrorInfo_Internal_And_Client line 9 - AL Language Coverage Tests by AL Language version x');
+        Obs.Expect('client message', 'Full message');
+        Obs.Expect('internal nested', 'type=Internal;dims=1:Dim1=Val1,;detailed=Detailed message;collectible=Yes');
+        Obs.Expect('internal nested callstack', '"LT PnB ErrorInfo"(CodeUnit 70550).RoRaiseFull line 9 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RoRaiseNested line 2 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RoCollect line 5 - AL Language Coverage Tests by AL Language version x\"LT PnB ErrorInfo"(CodeUnit 70550).RO_CollectedErrorInfo_Internal_And_Client line 12 - AL Language Coverage Tests by AL Language version x');
+        Obs.Expect('internal nested message', 'An error has occurred. If the error persists, please contact your system administrator.\r\nCorrelation ID: x');
+        Obs.Verify();
+    end;
+
+    [Test]
+    procedure RO_CollectedErrorInfo_Internal_NotCleared_ScopeExit()
+    var
+        Obs: Codeunit "Probe Observer";
+        Info: ErrorInfo;
+        Count: Integer;
+    begin
+        asserterror RoCollect(ErrorType::Internal, false, false, Count, Info);
+        Obs.Observe('kept: count', Format(Count));
+        Obs.Observe('kept: message', Info.Message);
+        Obs.ObserveError('kept: scope exit');
+        asserterror RoCollectInternalAndLeave();
+        Obs.ObserveError('left: scope exit');
+        Obs.Expect('kept: count', '1');
+        Obs.Expect('kept: message', 'An error has occurred. If the error persists, please contact your system administrator.\r\nCorrelation ID: x');
+        Obs.Expect('kept: scope exit|text', 'An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Obs.Expect('kept: scope exit|code', 'Dialog');
+        Obs.Expect('left: scope exit|text', 'An error has occurred. If the error persists, please contact your system administrator.\Correlation ID: x');
+        Obs.Expect('left: scope exit|code', 'Dialog');
         Obs.Verify();
     end;
 }

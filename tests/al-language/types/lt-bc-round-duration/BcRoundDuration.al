@@ -141,4 +141,48 @@ codeunit 80980 "BC Round Duration"
         Observer.Expect('to duration -3723004 by 60000', '-1 hour 2 minutes = -P0DT1H2M0.0S');
         Observer.Verify();
     end;
+
+    // Writer RO (al-runner issue 5746): invalid direction texts on a Duration ('x' is pinned in Round_Duration_DefaultPrecision_And_Errors).
+    [TryFunction]
+    local procedure RoTryRoundDir(D: Duration; Dir: Text; var R: Decimal)
+    begin
+        R := Round(D, 1000, Dir);
+    end;
+
+    local procedure RoRndDir(D: Duration; Dir: Text): Text
+    var
+        R: Decimal;
+    begin
+        ClearLastError();
+        if RoTryRoundDir(D, Dir, R) then
+            exit(Format(R, 0, 9));
+        exit('error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+    end;
+
+    [Test]
+    procedure RO_Round_Duration_InvalidDirections()
+    var
+        Observer: Codeunit "Probe Observer";
+        D: Duration;
+    begin
+        D := 1500;
+        Observer.Observe('empty', RoRndDir(D, ''));
+        Observer.Observe('>>', RoRndDir(D, '>>'));
+        Observer.Observe('q', RoRndDir(D, 'q'));
+        Observer.Observe('space', RoRndDir(D, ' '));
+        Observer.Observe('<>', RoRndDir(D, '<>'));
+        Observer.Observe('< ', RoRndDir(D, '< '));
+        D := 0;
+        Observer.Observe('zero empty', RoRndDir(D, ''));
+        Observer.Observe('zero q', RoRndDir(D, 'q'));
+        Observer.Expect('empty', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('>>', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('q', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('space', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('<>', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('< ', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('zero empty', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Expect('zero q', 'error:The supplied value is not valid.|InvalidValue');
+        Observer.Verify();
+    end;
 }

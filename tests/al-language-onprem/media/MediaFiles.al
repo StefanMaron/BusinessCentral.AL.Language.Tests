@@ -1072,7 +1072,6 @@ codeunit 61286 "LT S Media Files"
         Png: Text;
         Set1Text: Text;
         Set2Text: Text;
-        Tries: Integer;
     begin
         // (a) written c, b, a
         Dir := RjLoNewDir('a');
@@ -1084,24 +1083,29 @@ codeunit 61286 "LT S Media Files"
         Row1.SetFilter(Code, 'LTLO*');
         Row1.DeleteAll();
         Row1.Reset();
+        // Two one-item sets; the one whose id sorts higher gets the second item and becomes set1. The ids are random
+        // Guids (seen on OnPrem 27.5 and 28.5, 2026-10-24), so creating set2 until it sorts below set1 failed about once in 41 runs.
         Png := TempName('.png');
         WritePng(Png);
         Row1.Code := 'LTLO0';
         Row1.Set.ImportFile(Png, 'p1');
         Row1.Insert();
+        Row2.Code := 'LTLO1';
+        Row2.Set.ImportFile(Png, 'p1');
+        Row2.Insert();
+        Row1.Get('LTLO0');
+        Row2.Get('LTLO1');
+        if UpperCase(Format(Row2.Set)) < UpperCase(Format(Row1.Set)) then
+            Row1.Get('LTLO0')
+        else begin
+            Row1.Get('LTLO1');
+            Row2.Get('LTLO0');
+        end;
         Row1.Set.ImportFile(Png, 'p2');
         Row1.Modify();
-        Row1.Get('LTLO0');
+        Row1.Get(Row1.Code);
         Set1Text := Format(Row1.Set);
-        repeat
-            Tries += 1;
-            Clear(Row2);
-            Row2.Code := 'LTLO' + Format(Tries);
-            Row2.Set.ImportFile(Png, 'q');
-            Row2.Insert();
-            Row2.Get('LTLO' + Format(Tries));
-            Set2Text := Format(Row2.Set);
-        until (UpperCase(Set2Text) < UpperCase(Set1Text)) or (Tries >= 40);
+        Set2Text := Format(Row2.Set);
         Observer.Observe('b set2 sorts before set1', Format(UpperCase(Set2Text) < UpperCase(Set1Text)));
         Dir := RjLoNewDir('b');
         Observer.Observe('b export set1', Format(Row1.Set.ExportFile(Dir + '\' + Format(Row1.Set))));
