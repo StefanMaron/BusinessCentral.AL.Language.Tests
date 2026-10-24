@@ -156,8 +156,9 @@ codeunit 98041 "LT RE Media Jpg Holding Png"
         Observer.Expect('mediaset id = Item(1)', 'No');
         Observer.Expect('mediaset id = MediaId', 'Yes');
         Observer.Expect('mediaset item 1 tenant', 'description=[Item picture] mime=[image/jpeg] width=3 height=2 hascontent=Yes');
-        // Linux tiers give 'TEMP\<name>', Windows gives '<name>' (Windows check of QX_MediaAndMediaSet_ImportFile_Jpeg, 2026-10-22): not asserted.
-        Observer.Ignore('mediaset file name');
+        // MediaSet.ImportFile stores the bare file name: Windows BC 27.5, 28.5 and 29.0 (Windows check of QX_MediaAndMediaSet_ImportFile_Jpeg,
+        // 2026-10-22, same call) and bc-linux dc007079 (bc-linux #176). The older Linux image stored 'TEMP\<name>'.
+        Observer.Expect('mediaset file name', '<name>');
         Observer.Expect('mediaset return tenant', 'no tenant media row');
         Observer.Ignore('mediaset content length');
         Observer.Expect('mediaset count after get', '1');

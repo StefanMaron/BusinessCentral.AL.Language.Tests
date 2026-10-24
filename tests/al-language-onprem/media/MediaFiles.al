@@ -9,6 +9,8 @@
 // Writer RJ (DemoTool, Export RapidStart Packages: Config. XML Exchange.ExportMediaSet, ConfigXMLExchange.Codeunit.al:1433-1457, then
 //   UpdateConfigPackageMediaSet and ImportMediaSetFromFile, :1505-1563): MediaSet.ExportFile(MediaFolder + '\' + Format(Set)) of a set with one
 //   and a set with two items, the files File Management.GetServerDirectoryFilesList lists (names, order), their bytes against the imported files.
+// Listing order (Windows check 7, 2026-10-23): GetServerDirectoryFilesList lists in name order, case ignored, also for ExportFile names
+//   (RJ_GetServerDirectoryFilesList_ListingOrder).
 // BC versions: 27, 28, 29
 codeunit 61286 "LT S Media Files"
 {
@@ -251,8 +253,10 @@ codeunit 61286 "LT S Media Files"
         Observer.Expect('set_count_after_two', '2');
         Observer.Expect('set_import_ids_equal', 'Yes');
         Observer.Expect('set_id_is_media_id', 'Yes');
-        Observer.Expect('item1', 'description=[first set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=Yes width=1 height=1 hascontent=Yes');
-        Observer.Expect('item2', 'description=[second set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=Yes width=1 height=1 hascontent=Yes');
+        // MediaSet.ImportFile stores the bare file name as the Tenant Media File Name (filename_longer_than_name=No): Windows BC 27.5, 28.5 and
+        // 29.0 (windows-check QX item 9, 2026-10-22, and 2026-10-23) and bc-linux dc007079 (bc-linux #176). The older Linux image stored 'TEMP\<name>'.
+        Observer.Expect('item1', 'description=[first set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=No width=1 height=1 hascontent=Yes');
+        Observer.Expect('item2', 'description=[second set item] mime=[image/png] filename_contains_source_name=Yes filename_longer_than_name=No width=1 height=1 hascontent=Yes');
         Observer.Expect('export_count', '2');
         Observer.Expect('prefix_itself_exists', 'No');
         Observer.Verify();
@@ -341,8 +345,10 @@ codeunit 61286 "LT S Media Files"
         Observer.Expect('media file name', '<tmp><name>');
         Observer.Expect('media upper tenant', 'description=[Upper case extension] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
         Observer.Expect('mediaset count', '1');
-        Observer.Expect('mediaset item 1 tenant', 'description=[Item picture] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=Yes width=3 height=2 hascontent=Yes');
-        Observer.Ignore('mediaset file name');
+        // The bare file name (filename_longer_than_name=No): Windows BC 27.5, 28.5 and 29.0 (windows-check QX item 9) and bc-linux dc007079 (#176).
+        Observer.Expect('mediaset item 1 tenant', 'description=[Item picture] mime=[image/jpeg] filename_contains_source_name=Yes filename_longer_than_name=No width=3 height=2 hascontent=Yes');
+        // Windows BC 27.5, 28.5 and 29.0 (windows-check QX item 9, 2026-10-22) and bc-linux dc007079 (bc-linux #176): the bare file name.
+        Observer.Expect('mediaset file name', '<name>');
         Observer.Expect('mediaset count after get', '1');
         Observer.Verify();
     end;
@@ -351,8 +357,7 @@ codeunit 61286 "LT S Media Files"
     // Sales Document Icon SetIconFromFile of 'SalesStatusIcons\Quote.PNG' into a MediaSet, Word Template.Template.ImportFile(Path, 'Template')
     // of a .docx into a Media): a JPEG and then a 2 x 3 PNG with an upper-case .PNG extension into the same MediaSet (the returned Guid against
     // MediaId and Item(1), the order of the items, Mime Type, Width, Height); a .docx file into a Media (Tenant Media row, File Name form,
-    // the exported bytes). The Tenant Media File Name of a MediaSet item differs between the Linux and the Windows service tier (windows-check QX
-    // item 9) and is not asserted here. ----
+    // the exported bytes). The Tenant Media File Name of a MediaSet item is asserted in QX_MediaAndMediaSet_ImportFile_Jpeg. ----
 
     local procedure RdPngBase64(): Text
     begin
@@ -768,6 +773,70 @@ codeunit 61286 "LT S Media Files"
         Result := RjListFolder(Folder, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64());
     end;
 
+    // The listing in a form that holds on every tier (no lengths, no item order): the count, the masked Name and Value of each file sorted by
+    // the masked name, whether each file equals the Tenant Media content of an item of its set (content=Yes), and whether the listing came in
+    // name order (case ignored).
+    local procedure RjListShape(Folder: Text; Recursive: Boolean; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row"): Text
+    var
+        TempNameValueBuffer: Record "Name/Value Buffer" temporary;
+        FileManagement: Codeunit "File Management";
+        TempBlob: Codeunit "Temp Blob";
+        Base64: Codeunit "Base64 Convert";
+        Entries: List of [Text];
+        InS: InStream;
+        B64: Text;
+        Entry: Text;
+        Swap: Text;
+        Previous: Text;
+        Content: Boolean;
+        InNameOrder: Boolean;
+        Result: Text;
+        i: Integer;
+        j: Integer;
+    begin
+        if Recursive then
+            FileManagement.GetServerDirectoryFilesListInclSubDirs(TempNameValueBuffer, Folder)
+        else
+            FileManagement.GetServerDirectoryFilesList(TempNameValueBuffer, Folder);
+        InNameOrder := true;
+        if TempNameValueBuffer.FindSet() then
+            repeat
+                if (Folder <> TemporaryPath()) or (StrPos(RjMaskAll(TempNameValueBuffer.Name, Dir, Row1, Row2), '<s') > 0) or (StrPos(TempNameValueBuffer.Name, 'ltrjpkg') > 0) then begin
+                    Clear(TempBlob);
+                    FileManagement.BLOBImportFromServerFile(TempBlob, TempNameValueBuffer.Name);
+                    TempBlob.CreateInStream(InS);
+                    B64 := Base64.ToBase64(InS);
+                    Content := false;
+                    if StrPos(TempNameValueBuffer.Name, Format(Row1.Set)) > 0 then
+                        Content := B64 = RjTenantBase64(Row1.Set.Item(1));
+                    if StrPos(TempNameValueBuffer.Name, Format(Row2.Set)) > 0 then
+                        Content := (B64 = RjTenantBase64(Row2.Set.Item(1))) or (B64 = RjTenantBase64(Row2.Set.Item(2)));
+                    if (Previous <> '') and (UpperCase(TempNameValueBuffer.Name) < Previous) then
+                        InNameOrder := false;
+                    Previous := UpperCase(TempNameValueBuffer.Name);
+                    Entries.Add('[' + RjMaskAll(TempNameValueBuffer.Name, Dir, Row1, Row2) + '|v=' + RjMaskAll(TempNameValueBuffer.Value, Dir, Row1, Row2) +
+                      '|content=' + Format(Content) + ']');
+                end;
+            until TempNameValueBuffer.Next() = 0;
+        for i := 1 to Entries.Count() do
+            for j := i + 1 to Entries.Count() do
+                if Entries.Get(j) < Entries.Get(i) then begin
+                    Swap := Entries.Get(i);
+                    Entries.Set(i, Entries.Get(j));
+                    Entries.Set(j, Swap);
+                end;
+        Result := Format(Entries.Count()) + ':';
+        foreach Entry in Entries do
+            Result += Entry;
+        exit(Result + '|name order=' + Format(InNameOrder));
+    end;
+
+    [TryFunction]
+    local procedure RjTryListShape(var Result: Text; Folder: Text; Dir: Text; var Row1: Record "PZ OnPrem Media Row"; var Row2: Record "PZ OnPrem Media Row")
+    begin
+        Result := RjListShape(Folder, true, Dir, Row1, Row2);
+    end;
+
     [Test]
     procedure RJ_MediaSet_ExportFile_ConfigPackageShape()
     var
@@ -796,7 +865,9 @@ codeunit 61286 "LT S Media Files"
         Png := TempName('.png');
         QxWriteJpeg(Jpg);
         RdWriteBase64(Png, RdPngBase64());
-        Dir := TemporaryPath() + 'ltrjpkg' + DelChr(Format(CreateGuid()), '=', '{}-');
+        // A short folder name: on the Linux tier TemporaryPath() is about 45 characters longer than on Windows, and a listed full path over 250
+        // characters does not fit the Name of the Name/Value Buffer (error in GetServerDirectoryFilesList).
+        Dir := TemporaryPath() + 'ltrjpkg' + CopyStr(DelChr(Format(CreateGuid()), '=', '{}-'), 1, 8);
         FileManagement.ServerCreateDirectory(Dir);
         MediaFolder := FileManagement.CombinePath(Dir, 'Media');
         FileManagement.ServerCreateDirectory(MediaFolder);
@@ -820,6 +891,8 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Observe('export count one item', Format(Count1));
         RjObserver.Observe('media folder after one', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('package folder after one, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('media folder after one, shape', RjListShape(MediaFolder, false, Dir, Row1, Row2));
+        RjObserver.Observe('package folder after one, with sub folders, shape', RjListShape(Dir, true, Dir, Row1, Row2));
         Count2 := RjExportSet(Row2, MediaFolder);
         RjObserver.Observe('export count two items', Format(Count2));
         RjObserver.Observe('media folder after two', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
@@ -827,21 +900,32 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Observe('bytes of -1', RjBytesOf(MediaFolder + '\' + Format(Row2.Set) + '-1', Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('bytes of -2', RjBytesOf(MediaFolder + '\' + Format(Row2.Set) + '-2', Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('package folder after two, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('media folder after two, shape', RjListShape(MediaFolder, false, Dir, Row1, Row2));
+        RjObserver.Observe('package folder after two, with sub folders, shape', RjListShape(Dir, true, Dir, Row1, Row2));
         Count1 := RjExportSet(Row1, MediaFolder);
         RjObserver.Observe('export count one item again', Format(Count1));
         RjObserver.Observe('al file names after again', RjCandidates(MediaFolder + '\' + Format(Row1.Set), Dir, Row1, Row2));
         RjObserver.Observe('bytes of again -1', RjBytesOf(MediaFolder + '\' + Format(Row1.Set) + '-1', Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('again -1 and -2 exist', Format(File.Exists(MediaFolder + '\' + Format(Row1.Set) + '-1')) + '|' + Format(File.Exists(MediaFolder + '\' + Format(Row1.Set) + '-2')));
+        RjObserver.Observe('again -1 is the tenant content of its item', Format(RjFileB64(MediaFolder + '\' + Format(Row1.Set) + '-1') = RjTenantBase64(Row1.Set.Item(1))));
         RjObserver.Observe('media folder after again', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('media folder after again, shape', RjListShape(MediaFolder, false, Dir, Row1, Row2));
         if RjTryList(TempList, TemporaryPath(), Dir, Row1, Row2) then
             RjObserver.Observe('temporary path, with sub folders', TempList)
         else
             RjObserver.Observe('temporary path, with sub folders', 'error ' + GetLastErrorText());
+        if RjTryListShape(TempList, TemporaryPath(), Dir, Row1, Row2) then
+            RjObserver.Observe('temporary path, with sub folders, shape', TempList)
+        else
+            RjObserver.Observe('temporary path, with sub folders, shape', 'error ' + GetLastErrorText());
         // the same with a prefix that has no backslash: CombinePath(MediaFolder, Format(Set))
         Count2 := Row2.Set.ExportFile(FileManagement.CombinePath(MediaFolder, Format(Row2.Set)));
         RjObserver.Observe('slash prefix export count', Format(Count2));
         RjObserver.Observe('slash prefix al file names', RjCandidates(FileManagement.CombinePath(MediaFolder, Format(Row2.Set)), Dir, Row1, Row2));
         RjObserver.Observe('slash prefix media folder', RjListFolder(MediaFolder, false, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
         RjObserver.Observe('slash prefix package folder, with sub folders', RjListFolder(Dir, true, Dir, Row1, Row2, QxJpegBase64(), RdPngBase64()));
+        RjObserver.Observe('slash prefix media folder, shape', RjListShape(MediaFolder, false, Dir, Row1, Row2));
+        RjObserver.Observe('slash prefix package folder, with sub folders, shape', RjListShape(Dir, true, Dir, Row1, Row2));
         // Eight more sets of a JPEG then a PNG item: which item each numbered file holds, against the Tenant Media Set orders.
         for k := 1 to 8 do begin
             Clear(Row1);
@@ -868,8 +952,8 @@ codeunit 61286 "LT S Media Files"
         Row1.DeleteAll();
         Cleanup(Jpg);
         Cleanup(Png);
-        // Linux suspect, not asserted: File Management.GetServerDirectoryFilesList / ...InclSubDirs (DotNet Directory) list none of the files AL
-        // File.Exists finds (the QX GetFiles item: AL File and DotNet see different paths on the Linux tier); queued for the Windows check.
+        // The full listings carry file lengths and which item a file holds: not an oracle (a re-encoded image differs between the Windows and
+        // the Linux encoder, corpus issue 723; the item behind a number varies between runs). The ', shape' keys below assert what holds on both.
         RjObserver.Ignore('media folder');
         RjObserver.Ignore('media folder after one');
         RjObserver.Ignore('package folder after one, with sub folders');
@@ -893,18 +977,31 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Expect('set counts', '1|2');
         RjObserver.Expect('format set length', '38');
         RjObserver.Expect('format set is MediaId', 'Yes');
-        // BC 29 keeps the bytes of an imported JPEG; BC 27 and 28 re-encode it too.
-#if BC29PLUS
-        RjObserver.Expect('tenant item bytes same as files', 'No|Yes|No');
-#else
-        RjObserver.Expect('tenant item bytes same as files', 'No|No|No');
-#endif
+        // Whether the Tenant Media content keeps the bytes of the imported file is an image encoder output: Windows BC 29.0 re-encodes the JPEG
+        // (No|No|No), the Linux image keeps it on BC 29 (No|Yes|No). Not asserted (corpus issue 723).
+        RjObserver.Ignore('tenant item bytes same as files');
+        // File Management.GetServerDirectoryFilesList (DotNet Directory.GetFiles) lists the files ExportFile wrote: Name = the full path with
+        // backslashes, Value = the file name, no extension, in name order; each file is the Tenant Media content of an item of its set.
+        // Windows BC 29.0 (windows-check RJ item B, 2026-10-23); bc-linux dc007079 (bc-linux #181, #183). The older Linux image listed none.
+        // InclSubDirs on the package folder, the filtered TemporaryPath listing and a '/' prefix (CombinePath) give the same files.
         RjObserver.Expect('export count one item', '1');
+        RjObserver.Expect('media folder after one, shape', '1:[<media>\<set1>-1|v=<set1>-1|content=Yes]|name order=Yes');
+        RjObserver.Expect('package folder after one, with sub folders, shape', '1:[<media>\<set1>-1|v=<set1>-1|content=Yes]|name order=Yes');
         RjObserver.Expect('export count two items', '2');
+        RjObserver.Expect('media folder after two, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
+        RjObserver.Expect('package folder after two, with sub folders, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
         RjObserver.Expect('export count one item again', '1');
-        RjObserver.Expect('al file names after again', '[<media>\<set1>-1|len=108]');
-        RjObserver.Expect('bytes of again -1', 'len=108 bytes of: s2i2');
+        // The length of the re-encoded 1x1 PNG is an encoder output (Windows 103 bytes, Linux 108): only the names and the content are asserted
+        // (corpus issue 723).
+        RjObserver.Ignore('al file names after again');
+        RjObserver.Ignore('bytes of again -1');
+        RjObserver.Expect('again -1 and -2 exist', 'Yes|No');
+        RjObserver.Expect('again -1 is the tenant content of its item', 'Yes');
+        RjObserver.Expect('media folder after again, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
+        RjObserver.Expect('temporary path, with sub folders, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
         RjObserver.Expect('slash prefix export count', '2');
+        RjObserver.Expect('slash prefix media folder, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
+        RjObserver.Expect('slash prefix package folder, with sub folders, shape', '3:[<media>\<set1>-1|v=<set1>-1|content=Yes][<media>\<set2>-1|v=<set2>-1|content=Yes][<media>\<set2>-2|v=<set2>-2|content=Yes]|name order=Yes');
         RjObserver.Expect('set 1 export count', '2');
         RjObserver.Expect('set 2 export count', '2');
         RjObserver.Expect('set 3 export count', '2');
@@ -916,5 +1013,144 @@ codeunit 61286 "LT S Media Files"
         RjObserver.Expect('media index order', 'i1i2 i1i2 i1i2 i1i2 i1i2 i1i2 i1i2 i1i2 ');
         RjObserver.Expect('files follow the key order', 'Yes');
         RjObserver.Verify();
+    end;
+
+    // ---- Listing order (Windows check 7, 2026-10-23, BC 29.0): File Management.GetServerDirectoryFilesList lists a folder in NAME order,
+    // case ignored, never in creation order; Value is the file name without its extension. Each case writes its files in an order that
+    // differs from the name order (30 ms apart). The same cases through DotNet DirectoryInfo.GetFiles: QxDotNetDemoShapes.al,
+    // RJ_DirectoryInfo_GetFiles_ListingOrder. ----
+
+    local procedure RjLoNewDir(Tag: Text): Text
+    var
+        FileManagement: Codeunit "File Management";
+        Dir: Text;
+    begin
+        Dir := TemporaryPath() + 'ltlo' + Tag + CopyStr(DelChr(Format(CreateGuid()), '=', '{}-'), 1, 8);
+        FileManagement.ServerCreateDirectory(Dir);
+        exit(Dir);
+    end;
+
+    local procedure RjLoWrite(Name: Text)
+    var
+        F: File;
+    begin
+        F.Create(Name);
+        F.Write('x');
+        F.Close();
+        Sleep(30);
+    end;
+
+    local procedure RjLoList(Dir: Text; Set1Text: Text; Set2Text: Text): Text
+    var
+        TempNameValueBuffer: Record "Name/Value Buffer" temporary;
+        FileManagement: Codeunit "File Management";
+        Value: Text;
+        Result: Text;
+    begin
+        FileManagement.GetServerDirectoryFilesList(TempNameValueBuffer, Dir);
+        if TempNameValueBuffer.FindSet() then
+            repeat
+                Value := TempNameValueBuffer.Value;
+                if Set1Text <> '' then
+                    Value := Value.Replace(Set1Text, '<set1>');
+                if Set2Text <> '' then
+                    Value := Value.Replace(Set2Text, '<set2>');
+                Result += Value + ',';
+            until TempNameValueBuffer.Next() = 0;
+        FileManagement.ServerRemoveDirectory(Dir, true);
+        exit(Result);
+    end;
+
+    [Test]
+    procedure RJ_GetServerDirectoryFilesList_ListingOrder()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row1: Record "PZ OnPrem Media Row";
+        Row2: Record "PZ OnPrem Media Row";
+        FileManagement: Codeunit "File Management";
+        Dir: Text;
+        Png: Text;
+        Set1Text: Text;
+        Set2Text: Text;
+        Tries: Integer;
+    begin
+        // (a) written c, b, a
+        Dir := RjLoNewDir('a');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'c.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'b.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'a.txt'));
+        Observer.Observe('a written c,b,a', RjLoList(Dir, '', ''));
+        // (b) MediaSet.ExportFile(Dir + '\' + Format(Set)): set1 (two items) first, then set2 (one item) whose name sorts before set1
+        Row1.SetFilter(Code, 'LTLO*');
+        Row1.DeleteAll();
+        Row1.Reset();
+        Png := TempName('.png');
+        WritePng(Png);
+        Row1.Code := 'LTLO0';
+        Row1.Set.ImportFile(Png, 'p1');
+        Row1.Insert();
+        Row1.Set.ImportFile(Png, 'p2');
+        Row1.Modify();
+        Row1.Get('LTLO0');
+        Set1Text := Format(Row1.Set);
+        repeat
+            Tries += 1;
+            Clear(Row2);
+            Row2.Code := 'LTLO' + Format(Tries);
+            Row2.Set.ImportFile(Png, 'q');
+            Row2.Insert();
+            Row2.Get('LTLO' + Format(Tries));
+            Set2Text := Format(Row2.Set);
+        until (UpperCase(Set2Text) < UpperCase(Set1Text)) or (Tries >= 40);
+        Observer.Observe('b set2 sorts before set1', Format(UpperCase(Set2Text) < UpperCase(Set1Text)));
+        Dir := RjLoNewDir('b');
+        Observer.Observe('b export set1', Format(Row1.Set.ExportFile(Dir + '\' + Format(Row1.Set))));
+        Sleep(30);
+        Observer.Observe('b export set2', Format(Row2.Set.ExportFile(Dir + '\' + Format(Row2.Set))));
+        Observer.Observe('b exported set1 then set2', RjLoList(Dir, Set1Text, Set2Text));
+        Row1.Reset();
+        Row1.SetFilter(Code, 'LTLO*');
+        Row1.DeleteAll();
+        Cleanup(Png);
+        // (b2) Guid-shaped names, the high one written first
+        Dir := RjLoNewDir('b2');
+        RjLoWrite(FileManagement.CombinePath(Dir, '{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}-1'));
+        RjLoWrite(FileManagement.CombinePath(Dir, '{00000000-0000-0000-0000-000000000000}-1'));
+        Observer.Observe('b2 written FFFF then 0000', RjLoList(Dir, '', ''));
+        // (c) mixed case: written B, a
+        Dir := RjLoNewDir('c');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'B.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'a.txt'));
+        Observer.Observe('c written B,a', RjLoList(Dir, '', ''));
+        // (c2) written a, C, b: creation order a,C,b; name order with case ignored a,b,C; ordinal order C,a,b
+        Dir := RjLoNewDir('c2');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'a.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'C.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'b.txt'));
+        Observer.Observe('c2 written a,C,b', RjLoList(Dir, '', ''));
+        // (d) ten files written in shuffled order
+        Dir := RjLoNewDir('d');
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f07.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f02.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f09.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f01.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f10.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f05.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f03.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f08.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f04.txt'));
+        RjLoWrite(FileManagement.CombinePath(Dir, 'f06.txt'));
+        Observer.Observe('d written 07,02,09,01,10,05,03,08,04,06', RjLoList(Dir, '', ''));
+        // Windows BC 29.0 (windows-check 7, 2026-10-23); bc-linux dc007079 lists in the same order (bc-linux #183).
+        Observer.Expect('a written c,b,a', 'a,b,c,');
+        Observer.Expect('b set2 sorts before set1', 'Yes');
+        Observer.Expect('b export set1', '2');
+        Observer.Expect('b export set2', '1');
+        Observer.Expect('b exported set1 then set2', '<set2>-1,<set1>-1,<set1>-2,');
+        Observer.Expect('b2 written FFFF then 0000', '{00000000-0000-0000-0000-000000000000}-1,{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}-1,');
+        Observer.Expect('c written B,a', 'a,B,');
+        Observer.Expect('c2 written a,C,b', 'a,b,C,');
+        Observer.Expect('d written 07,02,09,01,10,05,03,08,04,06', 'f01,f02,f03,f04,f05,f06,f07,f08,f09,f10,');
+        Observer.Verify();
     end;
 }

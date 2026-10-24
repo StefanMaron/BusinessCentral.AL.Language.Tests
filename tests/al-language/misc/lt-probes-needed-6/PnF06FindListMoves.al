@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/triggers-auto/page/devenv-onfindrecord-page-trigger
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73869 (log), table 73870, pages 73871, 73872 and 73873, codeunit 73874; writer QD: pages 86530 to 86533; writer QV: enum 87462, table 87461, pages 87460 and 87463 to 87465
+// Fixtures used: Probe Observer (codeunit 69160), self-contained codeunit 73869 (log), table 73870, pages 73871, 73872 and 73873, codeunit 73874; writer QD: pages 86530 to 86533; writer QV: enum 87462, table 87461, pages 87460 and 87463 to 87465; writer RK: pages 88068 to 88073
 // Probe: written against a local BC 29.0.54011.55816 service tier; every literal asserted below is what that tier produced. Other BC versions are checked by the corpus CI matrix.
 // Settles probes-needed row: "Find list" (Page reads after an action, and a list that ends inside its window, corpus bump 7)
 // Facts: log of OnFindRecord (F), OnNextRecord (N), OnAfterGetRecord (R) and OnAfterGetCurrRecord (C) when a TestPage opens a list and moves First, Next, Last and Previous,
@@ -1004,6 +1004,934 @@ codeunit 73874 "LT PnF Find List Moves"
         Observer.Expect('close', '');
         Observer.Verify();
     end;
+
+    // Writer RK (AL Runner issue 5739, reporter's page shape; extends the QV probes of issue 5682): a List with OnFindRecord (with and without
+    // OnNextRecord) and no row trigger, over a SourceTableView that is descending or ascending, with or without a WHERE on the non-key field
+    // Kind, holding 1 (AL Runner issue 5738), 5, 20, 21 and 25 rows (the client window holds 20). Each test opens the page with OpenView, calls First, Next until it
+    // answers false, Last, then Previous until it answers false. Observed: open = Id shown|log; first and last = result|Id|log; walk and back =
+    // the Id after each move that answered true, followed by [log] when the move called the page, then end:<Id shown after the move that
+    // answered false>[log]; close = log of Close. Log entries: F(which)=found:Id = OnFindRecord, N(steps)=moved:Id = OnNextRecord.
+    local procedure RkSeed(Rows: Integer)
+    var
+        Row: Record "LT QV FL Row";
+        I: Integer;
+    begin
+        Row.DeleteAll();
+        for I := 1 to Rows do begin
+            Row.Init();
+            Row.Id := I;
+            if I mod 2 = 0 then
+                Row.Kind := Row.Kind::B
+            else
+                Row.Kind := Row.Kind::A;
+            Row.Insert();
+        end;
+    end;
+
+    local procedure RkStep(Entries: Text): Text
+    begin
+        if Entries = '' then
+            exit('');
+        exit('[' + Entries + ']');
+    end;
+
+    local procedure RkMoves_DescKind_Find(Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT QV FL DescKind Find";
+        Walk: Text;
+        Steps: Integer;
+    begin
+        Log.Take();
+        P.OpenView();
+        Observer.Observe(Prefix + 'open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe(Prefix + 'first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Next() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'walk', Walk);
+        Observer.Observe(Prefix + 'last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Previous() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'back', Walk);
+        P.Close();
+        Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    // The reporter's case of AL Runner issue 5738: Id 1 (Kind A) and Id 2 (Kind B), the view keeps one row.
+    [Test]
+    procedure RK_DescKind_Find_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(2);
+        RkMoves_DescKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', 'end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', 'end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_DescKind_Find_5Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(10);
+        RkMoves_DescKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|9|');
+        Observer.Expect('walk', '7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,end:9');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_DescKind_Find_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(40);
+        RkMoves_DescKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|39|');
+        Observer.Expect('walk', '37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,end:39');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_DescKind_Find_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(42);
+        RkMoves_DescKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|41|');
+        Observer.Expect('walk', '39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,end:41');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    // The reporter's case of AL Runner issue 5739: 50 rows, the view keeps the 25 odd Ids (on BC: open on 1 asking F(=><) once, then no call).
+    [Test]
+    procedure RK_DescKind_Find_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(50);
+        RkMoves_DescKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|49|');
+        Observer.Expect('walk', '47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,end:49');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    local procedure RkMoves_DescKind_FindNext(Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT QV FL DescKind FindNext";
+        Walk: Text;
+        Steps: Integer;
+    begin
+        Log.Take();
+        P.OpenView();
+        Observer.Observe(Prefix + 'open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe(Prefix + 'first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Next() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'walk', Walk);
+        Observer.Observe(Prefix + 'last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Previous() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'back', Walk);
+        P.Close();
+        Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_DescKind_FindNext_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(2);
+        RkMoves_DescKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', 'end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', 'end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_DescKind_FindNext_5Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(10);
+        RkMoves_DescKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=-1:7;N(-1)=-1:9;N(-1)=0:9;');
+        Observer.Expect('first', 'Yes|9|');
+        Observer.Expect('walk', '7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,end:9');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_DescKind_FindNext_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(40);
+        RkMoves_DescKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=-1:7;N(-1)=-1:9;N(-1)=-1:11;N(-1)=-1:13;N(-1)=-1:15;N(-1)=-1:17;N(-1)=-1:19;N(-1)=-1:21;N(-1)=-1:23;N(-1)=-1:25;N(-1)=-1:27;N(-1)=-1:29;N(-1)=-1:31;N(-1)=-1:33;N(-1)=-1:35;N(-1)=-1:37;N(-1)=-1:39;N(-1)=0:39;');
+        Observer.Expect('first', 'Yes|39|');
+        Observer.Expect('walk', '37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,end:39');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_DescKind_FindNext_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(42);
+        RkMoves_DescKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=-1:7;N(-1)=-1:9;N(-1)=-1:11;N(-1)=-1:13;N(-1)=-1:15;N(-1)=-1:17;N(-1)=-1:19;N(-1)=-1:21;N(-1)=-1:23;N(-1)=-1:25;N(-1)=-1:27;N(-1)=-1:29;N(-1)=-1:31;N(-1)=-1:33;N(-1)=-1:35;N(-1)=-1:37;N(-1)=-1:39;N(-1)=-1:41;');
+        Observer.Expect('first', 'Yes|41|N(-1)=0:41;');
+        Observer.Expect('walk', '39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,end:41');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_DescKind_FindNext_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(50);
+        RkMoves_DescKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:3;N(-1)=-1:5;N(-1)=-1:7;N(-1)=-1:9;N(-1)=-1:11;N(-1)=-1:13;N(-1)=-1:15;N(-1)=-1:17;N(-1)=-1:19;N(-1)=-1:21;N(-1)=-1:23;N(-1)=-1:25;N(-1)=-1:27;N(-1)=-1:29;N(-1)=-1:31;N(-1)=-1:33;N(-1)=-1:35;N(-1)=-1:37;N(-1)=-1:39;N(-1)=-1:41;');
+        Observer.Expect('first', 'Yes|49|N(-1)=-1:43;N(-1)=-1:45;N(-1)=-1:47;N(-1)=-1:49;N(-1)=0:49;');
+        Observer.Expect('walk', '47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,end:49');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    local procedure RkMoves_AscKind_Find(Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT RK FL AscKind Find";
+        Walk: Text;
+        Steps: Integer;
+    begin
+        Log.Take();
+        P.OpenView();
+        Observer.Observe(Prefix + 'open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe(Prefix + 'first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Next() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'walk', Walk);
+        Observer.Observe(Prefix + 'last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Previous() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'back', Walk);
+        P.Close();
+        Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_AscKind_Find_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(2);
+        RkMoves_AscKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', 'end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', 'end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_AscKind_Find_5Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(10);
+        RkMoves_AscKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,end:9');
+        Observer.Expect('last', 'Yes|9|');
+        Observer.Expect('back', '7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_AscKind_Find_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(40);
+        RkMoves_AscKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,end:39');
+        Observer.Expect('last', 'Yes|39|');
+        Observer.Expect('back', '37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_AscKind_Find_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(42);
+        RkMoves_AscKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,end:41');
+        Observer.Expect('last', 'Yes|41|');
+        Observer.Expect('back', '39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_AscKind_Find_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(50);
+        RkMoves_AscKind_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,end:49');
+        Observer.Expect('last', 'Yes|49|');
+        Observer.Expect('back', '47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    local procedure RkMoves_AscKind_FindNext(Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT RK FL AscKind FindNext";
+        Walk: Text;
+        Steps: Integer;
+    begin
+        Log.Take();
+        P.OpenView();
+        Observer.Observe(Prefix + 'open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe(Prefix + 'first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Next() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'walk', Walk);
+        Observer.Observe(Prefix + 'last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Previous() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'back', Walk);
+        P.Close();
+        Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_AscKind_FindNext_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(2);
+        RkMoves_AscKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', 'end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', 'end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_AscKind_FindNext_5Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(10);
+        RkMoves_AscKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:3;N(1)=1:5;N(1)=1:7;N(1)=1:9;N(1)=0:9;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,end:9');
+        Observer.Expect('last', 'Yes|9|');
+        Observer.Expect('back', '7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_AscKind_FindNext_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(40);
+        RkMoves_AscKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:3;N(1)=1:5;N(1)=1:7;N(1)=1:9;N(1)=1:11;N(1)=1:13;N(1)=1:15;N(1)=1:17;N(1)=1:19;N(1)=1:21;N(1)=1:23;N(1)=1:25;N(1)=1:27;N(1)=1:29;N(1)=1:31;N(1)=1:33;N(1)=1:35;N(1)=1:37;N(1)=1:39;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39[N(1)=0:39;],end:39');
+        Observer.Expect('last', 'Yes|39|');
+        Observer.Expect('back', '37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_AscKind_FindNext_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(42);
+        RkMoves_AscKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:3;N(1)=1:5;N(1)=1:7;N(1)=1:9;N(1)=1:11;N(1)=1:13;N(1)=1:15;N(1)=1:17;N(1)=1:19;N(1)=1:21;N(1)=1:23;N(1)=1:25;N(1)=1:27;N(1)=1:29;N(1)=1:31;N(1)=1:33;N(1)=1:35;N(1)=1:37;N(1)=1:39;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39[N(1)=1:41;N(1)=0:41;],41,end:41');
+        Observer.Expect('last', 'Yes|41|');
+        Observer.Expect('back', '39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_AscKind_FindNext_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(50);
+        RkMoves_AscKind_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:3;N(1)=1:5;N(1)=1:7;N(1)=1:9;N(1)=1:11;N(1)=1:13;N(1)=1:15;N(1)=1:17;N(1)=1:19;N(1)=1:21;N(1)=1:23;N(1)=1:25;N(1)=1:27;N(1)=1:29;N(1)=1:31;N(1)=1:33;N(1)=1:35;N(1)=1:37;N(1)=1:39;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39[N(1)=1:41;N(1)=1:43;N(1)=1:45;N(1)=1:47;N(1)=1:49;N(1)=0:49;],41,43,45,47,49,end:49');
+        Observer.Expect('last', 'Yes|49|');
+        Observer.Expect('back', '47,45,43,41,39,37,35,33,31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    local procedure RkMoves_Desc_Find(Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT RK FL Desc Find";
+        Walk: Text;
+        Steps: Integer;
+    begin
+        Log.Take();
+        P.OpenView();
+        Observer.Observe(Prefix + 'open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe(Prefix + 'first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Next() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'walk', Walk);
+        Observer.Observe(Prefix + 'last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Previous() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'back', Walk);
+        P.Close();
+        Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_Desc_Find_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(1);
+        RkMoves_Desc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', 'end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', 'end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Desc_Find_5Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(5);
+        RkMoves_Desc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|5|');
+        Observer.Expect('walk', '4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,end:5');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Desc_Find_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(20);
+        RkMoves_Desc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|20|');
+        Observer.Expect('walk', '19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,end:20');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Desc_Find_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(21);
+        RkMoves_Desc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|21|');
+        Observer.Expect('walk', '20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,end:21');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Desc_Find_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(25);
+        RkMoves_Desc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|25|');
+        Observer.Expect('walk', '24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,end:25');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    local procedure RkMoves_Desc_FindNext(Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT RK FL Desc FindNext";
+        Walk: Text;
+        Steps: Integer;
+    begin
+        Log.Take();
+        P.OpenView();
+        Observer.Observe(Prefix + 'open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe(Prefix + 'first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Next() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'walk', Walk);
+        Observer.Observe(Prefix + 'last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Previous() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'back', Walk);
+        P.Close();
+        Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_Desc_FindNext_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(1);
+        RkMoves_Desc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', 'end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', 'end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Desc_FindNext_5Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(5);
+        RkMoves_Desc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:2;N(-1)=-1:3;N(-1)=-1:4;N(-1)=-1:5;N(-1)=0:5;');
+        Observer.Expect('first', 'Yes|5|');
+        Observer.Expect('walk', '4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,end:5');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Desc_FindNext_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(20);
+        RkMoves_Desc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:2;N(-1)=-1:3;N(-1)=-1:4;N(-1)=-1:5;N(-1)=-1:6;N(-1)=-1:7;N(-1)=-1:8;N(-1)=-1:9;N(-1)=-1:10;N(-1)=-1:11;N(-1)=-1:12;N(-1)=-1:13;N(-1)=-1:14;N(-1)=-1:15;N(-1)=-1:16;N(-1)=-1:17;N(-1)=-1:18;N(-1)=-1:19;N(-1)=-1:20;N(-1)=0:20;');
+        Observer.Expect('first', 'Yes|20|');
+        Observer.Expect('walk', '19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,end:20');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Desc_FindNext_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(21);
+        RkMoves_Desc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:2;N(-1)=-1:3;N(-1)=-1:4;N(-1)=-1:5;N(-1)=-1:6;N(-1)=-1:7;N(-1)=-1:8;N(-1)=-1:9;N(-1)=-1:10;N(-1)=-1:11;N(-1)=-1:12;N(-1)=-1:13;N(-1)=-1:14;N(-1)=-1:15;N(-1)=-1:16;N(-1)=-1:17;N(-1)=-1:18;N(-1)=-1:19;N(-1)=-1:20;N(-1)=-1:21;');
+        Observer.Expect('first', 'Yes|21|N(-1)=0:21;');
+        Observer.Expect('walk', '20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,end:21');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Desc_FindNext_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(25);
+        RkMoves_Desc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=-1:2;N(-1)=-1:3;N(-1)=-1:4;N(-1)=-1:5;N(-1)=-1:6;N(-1)=-1:7;N(-1)=-1:8;N(-1)=-1:9;N(-1)=-1:10;N(-1)=-1:11;N(-1)=-1:12;N(-1)=-1:13;N(-1)=-1:14;N(-1)=-1:15;N(-1)=-1:16;N(-1)=-1:17;N(-1)=-1:18;N(-1)=-1:19;N(-1)=-1:20;N(-1)=-1:21;');
+        Observer.Expect('first', 'Yes|25|N(-1)=-1:22;N(-1)=-1:23;N(-1)=-1:24;N(-1)=-1:25;N(-1)=0:25;');
+        Observer.Expect('walk', '24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,end:25');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    local procedure RkMoves_Asc_Find(Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT RK FL Asc Find";
+        Walk: Text;
+        Steps: Integer;
+    begin
+        Log.Take();
+        P.OpenView();
+        Observer.Observe(Prefix + 'open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe(Prefix + 'first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Next() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'walk', Walk);
+        Observer.Observe(Prefix + 'last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Previous() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'back', Walk);
+        P.Close();
+        Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_Asc_Find_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(1);
+        RkMoves_Asc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', 'end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', 'end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Asc_Find_5Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(5);
+        RkMoves_Asc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,end:5');
+        Observer.Expect('last', 'Yes|5|');
+        Observer.Expect('back', '4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Asc_Find_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(20);
+        RkMoves_Asc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,end:20');
+        Observer.Expect('last', 'Yes|20|');
+        Observer.Expect('back', '19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Asc_Find_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(21);
+        RkMoves_Asc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,end:21');
+        Observer.Expect('last', 'Yes|21|');
+        Observer.Expect('back', '20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Asc_Find_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(25);
+        RkMoves_Asc_Find('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,end:25');
+        Observer.Expect('last', 'Yes|25|');
+        Observer.Expect('back', '24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    local procedure RkMoves_Asc_FindNext(Prefix: Text; var Observer: Codeunit "Probe Observer")
+    var
+        Log: Codeunit "LT PnF FL Log";
+        P: TestPage "LT RK FL Asc FindNext";
+        Walk: Text;
+        Steps: Integer;
+    begin
+        Log.Take();
+        P.OpenView();
+        Observer.Observe(Prefix + 'open', P.Id.Value() + '|' + Log.Take());
+        Observer.Observe(Prefix + 'first', Format(P.First()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Next() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'walk', Walk);
+        Observer.Observe(Prefix + 'last', Format(P.Last()) + '|' + P.Id.Value() + '|' + Log.Take());
+        Walk := '';
+        Steps := 0;
+        while P.Previous() and (Steps < 60) do begin
+            Walk += P.Id.Value() + RkStep(Log.Take()) + ',';
+            Steps += 1;
+        end;
+        Walk += 'end:' + P.Id.Value() + RkStep(Log.Take());
+        Observer.Observe(Prefix + 'back', Walk);
+        P.Close();
+        Observer.Observe(Prefix + 'close', Log.Take());
+    end;
+
+    [Test]
+    procedure RK_Asc_FindNext_1Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(1);
+        RkMoves_Asc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=0:1;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', 'end:1');
+        Observer.Expect('last', 'Yes|1|');
+        Observer.Expect('back', 'end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Asc_FindNext_5Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(5);
+        RkMoves_Asc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:2;N(1)=1:3;N(1)=1:4;N(1)=1:5;N(1)=0:5;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,end:5');
+        Observer.Expect('last', 'Yes|5|');
+        Observer.Expect('back', '4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Asc_FindNext_20Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(20);
+        RkMoves_Asc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:2;N(1)=1:3;N(1)=1:4;N(1)=1:5;N(1)=1:6;N(1)=1:7;N(1)=1:8;N(1)=1:9;N(1)=1:10;N(1)=1:11;N(1)=1:12;N(1)=1:13;N(1)=1:14;N(1)=1:15;N(1)=1:16;N(1)=1:17;N(1)=1:18;N(1)=1:19;N(1)=1:20;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20[N(1)=0:20;],end:20');
+        Observer.Expect('last', 'Yes|20|');
+        Observer.Expect('back', '19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Asc_FindNext_21Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(21);
+        RkMoves_Asc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:2;N(1)=1:3;N(1)=1:4;N(1)=1:5;N(1)=1:6;N(1)=1:7;N(1)=1:8;N(1)=1:9;N(1)=1:10;N(1)=1:11;N(1)=1:12;N(1)=1:13;N(1)=1:14;N(1)=1:15;N(1)=1:16;N(1)=1:17;N(1)=1:18;N(1)=1:19;N(1)=1:20;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20[N(1)=1:21;N(1)=0:21;],21,end:21');
+        Observer.Expect('last', 'Yes|21|');
+        Observer.Expect('back', '20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
+
+    [Test]
+    procedure RK_Asc_FindNext_25Rows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RkSeed(25);
+        RkMoves_Asc_FindNext('', Observer);
+        Observer.Expect('open', '1|F(=><)=Yes:1;N(1)=1:2;N(1)=1:3;N(1)=1:4;N(1)=1:5;N(1)=1:6;N(1)=1:7;N(1)=1:8;N(1)=1:9;N(1)=1:10;N(1)=1:11;N(1)=1:12;N(1)=1:13;N(1)=1:14;N(1)=1:15;N(1)=1:16;N(1)=1:17;N(1)=1:18;N(1)=1:19;N(1)=1:20;N(-1)=0:1;');
+        Observer.Expect('first', 'Yes|1|');
+        Observer.Expect('walk', '2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20[N(1)=1:21;N(1)=1:22;N(1)=1:23;N(1)=1:24;N(1)=1:25;N(1)=0:25;],21,22,23,24,25,end:25');
+        Observer.Expect('last', 'Yes|25|');
+        Observer.Expect('back', '24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,end:1');
+        Observer.Expect('close', '');
+        Observer.Verify();
+    end;
 }
 
 // Writer PW: an OnFindRecord / OnNextRecord / OnAfterGetRecord list that positions itself on the last row in OnOpenPage (with OnAfterGetCurrRecord).
@@ -1467,5 +2395,230 @@ page 87465 "LT QV FL DescKind FindGet"
         Log: Codeunit "LT PnF FL Log";
     begin
         Log.Add('R' + Format(Rec.Id));
+    end;
+}
+
+// Writer RK (AL Runner issue 5739): the QV lists above with the other SourceTableView shapes: ascending with the WHERE on Kind, and
+// descending and ascending without a WHERE; with OnFindRecord only and with OnFindRecord plus OnNextRecord, no row trigger.
+
+page 88068 "LT RK FL AscKind Find"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(ascending) where(Kind = filter(A));
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+}
+
+page 88069 "LT RK FL AscKind FindNext"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(ascending) where(Kind = filter(A));
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+
+    trigger OnNextRecord(Steps: Integer): Integer
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Moved: Integer;
+    begin
+        Moved := Rec.Next(Steps);
+        Log.Add('N(' + Format(Steps) + ')=' + Format(Moved) + ':' + Format(Rec.Id));
+        exit(Moved);
+    end;
+}
+
+page 88070 "LT RK FL Desc Find"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(descending);
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+}
+
+page 88071 "LT RK FL Desc FindNext"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(descending);
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+
+    trigger OnNextRecord(Steps: Integer): Integer
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Moved: Integer;
+    begin
+        Moved := Rec.Next(Steps);
+        Log.Add('N(' + Format(Steps) + ')=' + Format(Moved) + ':' + Format(Rec.Id));
+        exit(Moved);
+    end;
+}
+
+page 88072 "LT RK FL Asc Find"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(ascending);
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+}
+
+page 88073 "LT RK FL Asc FindNext"
+{
+    PageType = List;
+    ApplicationArea = All;
+    UsageCategory = None;
+    SourceTable = "LT QV FL Row";
+    SourceTableView = sorting(Id) order(ascending);
+    Editable = false;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+                field(Kind; Rec.Kind) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnFindRecord(Which: Text): Boolean
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Found: Boolean;
+    begin
+        Found := Rec.Find(Which);
+        Log.Add('F(' + Which + ')=' + Format(Found) + ':' + Format(Rec.Id));
+        exit(Found);
+    end;
+
+    trigger OnNextRecord(Steps: Integer): Integer
+    var
+        Log: Codeunit "LT PnF FL Log";
+        Moved: Integer;
+    begin
+        Moved := Rec.Next(Steps);
+        Log.Add('N(' + Format(Steps) + ')=' + Format(Moved) + ':' + Format(Rec.Id));
+        exit(Moved);
     end;
 }

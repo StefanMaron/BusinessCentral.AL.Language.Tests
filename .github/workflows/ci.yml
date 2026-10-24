@@ -266,8 +266,10 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     # Workflow and scripts pinned for corpus bump 63 to bc-linux 65f6b26: a write into a missing folder fails with
-    # InvalidPath as on Windows (#189). Earlier pins: HttpClient prompt answered (#165), test classifier respects #if
-    # (#166), fr-FR group separator and zz-ZZ dates (#167).
+    # InvalidPath as on Windows (#189). Bump 62 pin 84291ff before: fr-FR group separator U+00A0 on BC 27/28 as on
+    # Windows (#174); DotNet System.IO sees the files AL File wrote under the user folder and returns paths with '\'
+    # (#175, #181); MediaSet.ImportFile stores the bare file name (#176); Directory/DirectoryInfo listings match patterns
+    # case-insensitively and list in name order (#183). Earlier: #165, #166, #167.
     uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@65f6b26bbc5041a567790812773522accfae5473
     with:
       bc_linux_ref:         "65f6b26bbc5041a567790812773522accfae5473"
@@ -360,8 +362,10 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     # Workflow and scripts pinned for corpus bump 63 to bc-linux 65f6b26: a write into a missing folder fails with
-    # InvalidPath as on Windows (#189). Earlier pins: HttpClient prompt answered (#165), test classifier respects #if
-    # (#166), fr-FR group separator and zz-ZZ dates (#167).
+    # InvalidPath as on Windows (#189). Bump 62 pin 84291ff before: fr-FR group separator U+00A0 on BC 27/28 as on
+    # Windows (#174); DotNet System.IO sees the files AL File wrote under the user folder and returns paths with '\'
+    # (#175, #181); MediaSet.ImportFile stores the bare file name (#176); Directory/DirectoryInfo listings match patterns
+    # case-insensitively and list in name order (#183). Earlier: #165, #166, #167.
     uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@65f6b26bbc5041a567790812773522accfae5473
     with:
       bc_linux_ref:         "65f6b26bbc5041a567790812773522accfae5473"
@@ -407,8 +411,10 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     # Workflow and scripts pinned for corpus bump 63 to bc-linux 65f6b26: a write into a missing folder fails with
-    # InvalidPath as on Windows (#189). Earlier pins: HttpClient prompt answered (#165), test classifier respects #if
-    # (#166), fr-FR group separator and zz-ZZ dates (#167).
+    # InvalidPath as on Windows (#189). Bump 62 pin 84291ff before: fr-FR group separator U+00A0 on BC 27/28 as on
+    # Windows (#174); DotNet System.IO sees the files AL File wrote under the user folder and returns paths with '\'
+    # (#175, #181); MediaSet.ImportFile stores the bare file name (#176); Directory/DirectoryInfo listings match patterns
+    # case-insensitively and list in name order (#183). Earlier: #165, #166, #167.
     uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@65f6b26bbc5041a567790812773522accfae5473
     with:
       bc_linux_ref:         "65f6b26bbc5041a567790812773522accfae5473"
@@ -463,7 +469,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    # Same bc-linux pin as the jobs above (65f6b26 has the extra_apps input).
+    # Workflow and scripts pinned for corpus bump 63 to bc-linux 65f6b26: a write into a missing folder fails with
+    # InvalidPath as on Windows (#189). Bump 62 pin 84291ff before: fr-FR group separator U+00A0 on BC 27/28 as on
+    # Windows (#174); DotNet System.IO sees the files AL File wrote under the user folder and returns paths with '\'
+    # (#175, #181); MediaSet.ImportFile stores the bare file name (#176); Directory/DirectoryInfo listings match patterns
+    # case-insensitively and list in name order (#183). Earlier: #165, #166, #167.
     uses: aldevtools/MsDyn365Bc.On.Linux/.github/workflows/bc-test-from-source.yml@65f6b26bbc5041a567790812773522accfae5473
     with:
       bc_linux_ref:         "65f6b26bbc5041a567790812773522accfae5473"
