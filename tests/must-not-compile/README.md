@@ -599,6 +599,11 @@ is only a reference.
 | 2071 | AL0196 | Bare and Rec. calls of a method that a table (cross-app fixture A) and a table extension of another app (fixture B) both declare, from a table extension in a third app (writer QY). |
 | 2081 | AL0185 | A Record of the platform table Integer in a codeunit inside a namespace, without `using System.Utilities;` (writer RI). |
 | 2082 | AL0185 | A report dataitem over the platform table Integer inside a namespace, without `using System.Utilities;` (writer RI). |
+| 2110 | AL0118 | `Rec` in the OnOpenPage trigger of a report request page that declares no SourceTable (with SourceTable it compiles: report/lt-y-request-page/RsRequestPageRec.al) (writer RS). |
+| 2111 | AL0118 | `Rec` in the OnOpenPage trigger of an xmlport request page that declares no SourceTable (with SourceTable it compiles: xmlport 88570 in xmlport/lt-y-xmlport-props/YXmlPortProps.al) (writer RS). |
+| 2112 | AL0118 | `Rec` in the OnPreXmlPort trigger of an xmlport without a request page (with a request page SourceTable it compiles: xmlport 88570) (writer RS). |
+| 2113 | AL0118 | `Rec` in the OnPreReport trigger of a report whose request page declares no SourceTable (with SourceTable it compiles: report 88562) (writer RS). |
+| 2114 | AL0118 | `CurrPage` in the OnOpenPage trigger of an xmlport request page with SourceTable (`Rec` compiles there) (writer RS). |
 
 Accepted by the compiler, so not cases: an overload in a page extension (the name of a base procedure with other parameter types: tests/al-language/pageext/POPageExtOverload.al), and a bare `exit;` in a procedure with a return value.
 

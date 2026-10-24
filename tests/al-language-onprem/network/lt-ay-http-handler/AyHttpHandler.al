@@ -6,10 +6,11 @@
 // '/orders', '../x' and '?q=1', and for Get without a base address of 'a/b', 'a.b' and '?q=1'; a handler that sets only status 404 (reason phrase,
 // IsSuccessStatusCode, the Boolean of Get); a handler that raises an error (what the caller sees); a handler that answers true (fall through to the
 // real network) for a host that resolves but refuses the connection (http://localhost:1): the Boolean, the status code and GetLastErrorText.
-// On BC 27 and 28 a request is not given to the handler (PZHttpHandler.al): those legs pin what the caller sees there.
+// On the Linux images of BC 27 and 28 a request is not given to the handler; Windows 27.5 and 28.5 give it to the handler, the same as BC 29
+// (Windows check 2026-10-22; Linux suspect, bc-linux issue 192). So the tests that reach a handler assert on BC 29 only.
 // Writer PY (2026-10-20, tests PY_*): a handler answering true with a StrMenuHandler bound (Allow Once, Block Once, cancel), a failed call whose
 // result is not used, a failed call into a filled response, ReasonPhrase of mocked statuses, more base-address joins and paths without one.
-// BC versions: 27, 28, 29 (corpus CI)
+// BC versions: 27, 28, 29 (corpus CI); handler values asserted on 29 only (see above).
 // No outbound-request approval prompt (StrMenu Allow Always/Allow Once/Block Always/Block Once) appears (bc-linux bcc60c1c; a Windows container
 // never shows it, bc-linux 05752c9 #165). So no test binds a StrMenuHandler: a prompt would surface as 'Unhandled UI' in last_error, and
 // menu=0 in 'calls' records that none was answered. The *_StrMenuAllowOnce/_StrMenuBlockOnce/_StrMenuCancel tests keep their names and the
@@ -117,15 +118,13 @@ codeunit 98550 "LT AY Http Handler"
         Path(Observer, Client, 'rooted', '/orders');
 #if BC29PLUS
         Observer.Expect('plain', 'Yes [https://example.invalid/api/v1/orders]');
-#else
-        Observer.Expect('plain', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('rooted', 'Yes [https://example.invalid/orders]');
-#else
-        Observer.Expect('rooted', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -140,15 +139,13 @@ codeunit 98550 "LT AY Http Handler"
         Path(Observer, Client, 'query', '?q=1');
 #if BC29PLUS
         Observer.Expect('parent', 'Yes [https://example.invalid/api/x]');
-#else
-        Observer.Expect('parent', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('query', 'Yes [https://example.invalid/api/v1/]q=1&');
-#else
-        Observer.Expect('query', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -162,15 +159,13 @@ codeunit 98550 "LT AY Http Handler"
         Path(Observer, Client, 'a_dot_b', 'a.b');
 #if BC29PLUS
         Observer.Expect('a_slash_b', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('a_slash_b', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('a_dot_b', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('a_dot_b', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -183,10 +178,12 @@ codeunit 98550 "LT AY Http Handler"
         Path(Observer, Client, 'query', '?q=1');
 #if BC29PLUS
         Observer.Expect('query', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('query', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -198,25 +195,15 @@ codeunit 98550 "LT AY Http Handler"
         Outcome(Observer, 'https://example.invalid/missing');
 #if BC29PLUS
         Observer.Expect('result', 'ret=Yes status=404 reason=[Not Found] success=No blocked=No');
-#else
-        Observer.Expect('result', 'error status=200');
-#endif
-#if BC29PLUS
         Observer.Expect('last_error', '');
-#else
-        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
-#endif
-#if BC29PLUS
         Observer.Expect('last_code', '');
-#else
-        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
-#endif
-#if BC29PLUS
         Observer.Expect('calls', '1');
-#else
-        Observer.Expect('calls', '0');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -229,20 +216,14 @@ codeunit 98550 "LT AY Http Handler"
         Observer.Expect('result', 'error status=200');
 #if BC29PLUS
         Observer.Expect('last_error', 'handler failed');
-#else
-        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
-#endif
-#if BC29PLUS
         Observer.Expect('last_code', 'Dialog');
-#else
-        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
-#endif
-#if BC29PLUS
         Observer.Expect('calls', '1');
-#else
-        Observer.Expect('calls', '0');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -254,25 +235,15 @@ codeunit 98550 "LT AY Http Handler"
         Outcome(Observer, 'http://localhost:1/x');
 #if BC29PLUS
         Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
-#else
-        Observer.Expect('result', 'error status=200');
-#endif
-#if BC29PLUS
         Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
-#else
-        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
-#endif
-#if BC29PLUS
         Observer.Expect('last_code', 'HttpRequest:Security');
-#else
-        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
-#endif
-#if BC29PLUS
         Observer.Expect('calls', '1');
-#else
-        Observer.Expect('calls', '0');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     // Writer PY (2026-10-20): probes-needed "HTTP" rows (al-runtime-rs PR 342): a handler answering true while a StrMenuHandler is bound,
@@ -338,25 +309,15 @@ codeunit 98550 "LT AY Http Handler"
         Menu(Observer, 2, 'http://localhost:1/x');
 #if BC29PLUS
         Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
-#else
-        Observer.Expect('result', 'error status=200 reason=[OK] success=Yes blocked=No');
-#endif
-#if BC29PLUS
         Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
-#else
-        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
-#endif
-#if BC29PLUS
         Observer.Expect('last_code', 'HttpRequest:Security');
-#else
-        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
-#endif
-#if BC29PLUS
         Observer.Expect('calls', '1 menu=0 ');
-#else
-        Observer.Expect('calls', '0 menu=0 ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -368,25 +329,15 @@ codeunit 98550 "LT AY Http Handler"
         Menu(Observer, 4, 'http://localhost:1/x');
 #if BC29PLUS
         Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
-#else
-        Observer.Expect('result', 'error status=200 reason=[OK] success=Yes blocked=No');
-#endif
-#if BC29PLUS
         Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
-#else
-        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
-#endif
-#if BC29PLUS
         Observer.Expect('last_code', 'HttpRequest:Security');
-#else
-        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
-#endif
-#if BC29PLUS
         Observer.Expect('calls', '1 menu=0 ');
-#else
-        Observer.Expect('calls', '0 menu=0 ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -398,25 +349,15 @@ codeunit 98550 "LT AY Http Handler"
         Menu(Observer, 0, 'http://localhost:1/x');
 #if BC29PLUS
         Observer.Expect('result', 'ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
-#else
-        Observer.Expect('result', 'error status=200 reason=[OK] success=Yes blocked=No');
-#endif
-#if BC29PLUS
         Observer.Expect('last_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.');
-#else
-        Observer.Expect('last_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.');
-#endif
-#if BC29PLUS
         Observer.Expect('last_code', 'HttpRequest:Security');
-#else
-        Observer.Expect('last_code', 'TestCodeunitUnhandledHttpRequest');
-#endif
-#if BC29PLUS
         Observer.Expect('calls', '1 menu=0 ');
-#else
-        Observer.Expect('calls', '0 menu=0 ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     local procedure Unused(var Observer: Codeunit "Probe Observer"; ObsKey: Text; NewMode: Text; Url: Text)
@@ -445,10 +386,12 @@ codeunit 98550 "LT AY Http Handler"
         Unused(Observer, 'block_once', 'true', 'http://localhost:1/x');
 #if BC29PLUS
         Observer.Expect('block_once', 'E[There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=1 menu=0');
-#else
-        Observer.Expect('block_once', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -461,10 +404,12 @@ codeunit 98550 "LT AY Http Handler"
         Unused(Observer, 'allow_once', 'true', 'http://localhost:1/x');
 #if BC29PLUS
         Observer.Expect('allow_once', 'E[There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security] status=0 reason=[NavHttpClient Request Failed] success=No blocked=No calls=1 menu=0');
-#else
-        Observer.Expect('allow_once', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -478,20 +423,14 @@ codeunit 98550 "LT AY Http Handler"
         Unused(Observer, 'no_base_a_b', 'status', 'a/b');
 #if BC29PLUS
         Observer.Expect('mocked_404', 'ok status=404 reason=[Not Found] success=No blocked=No calls=1 menu=0');
-#else
-        Observer.Expect('mocked_404', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
-#endif
-#if BC29PLUS
         Observer.Expect('handler_error', 'E[mode handler failed|Dialog] status=200 reason=[OK] success=Yes blocked=No calls=1 menu=0');
-#else
-        Observer.Expect('handler_error', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
-#endif
-#if BC29PLUS
         Observer.Expect('no_base_a_b', 'E[Invalid URI: The URI is empty.|AL:UriFormat] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
-#else
-        Observer.Expect('no_base_a_b', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest] status=200 reason=[OK] success=Yes blocked=No calls=0 menu=0');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -516,25 +455,15 @@ codeunit 98550 "LT AY Http Handler"
         Observer.Observe('third', Format(TryGet(Client, 'https://example.invalid/three', Resp, Ret)) + ' ret=' + Format(Ret) + ' ' + Describe(Resp));
 #if BC29PLUS
         Observer.Expect('first', 'Yes ret=Yes status=201 reason=[Created] success=Yes blocked=No');
-#else
-        Observer.Expect('first', 'No ret=No status=200 reason=[OK] success=Yes blocked=No');
-#endif
-#if BC29PLUS
         Observer.Expect('second', 'Yes ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
-#else
-        Observer.Expect('second', 'No ret=No status=200 reason=[OK] success=Yes blocked=No');
-#endif
-#if BC29PLUS
         Observer.Expect('second_error', 'There was an error while executing the HTTP request, the connecting endpoint violates security requirements. Make sure you are connecting to a valid endpoint.|HttpRequest:Security');
-#else
-        Observer.Expect('second_error', 'Unhandled outbound HTTP requests are not permitted when the TestHttpRequestPolicy property is set to ''AllowOutboundFromHandler''. Please ensure that an HTTP client handler is configured.|TestCodeunitUnhandledHttpRequest');
-#endif
-#if BC29PLUS
         Observer.Expect('third', 'No ret=No status=0 reason=[NavHttpClient Request Failed] success=No blocked=No');
-#else
-        Observer.Expect('third', 'No ret=No status=200 reason=[OK] success=Yes blocked=No');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     local procedure Reason(var Observer: Codeunit "Probe Observer"; Status: Integer)
@@ -575,17 +504,12 @@ codeunit 98550 "LT AY Http Handler"
         Observer.Expect('304', 'E[The value ''304'' is outside the allowed range for mocked HTTP|InvalidValue]');
         Observer.Expect('400', 'ret=Yes status=400 reason=[Bad Request] success=No blocked=No');
         Observer.Expect('401', 'ret=Yes status=401 reason=[Unauthorized] success=No blocked=No');
-#else
-        Observer.Expect('201', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('202', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('204', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('301', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('302', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('304', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('400', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('401', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -611,17 +535,12 @@ codeunit 98550 "LT AY Http Handler"
         Observer.Expect('429', 'ret=Yes status=429 reason=[Too Many Requests] success=No blocked=No');
         Observer.Expect('500', 'ret=Yes status=500 reason=[Internal Server Error] success=No blocked=No');
         Observer.Expect('503', 'ret=Yes status=503 reason=[Service Unavailable] success=No blocked=No');
-#else
-        Observer.Expect('403', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('405', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('409', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('418', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('422', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('429', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('500', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('503', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -647,17 +566,12 @@ codeunit 98550 "LT AY Http Handler"
         Observer.Expect('999', 'E[The value ''999'' is not a valid HTTP status code.|InvalidValue]');
         Observer.Expect('1000', 'E[The value ''1000'' is not a valid HTTP status code.|InvalidValue]');
         Observer.Expect('-1', 'E[The value ''-1'' is not a valid HTTP status code.|InvalidValue]');
-#else
-        Observer.Expect('100', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('299', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('451', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('599', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('0', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('999', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('1000', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-        Observer.Expect('-1', 'E[Unhandled outbound HTTP requests are not permitted when the |TestCodeunitUnhandledHttpRequest]');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     local procedure Join(var Observer: Codeunit "Probe Observer"; ObsKey: Text; Base: Text; Url: Text)
@@ -684,30 +598,16 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'empty', 'https://example.invalid/api/v1/', '');
 #if BC29PLUS
         Observer.Expect('noslash_plain', 'Yes [https://example.invalid/api/orders]');
-#else
-        Observer.Expect('noslash_plain', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('noslash_rooted', 'Yes [https://example.invalid/orders]');
-#else
-        Observer.Expect('noslash_rooted', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('host_only_plain', 'Yes [https://example.invalid/orders]');
-#else
-        Observer.Expect('host_only_plain', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('dot_slash', 'Yes [https://example.invalid/api/v1/x]');
-#else
-        Observer.Expect('dot_slash', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('empty', 'Yes [https://example.invalid/api/v1/]');
-#else
-        Observer.Expect('empty', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -723,30 +623,16 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'fragment', 'https://example.invalid/api/v1/', 'orders?x=1#f');
 #if BC29PLUS
         Observer.Expect('absolute', 'Yes [https://other.invalid/abs]');
-#else
-        Observer.Expect('absolute', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('scheme_relative', 'Yes [https://other.invalid/x]');
-#else
-        Observer.Expect('scheme_relative', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('dot_dot_middle', 'Yes [https://example.invalid/api/v1/b]');
-#else
-        Observer.Expect('dot_dot_middle', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('two_up', 'Yes [https://example.invalid/x]');
-#else
-        Observer.Expect('two_up', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('fragment', 'Yes [https://example.invalid/api/v1/orders]');
-#else
-        Observer.Expect('fragment', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -761,25 +647,15 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'query_on_noslash', 'https://example.invalid/api/v1', '?q=1');
 #if BC29PLUS
         Observer.Expect('base_query', 'Yes [https://example.invalid/api/v1/orders]');
-#else
-        Observer.Expect('base_query', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('space', 'Yes [https://example.invalid/api/v1/a%20b]');
-#else
-        Observer.Expect('space', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('trailing_slash', 'Yes [https://example.invalid/api/v1/orders/]');
-#else
-        Observer.Expect('trailing_slash', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('query_on_noslash', 'Yes [https://example.invalid/api/v1]');
-#else
-        Observer.Expect('query_on_noslash', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -794,25 +670,15 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'a_b_c', '', 'a/b/c');
 #if BC29PLUS
         Observer.Expect('orders', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('orders', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('rooted', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('rooted', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('x_y', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('x_y', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('a_b_c', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('a_b_c', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 
     [Test]
@@ -827,24 +693,14 @@ codeunit 98550 "LT AY Http Handler"
         Join(Observer, 'host_no_scheme', '', 'example.invalid/x');
 #if BC29PLUS
         Observer.Expect('ab_cd', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('ab_cd', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('query_x', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('query_x', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('empty', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('empty', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
-#if BC29PLUS
         Observer.Expect('host_no_scheme', 'E[Invalid URI: The URI is empty.|AL:UriFormat] ');
-#else
-        Observer.Expect('host_no_scheme', 'E[Unhandled outbound HTTP requests are not permitted when the TestHttpRe|TestCodeunitUnhandledHttpRequest] ');
-#endif
         Observer.Verify();
+#else
+        // BC 27.5 and 28.5 on Windows call the handler too, with the BC 29 values (Windows check 2026-10-22). The Linux images of 27 and 28
+        // do not call it (Linux suspect, bc-linux issue 192), so nothing is asserted there.
+        Observer.Discard();
+#endif
     end;
 }
