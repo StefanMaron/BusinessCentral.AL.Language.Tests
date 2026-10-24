@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-request-page
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), LT Y Helper (75500), LT Y Seen (75501), YRequestPage.al (table 75530, reports 75531-75540)
+// Fixtures used: Probe Observer (codeunit 69160), LT Y Helper (75500), LT Y Seen (75501), YRequestPage.al (table 75530, reports 75531-75540), RsRequestPageRec.al (reports 88560-88564)
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced.
 // Facts: see YRequestPage.al.
 // BC versions: 27-29
@@ -402,5 +402,115 @@ codeunit 75512 "LT Y Request Page Tests"
 #endif
         Observer.Expect('misc_items', '[Line filter_fields= view=]');
         Observer.Verify();
+    end;
+
+    // ---- Rec of a request page with SourceTable: Modify and Insert in OnOpenPage, Rec in the report triggers (RsRequestPageRec.al, al-runner issue 5756)
+
+    [RequestPageHandler]
+    procedure RsUnpositionedHandler(var RP: TestRequestPage "LT RS RP Modify Unpositioned")
+    begin
+        Seen.Put('handler', 'shown');
+        RP.Cancel().Invoke();
+    end;
+
+    [Test]
+    [HandlerFunctions('RsUnpositionedHandler')]
+    procedure RS_RequestPageRec_ModifyUnpositioned_InOnOpenPage()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Report.RunModal(Report::"LT RS RP Modify Unpositioned", true, false);
+        ObserveSeen(Observer, 'open_rec,modify_bool,modify,handler');
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure RsFoundHandler(var RP: TestRequestPage "LT RS RP Modify Found")
+    begin
+        Seen.Put('docno', RP.DocNoCtl.Value());
+        Seen.Put('descr', RP.DescrCtl.Value());
+        RP.Cancel().Invoke();
+    end;
+
+    [Test]
+    [HandlerFunctions('RsFoundHandler')]
+    procedure RS_RequestPageRec_ModifyAndInsert_InOnOpenPage()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Report.RunModal(Report::"LT RS RP Modify Found", true, false);
+        ObserveSeen(Observer, 'modify,insert,open_rec,docno,descr');
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure RsInReportHandler(var RP: TestRequestPage "LT RS RP Rec In Report")
+    begin
+        Seen.Put('docno', RP.DocNoCtl.Value());
+        Seen.Put('descr', RP.DescrCtl.Value());
+        RP.DescrCtl.SetValue('typed');
+        RP.OK().Invoke();
+    end;
+
+    [Test]
+    [HandlerFunctions('RsInReportHandler')]
+    procedure RS_RequestPageRec_ReadInReportTriggers()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Report.RunModal(Report::"LT RS RP Rec In Report", true, false);
+        ObserveSeen(Observer, 'init_rec,open_rec,docno,descr,pre_rec,dataitem_rec,post_rec,proc_rec');
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RS_RequestPageRec_ReadInReportTriggers_WithoutRequestPage()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Report.RunModal(Report::"LT RS RP Rec In Report", false, false);
+        ObserveSeen(Observer, 'init_rec,open_rec,pre_rec,dataitem_rec,post_rec,proc_rec');
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RS_RequestPageRec_BareModifyInOnOpenPage_Raises()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        asserterror Report.RunModal(Report::"LT RS RP Modify Raises", true, false);
+        Observer.Observe('error', GetLastErrorText() + '|' + GetLastErrorCode());
+        ObserveSeen(Observer, 'before_modify,after_modify');
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [RequestPageHandler]
+    procedure RsTempHandler(var RP: TestRequestPage "LT RS RP Temp Rec In Report")
+    begin
+        Seen.Put('docno', RP.DocNoCtl.Value());
+        RP.OK().Invoke();
+    end;
+
+    [Test]
+    [HandlerFunctions('RsTempHandler')]
+    procedure RS_TemporaryRequestPageRec_ModifyInsertAndReportTrigger()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        Report.RunModal(Report::"LT RS RP Temp Rec In Report", true, false);
+        ObserveSeen(Observer, 'modify,insert,docno,pre_rec');
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
     end;
 }

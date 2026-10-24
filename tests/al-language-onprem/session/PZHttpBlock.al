@@ -12,6 +12,9 @@ codeunit 61298 "PZ Http Block"
     TestPermissions = Disabled;
     TestHttpRequestPolicy = BlockOutboundRequests;
 
+    var
+        MockCalls: Integer;
+
     [TryFunction]
     local procedure TryGet(Url: Text)
     var
@@ -52,5 +55,76 @@ codeunit 61298 "PZ Http Block"
         // BC 27.5 and 28.5 on Windows call the handler too (Windows check 2026-10-22, al-runner issue 5777).
         Observer.Expect('handled', 'Yes |');
         Observer.Verify();
+    end;
+
+    // ---- The shape of al-runner issue 5777: a mock handler that counts its calls, answers 200 with a body and returns false (the mock is used),
+    // a handler that returns true (the request goes out, which BlockOutboundRequests refuses), and a GET that reads the status and the body.
+
+    [HttpClientHandler]
+    procedure MockHandler(Request: TestHttpRequestMessage; var Response: TestHttpResponseMessage): Boolean
+    begin
+        MockCalls += 1;
+        Response.HttpStatusCode(200);
+        Response.Content.WriteFrom('{"ok":true}');
+        exit(false);
+    end;
+
+    [HttpClientHandler]
+    procedure PassOnHandler(Request: TestHttpRequestMessage; var Response: TestHttpResponseMessage): Boolean
+    begin
+        MockCalls += 1;
+        exit(true);
+    end;
+
+    local procedure GetStatusAndBody(Url: Text; var Status: Integer; var Body: Text): Boolean
+    var
+        Client: HttpClient;
+        Response: HttpResponseMessage;
+    begin
+        if not Client.Get(Url, Response) then
+            exit(false);
+        Status := Response.HttpStatusCode();
+        Response.Content.ReadAs(Body);
+        exit(true);
+    end;
+
+    [TryFunction]
+    local procedure TryGetStatusAndBody(Url: Text; var Ok: Boolean; var Status: Integer; var Body: Text)
+    begin
+        Ok := GetStatusAndBody(Url, Status, Body);
+    end;
+
+    [Test]
+    [HandlerFunctions('MockHandler')]
+    procedure RS_MockHandler_ReturnsFalse_GivesTheMock()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+        Status: Integer;
+        Body: Text;
+    begin
+        MockCalls := 0;
+        ClearLastError();
+        Observer.Observe('try', Format(TryGetStatusAndBody('https://api.example.com/v1/items?id=7', Ok, Status, Body)));
+        Observer.Observe('result', StrSubstNo('%1|%2|%3|%4', Ok, Status, Body, MockCalls));
+        Observer.Observe('error', GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('PassOnHandler')]
+    procedure RS_PassOnHandler_ReturnsTrue_UnderBlockOutboundRequests()
+    var
+        Observer: Codeunit "Probe Observer";
+        Ok: Boolean;
+        Status: Integer;
+        Body: Text;
+    begin
+        MockCalls := 0;
+        ClearLastError();
+        Observer.Observe('try', Format(TryGetStatusAndBody('https://api.example.com/v1/items?id=7', Ok, Status, Body)));
+        Observer.Observe('result', StrSubstNo('%1|%2|%3|%4', Ok, Status, Body, MockCalls));
+        Observer.Observe('error', GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Finish();
     end;
 }

@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-xmlport-object
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), LT Y XP State (75568); own tables 75550-75551, xmlports 75552-75567, codeunits 75513 (import runner) and 75514 (tests)
+// Fixtures used: Probe Observer (codeunit 69160), LT Y XP State (75568); own tables 75550-75551, xmlports 75552-75567 and 88570-88571, codeunits 75513 (import runner) and 75514 (tests)
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced.
 // Facts: XmlPort properties FileName, InlineSchema, UseLax, XmlVersionNo, InherentEntitlements, InherentPermissions; field/text node properties XmlName, NamespacePrefix, Unbound, AutoCalcField, Width;
 // table element properties RequestFilterHeading(ML), Unbound, Width. Width out of Integer range, an invalid XmlName and RequestFilterHeading with RequestFilterHeadingML are must-not-compile cases 0814-0825.
@@ -413,6 +413,108 @@ xmlport 75565 "LT Y XP Heading ML"
     }
 }
 
+// al-runner issue 5756: the Rec of an xmlport request page that declares SourceTable is a record of that table. It compiles in the request page
+// triggers, in the xmlport triggers and in xmlport procedures (without a request page SourceTable there is no Rec: must-not-compile cases 2111 and 2112).
+xmlport 88570 "LT RS XP Rec"
+{
+    Format = Xml;
+    Direction = Both;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Rw; "LT Y Item")
+            {
+                MinOccurs = Zero;
+                fieldelement(Id; Rw.Id) { }
+            }
+        }
+    }
+
+    requestpage
+    {
+        SourceTable = "LT Y Item";
+
+        trigger OnOpenPage()
+        var
+            Seen: Codeunit "LT Y XP State";
+        begin
+            Seen.Put('xp_open', 'reached');
+            Rec.Modify();
+        end;
+    }
+
+    trigger OnPreXmlPort()
+    var
+        Seen: Codeunit "LT Y XP State";
+    begin
+        Seen.Put('xp_pre_rec', RecText() + ' filters=[' + Rec.GetFilters() + '] count=' + Format(Rec.Count()) + ' temporary=' + Format(Rec.IsTemporary()) + ' table=' + Rec.TableName());
+        ClearLastError();
+        if TryModify(Rec) then
+            Seen.Put('xp_modify', 'ok')
+        else
+            Seen.Put('xp_modify', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Rec.Init();
+        Rec.Id := 50;
+        Rec.Name := 'xp';
+        Seen.Put('xp_insert', Format(Rec.Insert()));
+    end;
+
+    trigger OnPostXmlPort()
+    var
+        Seen: Codeunit "LT Y XP State";
+    begin
+        Seen.Put('xp_post_rec', RecText() + ' count=' + Format(Rec.Count()));
+    end;
+
+    procedure RecText(): Text
+    begin
+        exit('[' + Format(Rec.Id) + '/' + Rec.Name + ']');
+    end;
+
+    [TryFunction]
+    local procedure TryModify(var Item: Record "LT Y Item")
+    begin
+        Item.Modify();
+    end;
+}
+
+xmlport 88571 "LT RS XP Temp Rec"
+{
+    Format = Xml;
+    Direction = Export;
+
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(Rw; "LT Y Item")
+            {
+                MinOccurs = Zero;
+                fieldelement(Id; Rw.Id) { }
+            }
+        }
+    }
+
+    requestpage
+    {
+        SourceTable = "LT Y Item";
+        SourceTableTemporary = true;
+    }
+
+    trigger OnPreXmlPort()
+    var
+        Seen: Codeunit "LT Y XP State";
+    begin
+        Rec.Init();
+        Rec.Id := 51;
+        Rec.Name := 'temp';
+        Seen.Put('xp_insert', Format(Rec.Insert()));
+        Seen.Put('xp_pre_rec', '[' + Format(Rec.Id) + '/' + Rec.Name + '] count=' + Format(Rec.Count()) + ' temporary=' + Format(Rec.IsTemporary()));
+    end;
+}
+
 codeunit 75568 "LT Y XP State"
 {
     SingleInstance = true;
@@ -739,5 +841,73 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer.Expect('v11', 'UseRequestPage=No;Direction=Both;Format=Xml;InherentPermissions=;InherentEntitlements=;');
         Observer.Expect('perm', 'UseRequestPage=No;Direction=Both;Format=Xml;InherentPermissions=X;InherentEntitlements=X;');
         Observer.Verify();
+    end;
+
+    // ---- Rec of an xmlport request page with SourceTable, read and written in the xmlport triggers (xmlports 88570, 88571; al-runner issue 5756)
+
+    local procedure ClearRsState()
+    begin
+        Seen.Put('xp_open', '-');
+        Seen.Put('xp_pre_rec', '-');
+        Seen.Put('xp_modify', '-');
+        Seen.Put('xp_insert', '-');
+        Seen.Put('xp_post_rec', '-');
+    end;
+
+    local procedure ObserveRsState(var Observer: Codeunit "Probe Observer")
+    begin
+        Observer.Observe('xp_open', Seen.Get('xp_open'));
+        Observer.Observe('xp_pre_rec', Seen.Get('xp_pre_rec'));
+        Observer.Observe('xp_modify', Seen.Get('xp_modify'));
+        Observer.Observe('xp_insert', Seen.Get('xp_insert'));
+        Observer.Observe('xp_post_rec', Seen.Get('xp_post_rec'));
+    end;
+
+    [Test]
+    procedure RS_XmlPortRequestPageRec_Export()
+    var
+        Observer: Codeunit "Probe Observer";
+        Result: Text;
+    begin
+        Seed();
+        ClearRsState();
+        if TryExport(88570, Result) then
+            Observer.Observe('export', Result)
+        else
+            Observer.Observe('export', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        ObserveRsState(Observer);
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RS_XmlPortRequestPageRec_Import()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        Seed();
+        ClearRsState();
+        Observer.Observe('import', ImportText(88570, '<Root><Rw><Id>7</Id></Rw></Root>'));
+        ObserveRsState(Observer);
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RS_XmlPortTemporaryRequestPageRec_Export()
+    var
+        Observer: Codeunit "Probe Observer";
+        Result: Text;
+    begin
+        Seed();
+        ClearRsState();
+        if TryExport(88571, Result) then
+            Observer.Observe('export', Result)
+        else
+            Observer.Observe('export', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
+        Observer.Observe('xp_insert', Seen.Get('xp_insert'));
+        Observer.Observe('xp_pre_rec', Seen.Get('xp_pre_rec'));
+        Observer.Observe('rows', Rows());
+        Observer.Finish();
     end;
 }
