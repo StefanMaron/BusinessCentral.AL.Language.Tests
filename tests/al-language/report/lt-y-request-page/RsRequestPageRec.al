@@ -1,10 +1,11 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/properties/devenv-sourcetable-property
 // Scope: in-scope
-// Fixtures used: LT Y Helper (75500), LT Y Seen (75501), table LT Y Line (75530, YRequestPage.al); own reports 88560-88564 and 88566, codeunit 88565. The tests are in YRequestPageTests.al (codeunit 75512).
+// Fixtures used: LT Y Helper (75500), LT Y Seen (75501), table LT Y Line (75530, YRequestPage.al); own reports 88560-88564 and 88566. The tests are in YRequestPageTests.al (codeunit 75512).
 // Probe: observed values; every literal asserted in codeunit 75512 for these reports is what the BC tiers of the corpus matrix produced.
 // Facts (al-runner issue 5756): the Rec of a report request page that declares SourceTable is a normal record of that table. It compiles in the request page
 // triggers, in the report triggers and in report procedures (a request page without SourceTable has no Rec: must-not-compile cases 2110 and 2113).
-// Rec.Modify and Rec.Insert in OnOpenPage write to the database; the report triggers see the same Rec as the request page.
+// Rec.Modify and Rec.Insert in OnOpenPage write to the database; the report triggers, data item triggers and procedures see the same Rec as the request page,
+// and a value typed into a control bound to Rec is written to the row when the request page is closed with OK. In OnInitReport Rec raises ReportRequestPageNotInitialized.
 // BC versions: 27-29
 
 // The reporter's shape: a processing-only report with no data item whose request page OnOpenPage calls Rec.Modify on a Rec it never positioned.
@@ -28,29 +29,12 @@ report 88560 "LT RS RP Modify Unpositioned"
 
         trigger OnOpenPage()
         var
-            Helper: Codeunit "LT Y Helper";
             Seen: Codeunit "LT Y Seen";
         begin
             Seen.Put('open_rec', '[' + Rec.DocNo + '/' + Format(Rec.LineNo) + '] filters=[' + Rec.GetFilters() + '] count=' + Format(Rec.Count()) + ' temporary=' + Format(Rec.IsTemporary()) + ' table=' + Rec.TableName());
             Seen.Put('modify_bool', Format(Rec.Modify()));
-            // Not a TryFunction: a TryFunction may not write to the database (TryFunctionWrite).
-            ClearLastError();
-            if Codeunit.Run(Codeunit::"LT RS Modify Line", Rec) then
-                Seen.Put('modify', 'ok')
-            else
-                Seen.Put('modify', Helper.Failed());
         end;
     }
-}
-
-codeunit 88565 "LT RS Modify Line"
-{
-    TableNo = "LT Y Line";
-
-    trigger OnRun()
-    begin
-        Rec.Modify();
-    end;
 }
 
 // OnOpenPage finds a row, changes it and calls Rec.Modify; then inserts a new row through Rec.
@@ -157,7 +141,7 @@ report 88562 "LT RS RP Rec In Report"
 
 // The reporter's exact trigger: a bare Rec.Modify on an unpositioned Rec, not caught. Run without a [RequestPageHandler], the report fails with
 // 'Unhandled UI' before OnOpenPage runs. With a handler it is not run: an error in OnOpenPage could leave the handler queued for a later
-// codeunit (see handlers/TestReportRequestPageSourceTable.al); report 88560 gives the same Modify error through Codeunit.Run.
+// codeunit (see handlers/TestReportRequestPageSourceTable.al); report 88560 calls Modify in its returning form, and report 88564 shows the error of a Modify that finds no row.
 report 88563 "LT RS RP Modify Raises"
 {
     UsageCategory = None;

@@ -1,6 +1,6 @@
 // BC Documentation: https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-report-request-page
 // Scope: in-scope
-// Fixtures used: Probe Observer (codeunit 69160), LT Y Helper (75500), LT Y Seen (75501), YRequestPage.al (table 75530, reports 75531-75540), RsRequestPageRec.al (reports 88560-88566, codeunit 88565)
+// Fixtures used: Probe Observer (codeunit 69160), LT Y Helper (75500), LT Y Seen (75501), YRequestPage.al (table 75530, reports 75531-75540), RsRequestPageRec.al (reports 88560-88564, 88566)
 // Probe: observed values; every literal asserted below is what the BC tiers of the corpus matrix produced.
 // Facts: see YRequestPage.al.
 // BC versions: 27-29
@@ -421,7 +421,7 @@ codeunit 75512 "LT Y Request Page Tests"
     begin
         Seed();
         Report.RunModal(Report::"LT RS RP Modify Unpositioned", true, false);
-        ObserveSeen(Observer, 'open_rec,modify_bool,modify,handler');
+        ObserveSeen(Observer, 'open_rec,modify_bool,handler');
         Observer.Observe('rows', Rows());
         Observer.Finish();
     end;
@@ -472,7 +472,15 @@ codeunit 75512 "LT Y Request Page Tests"
         Report.RunModal(Report::"LT RS RP Rec In Report", true, false);
         ObserveSeen(Observer, 'open_rec,docno,descr,pre_rec,dataitem_rec,post_rec,proc_rec');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('open_rec', '[A/20000/second]');
+        Observer.Expect('docno', 'A');
+        Observer.Expect('descr', 'second');
+        Observer.Expect('pre_rec', '[A/20000/typed] filters=[] count=3 temporary=No');
+        Observer.Expect('dataitem_rec', '[A/20000/typed]');
+        Observer.Expect('post_rec', '[A/20000/typed]');
+        Observer.Expect('proc_rec', '[A/20000/typed]');
+        Observer.Expect('rows', 'A/10000/first;A/20000/typed;B/10000/other;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -484,7 +492,13 @@ codeunit 75512 "LT Y Request Page Tests"
         Report.RunModal(Report::"LT RS RP Rec In Report", false, false);
         ObserveSeen(Observer, 'open_rec,pre_rec,dataitem_rec,post_rec,proc_rec');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('open_rec', '<none>');
+        Observer.Expect('pre_rec', '[/0/] filters=[] count=3 temporary=No');
+        Observer.Expect('dataitem_rec', '[/0/]');
+        Observer.Expect('post_rec', '[/0/]');
+        Observer.Expect('proc_rec', '[/0/]');
+        Observer.Expect('rows', 'A/10000/first;A/20000/second;B/10000/other;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -538,6 +552,10 @@ codeunit 75512 "LT Y Request Page Tests"
         asserterror Report.RunModal(Report::"LT RS RP Rec In Init", false, false);
         Observer.Observe('error', GetLastErrorText() + '|' + GetLastErrorCode());
         ObserveSeen(Observer, 'init_before,init_rec,init_after');
-        Observer.Finish();
+        Observer.Expect('error', 'You cannot call the RequestPage from the OnInitReport Trigger in Report ID "88566" because the RequestPage is not yet initialized.|ReportRequestPageNotInitialized');
+        Observer.Expect('init_before', 'reached');
+        Observer.Expect('init_rec', '<none>');
+        Observer.Expect('init_after', '<none>');
+        Observer.Verify();
     end;
 }
