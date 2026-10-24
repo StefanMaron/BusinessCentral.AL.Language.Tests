@@ -232,9 +232,11 @@ codeunit 61267 "LT P110 File Errors"
         Observer.Expect('create_empty_name', 'error: File name was not specified. code=MissingFileName');
         Observer.Expect('open_empty_name', 'error: File name was not specified. code=MissingFileName');
         Observer.Expect('exists_empty', 'No');
-        Observer.Expect('create_in_missing_dir', 'ok');
-        Observer.Expect('open_in_missing_dir', 'error: The operation cannot be performed while the file is open. code=FileAlreadyOpened');
-        Observer.Expect('exists_in_missing_dir', 'Yes');
+        // Windows BC 29.0 (corpus probe branch al-runtime-rs-winprobe-63c, cu 98998): a write into a missing folder fails and
+        // does not create the folder. Full text: "Could not find a part of the path '<TemporaryPath>p110nodir<guid>\x.tmp'."
+        Observer.Expect('create_in_missing_dir', 'error: Could not find a part of the path  code=InvalidPath');
+        Observer.Expect('open_in_missing_dir', 'error: Could not find a part of the path  code=InvalidPath');
+        Observer.Expect('exists_in_missing_dir', 'No');
         Observer.Expect('erase_empty_name', 'error: The value cannot be an empty string. (Parameter  code=InvalidPath');
         Observer.Verify();
     end;
