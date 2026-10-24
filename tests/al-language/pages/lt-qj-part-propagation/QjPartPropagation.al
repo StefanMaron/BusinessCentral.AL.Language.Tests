@@ -4590,4 +4590,305 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         Observer.Expect('log-close', '');
         Observer.Verify();
     end;
+
+    // Writer RP (al-runner issue 5765): a main Card, a ListPart (Sub A) and a FactBox CardPart, each with a control bound to
+    // State.GetValue() of ONE codeunit instance ("LT RP State", not SingleInstance) handed to all three pages. Pins when each
+    // page shows a changed state: after a FactBox action (with and without CurrPage.Update(false) in it), after a main-page
+    // action (with and without CurrPage.Update(false)), after test code changes the state, after navigating the main page
+    // or a part. RpObserve walks Sub A to its first row before it reads (the reporter's shape); RpRead does not navigate.
+    local procedure RpOpenMain(var MainTestPage: TestPage "LT RP State Main"; var State: Codeunit "LT RP State")
+    var
+        TempParam: Record "LT RP Param" temporary;
+        MainPage: Page "LT RP State Main";
+        i: Integer;
+    begin
+        for i := 1 to 3 do begin
+            TempParam.Init();
+            TempParam."Code" := CopyStr('ABC', i, 1);
+            TempParam.Insert();
+        end;
+        MainPage.SetParam(TempParam);
+        MainPage.SetState(State);
+        MainTestPage.Trap();
+        MainPage.Run();
+    end;
+
+    local procedure RpObserve(var MainTestPage: TestPage "LT RP State Main"; var State: Codeunit "LT RP State"): Text
+    begin
+        MainTestPage.SubA.First();
+        exit(StrSubstNo('test=%1;main=%2;subA=%3;factbox=%4', State.GetValue(), MainTestPage.StateValue.Value(), MainTestPage.SubA.StateValue.Value(), MainTestPage.Factbox.StateValue.Value()));
+    end;
+
+    local procedure RpRead(var MainTestPage: TestPage "LT RP State Main"; var State: Codeunit "LT RP State"): Text
+    begin
+        exit(StrSubstNo('test=%1;main=%2;subA=%3;factbox=%4', State.GetValue(), MainTestPage.StateValue.Value(), MainTestPage.SubA.StateValue.Value(), MainTestPage.Factbox.StateValue.Value()));
+    end;
+
+    [Test]
+    procedure RP_SharedState_FactBoxAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        State: Codeunit "LT RP State";
+        MainTestPage: TestPage "LT RP State Main";
+    begin
+        RpOpenMain(MainTestPage, State);
+        Observer.Observe('opened', RpRead(MainTestPage, State));
+        MainTestPage.Factbox.SetState42.Invoke();
+        Observer.Observe('after_factbox_action_read', RpRead(MainTestPage, State));
+        Observer.Observe('after_factbox_action', RpObserve(MainTestPage, State));
+        MainTestPage.UpdatePage.Invoke();
+        Observer.Observe('after_main_update', RpObserve(MainTestPage, State));
+        MainTestPage.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RP_SharedState_FactBoxActionWithUpdate()
+    var
+        Observer: Codeunit "Probe Observer";
+        State: Codeunit "LT RP State";
+        MainTestPage: TestPage "LT RP State Main";
+    begin
+        RpOpenMain(MainTestPage, State);
+        MainTestPage.Factbox.SetState42AndUpdate.Invoke();
+        Observer.Observe('main_factbox', StrSubstNo('main=%1;factbox=%2', MainTestPage.StateValue.Value(), MainTestPage.Factbox.StateValue.Value()));
+        Observer.Observe('after_factbox_update', RpRead(MainTestPage, State));
+        MainTestPage.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RP_SharedState_TestCodeChangesState()
+    var
+        Observer: Codeunit "Probe Observer";
+        State: Codeunit "LT RP State";
+        MainTestPage: TestPage "LT RP State Main";
+    begin
+        RpOpenMain(MainTestPage, State);
+        State.SetValue(7);
+        Observer.Observe('after_set_read', RpRead(MainTestPage, State));
+        Observer.Observe('after_set', RpObserve(MainTestPage, State));
+        MainTestPage.SubA.Next();
+        Observer.Observe('after_sub_next', RpRead(MainTestPage, State));
+        MainTestPage.Next();
+        Observer.Observe('after_main_next', RpRead(MainTestPage, State));
+        State.SetValue(9);
+        MainTestPage.UpdatePage.Invoke();
+        Observer.Observe('after_main_update', RpRead(MainTestPage, State));
+        MainTestPage.Close();
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RP_SharedState_MainAction()
+    var
+        Observer: Codeunit "Probe Observer";
+        State: Codeunit "LT RP State";
+        MainTestPage: TestPage "LT RP State Main";
+    begin
+        RpOpenMain(MainTestPage, State);
+        MainTestPage.SetState5.Invoke();
+        Observer.Observe('after_main_action', RpRead(MainTestPage, State));
+        MainTestPage.SetState6AndUpdate.Invoke();
+        Observer.Observe('after_main_action_update', RpRead(MainTestPage, State));
+        MainTestPage.Close();
+        Observer.Finish();
+    end;
 }
+
+// Writer RP (al-runner issue 5765): one state codeunit instance shared by a main page, a ListPart and a FactBox.
+codeunit 88399 "LT RP State"
+{
+    var
+        Value: Integer;
+
+    procedure SetValue(NewValue: Integer)
+    begin
+        Value := NewValue;
+    end;
+
+    procedure GetValue(): Integer
+    begin
+        exit(Value);
+    end;
+}
+
+table 88400 "LT RP Param"
+{
+    TableType = Temporary;
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; "Code"; Code[20]) { }
+        field(2; Amount; Decimal) { }
+    }
+
+    keys
+    {
+        key(PK; "Code") { Clustered = true; }
+    }
+}
+
+page 88401 "LT RP State Main"
+{
+    PageType = Card;
+    SourceTable = "LT RP Param";
+    SourceTableTemporary = true;
+    UsageCategory = None;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field("Code"; Rec."Code") { }
+                field(StateValue; State.GetValue()) { }
+            }
+            part(SubA; "LT RP State Sub") { }
+        }
+        area(FactBoxes)
+        {
+            part(Factbox; "LT RP State Factbox") { }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(UpdatePage)
+            {
+                trigger OnAction()
+                begin
+                    CurrPage.Update(false);
+                end;
+            }
+            action(SetState5)
+            {
+                trigger OnAction()
+                begin
+                    State.SetValue(5);
+                end;
+            }
+            action(SetState6AndUpdate)
+            {
+                trigger OnAction()
+                begin
+                    State.SetValue(6);
+                    CurrPage.Update(false);
+                end;
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    begin
+        Rec.Copy(TempParamSource, true);
+        CurrPage.SubA.Page.SetSource(Rec);
+        CurrPage.SubA.Page.SetState(State);
+        CurrPage.Factbox.Page.SetSource(Rec);
+        CurrPage.Factbox.Page.SetState(State);
+    end;
+
+    var
+        TempParamSource: Record "LT RP Param" temporary;
+        State: Codeunit "LT RP State";
+
+    procedure SetParam(var TempParam: Record "LT RP Param" temporary)
+    begin
+        TempParamSource.Copy(TempParam, true);
+    end;
+
+    procedure SetState(NewState: Codeunit "LT RP State")
+    begin
+        State := NewState;
+    end;
+}
+
+page 88402 "LT RP State Sub"
+{
+    PageType = ListPart;
+    SourceTable = "LT RP Param";
+    SourceTableTemporary = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { }
+                field(StateValue; State.GetValue()) { }
+            }
+        }
+    }
+
+    var
+        State: Codeunit "LT RP State";
+
+    procedure SetSource(var TempParam: Record "LT RP Param" temporary)
+    begin
+        Rec.Copy(TempParam, true);
+    end;
+
+    procedure SetState(NewState: Codeunit "LT RP State")
+    begin
+        State := NewState;
+    end;
+}
+
+page 88403 "LT RP State Factbox"
+{
+    PageType = CardPart;
+    SourceTable = "LT RP Param";
+    SourceTableTemporary = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            field(StateValue; State.GetValue()) { }
+        }
+    }
+
+    actions
+    {
+        area(Processing)
+        {
+            action(SetState42)
+            {
+                trigger OnAction()
+                begin
+                    State.SetValue(42);
+                end;
+            }
+            action(SetState42AndUpdate)
+            {
+                trigger OnAction()
+                begin
+                    State.SetValue(42);
+                    CurrPage.Update(false);
+                end;
+            }
+        }
+    }
+
+    var
+        State: Codeunit "LT RP State";
+
+    procedure SetSource(var TempParam: Record "LT RP Param" temporary)
+    begin
+        Rec.Copy(TempParam, true);
+    end;
+
+    procedure SetState(NewState: Codeunit "LT RP State")
+    begin
+        State := NewState;
+    end;
+}
+

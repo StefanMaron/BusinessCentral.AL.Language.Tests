@@ -217,4 +217,167 @@ codeunit 60419 "QCV Close Veto Tests"
     begin
         MessageCalls += 1;
     end;
+
+    // Writer RP (al-runner issue 5769): what GetLastErrorText and GetLastErrorCode give after a vetoed TestPage.Close(), called
+    // directly and inside a [TryFunction] (the reporter's shape), for OpenEdit / OpenView / OpenNew, for a Confirm answered No,
+    // for a card with a source table, against the allowed close, and when an earlier error is still the last error.
+    local procedure RpObserveClose(var Observer: Codeunit "Probe Observer"; Name: Text)
+    begin
+        Observer.Observe(Name + '_err', GetLastErrorText());
+        Observer.Observe(Name + '_code', GetLastErrorCode());
+        Observer.Observe(Name + '_calls', Format(Probe.QueryCloseCalls()) + '/' + Format(Probe.ClosePageCalls()));
+    end;
+
+    [TryFunction]
+    local procedure RpTryClose(var Card: TestPage "QCV Veto Card")
+    begin
+        Card.Close();
+    end;
+
+    [TryFunction]
+    local procedure RpTryCloseTable(var Card: TestPage "LT RP QCV Table Card")
+    begin
+        Card.Close();
+    end;
+
+    [Test]
+    procedure RP_PlainVeto_LastErrorAfterClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "QCV Veto Card";
+    begin
+        Initialize(Probe.ModeVeto());
+        Card.OpenEdit();
+        ClearLastError();
+        Card.Close();
+        RpObserveClose(Observer, 'direct');
+        Initialize(Probe.ModeVeto());
+        Card.OpenEdit();
+        ClearLastError();
+        Observer.Observe('try_ok', Format(RpTryClose(Card)));
+        RpObserveClose(Observer, 'try');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RP_PlainVeto_LastErrorPerOpenMode()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "QCV Veto Card";
+    begin
+        Initialize(Probe.ModeVeto());
+        Card.OpenView();
+        ClearLastError();
+        Card.Close();
+        RpObserveClose(Observer, 'view');
+        Initialize(Probe.ModeVeto());
+        Card.OpenNew();
+        ClearLastError();
+        Card.Close();
+        RpObserveClose(Observer, 'new');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RP_Allowed_LastErrorAfterClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "QCV Veto Card";
+    begin
+        Initialize(Probe.ModeAllow());
+        Card.OpenEdit();
+        ClearLastError();
+        Card.Close();
+        RpObserveClose(Observer, 'allowed');
+        Initialize(Probe.ModeAllow());
+        Card.OpenEdit();
+        asserterror Error('RP earlier error');
+        Card.Close();
+        RpObserveClose(Observer, 'allowed_earlier');
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RP_PlainVeto_ReplacesAnEarlierLastError()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "QCV Veto Card";
+    begin
+        Initialize(Probe.ModeVeto());
+        Card.OpenEdit();
+        asserterror Error('RP earlier error');
+        Card.Close();
+        RpObserveClose(Observer, 'earlier');
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('QcvConfirmNo')]
+    procedure RP_ConfirmNoVeto_LastErrorAfterClose()
+    var
+        Observer: Codeunit "Probe Observer";
+        Card: TestPage "QCV Veto Card";
+    begin
+        Initialize(Probe.ModeConfirm());
+        Card.OpenEdit();
+        ClearLastError();
+        Card.Close();
+        RpObserveClose(Observer, 'confirm_no');
+        Observer.Observe('confirm_calls', Format(ConfirmCalls));
+        Observer.Finish();
+    end;
+
+    [Test]
+    procedure RP_PlainVeto_TableCard_LastErrorInTryFunction()
+    var
+        Observer: Codeunit "Probe Observer";
+        Row: Record "LT RP Veto Row";
+        Card: TestPage "LT RP QCV Table Card";
+    begin
+        Initialize(Probe.ModeVeto());
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Name := 'Q1';
+        Row.Insert();
+        Card.OpenEdit();
+        ClearLastError();
+        Observer.Observe('table_try_ok', Format(RpTryCloseTable(Card)));
+        RpObserveClose(Observer, 'table_try');
+        Observer.Finish();
+    end;
+}
+
+// Writer RP (al-runner issue 5769): the reporter's shape, a Card with a source table whose OnQueryClosePage refuses. Used only by
+// codeunit 60419 (it shares the SingleInstance "QCV Probe").
+page 88398 "LT RP QCV Table Card"
+{
+    PageType = Card;
+    SourceTable = "LT RP Veto Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            group(General)
+            {
+                field(Id; Rec.Id) { }
+                field(Name; Rec.Name) { }
+            }
+        }
+    }
+
+    var
+        Probe: Codeunit "QCV Probe";
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    begin
+        exit(Probe.AnswerQueryClose());
+    end;
+
+    trigger OnClosePage()
+    begin
+        Probe.NoteClosePage();
+    end;
 }

@@ -454,4 +454,160 @@ codeunit 68751 "W2 Meta Tests"
             until Act.Next() = 0;
         exit(Result);
     end;
+
+    // Writer RP (al-runner issue 5758): codeunit 700 "Page Management".GetDefaultCardPageID reads the Page Metadata row of the
+    // table's lookup page; here that page has SourceTableView = sorting(<secondary key>) and a CardPageId.
+    [Test]
+    procedure RP_LookupPageSortedBySecondaryKey_CardPageId()
+    var
+        Observer: Codeunit "Probe Observer";
+        PageManagement: Codeunit "Page Management";
+        Meta: Record "Page Metadata";
+        TableMeta: Record "Table Metadata";
+    begin
+        RpObserveMeta(Observer, 'one', Page::"LT RP Meta Sorted List");
+        RpObserveMeta(Observer, 'two', Page::"LT RP Meta Sorted Two");
+        RpObserveMeta(Observer, 'card', Page::"LT RP Meta Card");
+        TableMeta.Get(Database::"LT RP Meta Row");
+        Observer.Observe('one_table_lookup', Format(TableMeta.LookupPageID, 0, 9));
+        TableMeta.Get(Database::"LT RP Meta Row Two");
+        Observer.Observe('two_table_lookup', Format(TableMeta.LookupPageID, 0, 9));
+        Observer.Observe('one_default_card', Format(PageManagement.GetDefaultCardPageID(Database::"LT RP Meta Row"), 0, 9));
+        Observer.Observe('two_default_card', Format(PageManagement.GetDefaultCardPageID(Database::"LT RP Meta Row Two"), 0, 9));
+        Observer.Observe('one_default_lookup', Format(PageManagement.GetDefaultLookupPageID(Database::"LT RP Meta Row"), 0, 9));
+        Meta.SetRange(ID, Page::"LT RP Meta Sorted List");
+        Observer.Observe('one_filtered_find', Format(Meta.FindFirst()) + '/' + Format(Meta.CardPageID, 0, 9));
+        Observer.Finish();
+    end;
+
+    local procedure RpObserveMeta(var Observer: Codeunit "Probe Observer"; Name: Text; PageId: Integer)
+    var
+        Meta: Record "Page Metadata";
+    begin
+        if not Meta.Get(PageId) then begin
+            Observer.Observe(Name, '<no row>');
+            exit;
+        end;
+        Observer.Observe(Name + '_view', Meta.SourceTableView);
+        Observer.Observe(Name + '_card', Format(Meta.CardPageID, 0, 9));
+        Observer.Observe(Name + '_source', Format(Meta.SourceTable, 0, 9));
+        Observer.Observe(Name + '_type', Format(Meta.PageType));
+        Observer.Observe(Name + '_editable', Format(Meta.Editable));
+    end;
+}
+
+// Writer RP (al-runner issue 5758): tables whose LookupPageId is a List with SourceTableView = sorting(<secondary key>) and a CardPageId.
+table 88385 "LT RP Meta Row"
+{
+    DataClassification = SystemMetadata;
+    LookupPageId = "LT RP Meta Sorted List";
+
+    fields
+    {
+        field(1; "Code"; Code[20]) { }
+        field(2; SortOrder; Integer) { }
+    }
+
+    keys
+    {
+        key(PK; "Code") { Clustered = true; }
+        key(BySortOrder; SortOrder) { }
+    }
+}
+
+table 88389 "LT RP Meta Row Two"
+{
+    DataClassification = SystemMetadata;
+    LookupPageId = "LT RP Meta Sorted Two";
+
+    fields
+    {
+        field(1; "Code"; Code[20]) { }
+        field(2; SortOrder; Integer) { }
+    }
+
+    keys
+    {
+        key(PK; "Code") { Clustered = true; }
+        key(ByBoth; SortOrder, "Code") { }
+    }
+}
+
+page 88386 "LT RP Meta Sorted List"
+{
+    PageType = List;
+    SourceTable = "LT RP Meta Row";
+    SourceTableView = sorting(SortOrder);
+    CardPageId = "LT RP Meta Card";
+    Editable = false;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+                field(SortOrder; Rec.SortOrder) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 88388 "LT RP Meta Sorted Two"
+{
+    PageType = List;
+    SourceTable = "LT RP Meta Row Two";
+    SourceTableView = sorting(SortOrder, "Code") order(descending);
+    CardPageId = "LT RP Meta Card Two";
+    Editable = false;
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { ApplicationArea = All; }
+                field(SortOrder; Rec.SortOrder) { ApplicationArea = All; }
+            }
+        }
+    }
+}
+
+page 88387 "LT RP Meta Card"
+{
+    PageType = Card;
+    SourceTable = "LT RP Meta Row";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("Code"; Rec."Code") { ApplicationArea = All; }
+            field(SortOrder; Rec.SortOrder) { ApplicationArea = All; }
+        }
+    }
+}
+
+page 88390 "LT RP Meta Card Two"
+{
+    PageType = Card;
+    SourceTable = "LT RP Meta Row Two";
+    ApplicationArea = All;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field("Code"; Rec."Code") { ApplicationArea = All; }
+        }
+    }
 }

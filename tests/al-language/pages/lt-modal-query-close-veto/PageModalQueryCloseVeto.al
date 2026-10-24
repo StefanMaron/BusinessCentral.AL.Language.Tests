@@ -95,6 +95,7 @@ codeunit 70867 "LT Modal Close Veto"
         Probe: Codeunit "LT QCVM Probe";
         HandlerNote: Text;
         LookupFlag: Boolean;
+        RpHandlerMode: Integer;
 
     [TryFunction]
     local procedure TryRunModal(var Result: Text)
@@ -382,5 +383,427 @@ codeunit 70867 "LT Modal Close Veto"
     local procedure TryMarker(var Modal: TestPage "LT QCVM Veto Modal"): Text
     begin
         exit(Modal.Marker.Value());
+    end;
+
+    // Writer RP (al-runner issue 5762): the same veto on pages WITH parts: a List with a FactBox CardPart (SubPageLink), a Card
+    // with a ListPart in its content, and a List whose host allows the close but whose FactBox part's OnQueryClosePage returns
+    // false. The host page counts its own OnQueryClosePage calls (read through the page variable after RunModal, the reporter's
+    // shape); "LT RP Veto Log" records every trigger of host and part in order.
+    [TryFunction]
+    local procedure RpTryRun(Which: Integer; var Result: Text; var HostCount: Integer)
+    var
+        VetoList: Page "LT RP Veto List";
+        VetoCard: Page "LT RP Veto Part Card";
+        PartVeto: Page "LT RP Veto By Part";
+    begin
+        case Which of
+            1:
+                begin
+                    Result := Format(VetoList.RunModal());
+                    HostCount := VetoList.GetQueryCloseCount();
+                end;
+            2:
+                begin
+                    Result := Format(VetoCard.RunModal());
+                    HostCount := VetoCard.GetQueryCloseCount();
+                end;
+            3:
+                begin
+                    Result := Format(PartVeto.RunModal());
+                    HostCount := PartVeto.GetQueryCloseCount();
+                end;
+        end;
+    end;
+
+    local procedure RpRun(Name: Text; Which: Integer; HostVeto: Boolean; PartVeto: Boolean; HandlerMode: Integer; var Observer: Codeunit "Probe Observer")
+    var
+        Row: Record "LT RP Veto Row";
+        RpLog: Codeunit "LT RP Veto Log";
+        Result: Text;
+        HostCount: Integer;
+        Ok: Boolean;
+    begin
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Name := 'Alpha';
+        Row.Insert();
+        Row.Id := 2;
+        Row.Name := 'Bravo';
+        Row.Insert();
+        RpLog.Reset(HostVeto, PartVeto);
+        RpHandlerMode := HandlerMode;
+        HostCount := -1;
+        ClearLastError();
+        Ok := RpTryRun(Which, Result, HostCount);
+        Observer.Observe(Name + '_ok', Format(Ok));
+        Observer.Observe(Name + '_result', Result);
+        Observer.Observe(Name + '_err', GetLastErrorText());
+        Observer.Observe(Name + '_code', GetLastErrorCode());
+        Observer.Observe(Name + '_hostcount', Format(HostCount));
+        Observer.Observe(Name + '_log', RpLog.Dump());
+    end;
+
+    [Test]
+    [HandlerFunctions('RpVetoListHandler')]
+    procedure RP_ListWithFactBox_HandlerDoesNothing_HostVetoes()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RpRun('noinvoke', 1, true, false, 0, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpVetoListHandler')]
+    procedure RP_ListWithFactBox_HandlerOk_HostVetoes()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RpRun('ok', 1, true, false, 1, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpVetoListHandler')]
+    procedure RP_ListWithFactBox_HandlerCancel_HostVetoes()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RpRun('cancel', 1, true, false, 2, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpVetoListHandler')]
+    procedure RP_ListWithFactBox_HandlerOk_HostAllows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RpRun('allow_ok', 1, false, false, 1, Observer);
+        RpRun('allow_noinvoke', 1, false, false, 0, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpVetoCardHandler')]
+    procedure RP_CardWithListPart_HostVetoes()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RpRun('card_noinvoke', 2, true, false, 0, Observer);
+        RpRun('card_ok', 2, true, false, 1, Observer);
+        Observer.Finish();
+    end;
+
+    [Test]
+    [HandlerFunctions('RpVetoByPartHandler')]
+    procedure RP_ListWithFactBox_PartVetoes_HostAllows()
+    var
+        Observer: Codeunit "Probe Observer";
+    begin
+        RpRun('part_noinvoke', 3, false, true, 0, Observer);
+        RpRun('part_ok', 3, false, true, 1, Observer);
+        Observer.Finish();
+    end;
+
+    [ModalPageHandler]
+    procedure RpVetoListHandler(var VetoList: TestPage "LT RP Veto List")
+    begin
+        case RpHandlerMode of
+            1:
+                VetoList.OK().Invoke();
+            2:
+                VetoList.Cancel().Invoke();
+        end;
+    end;
+
+    [ModalPageHandler]
+    procedure RpVetoCardHandler(var VetoCard: TestPage "LT RP Veto Part Card")
+    begin
+        if RpHandlerMode = 1 then
+            VetoCard.OK().Invoke();
+    end;
+
+    [ModalPageHandler]
+    procedure RpVetoByPartHandler(var PartVeto: TestPage "LT RP Veto By Part")
+    begin
+        if RpHandlerMode = 1 then
+            PartVeto.OK().Invoke();
+    end;
+
+}
+
+// Writer RP (al-runner issue 5762): pages with parts whose OnQueryClosePage refuses the close. Used only by codeunit 70867.
+table 88391 "LT RP Veto Row"
+{
+    DataClassification = SystemMetadata;
+
+    fields
+    {
+        field(1; Id; Integer) { }
+        field(2; Name; Text[30]) { }
+    }
+
+    keys
+    {
+        key(PK; Id) { Clustered = true; }
+    }
+}
+
+codeunit 88396 "LT RP Veto Log"
+{
+    SingleInstance = true;
+
+    var
+        HostVeto: Boolean;
+        PartVeto: Boolean;
+        Entries: Text;
+
+    procedure Reset(NewHostVeto: Boolean; NewPartVeto: Boolean)
+    begin
+        HostVeto := NewHostVeto;
+        PartVeto := NewPartVeto;
+        Entries := '';
+    end;
+
+    procedure Add(Entry: Text)
+    begin
+        if Entries <> '' then
+            Entries += ';';
+        Entries += Entry;
+    end;
+
+    procedure HostAnswer(Who: Text; CloseAction: Action): Boolean
+    begin
+        Add(Who + ' OnQueryClosePage(' + Format(CloseAction) + ')');
+        exit(not HostVeto);
+    end;
+
+    procedure PartAnswer(Who: Text; CloseAction: Action): Boolean
+    begin
+        Add(Who + ' OnQueryClosePage(' + Format(CloseAction) + ')');
+        exit(not PartVeto);
+    end;
+
+    procedure Dump(): Text
+    begin
+        exit(Entries);
+    end;
+}
+
+page 88392 "LT RP Veto FactBox"
+{
+    PageType = CardPart;
+    SourceTable = "LT RP Veto Row";
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(Name; Rec.Name) { ApplicationArea = All; }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        RpLog.Add('part OnOpenPage');
+    end;
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        exit(RpLog.PartAnswer('part', CloseAction));
+    end;
+
+    trigger OnClosePage()
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        RpLog.Add('part OnClosePage');
+    end;
+}
+
+page 88393 "LT RP Veto List"
+{
+    PageType = List;
+    SourceTable = "LT RP Veto Row";
+    Editable = false;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+            }
+        }
+        area(FactBoxes)
+        {
+            part(Details; "LT RP Veto FactBox")
+            {
+                ApplicationArea = All;
+                SubPageLink = Id = field(Id);
+            }
+        }
+    }
+
+    trigger OnOpenPage()
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        RpLog.Add('host OnOpenPage');
+    end;
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        QueryCloseCount += 1;
+        exit(RpLog.HostAnswer('host', CloseAction));
+    end;
+
+    trigger OnClosePage()
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        RpLog.Add('host OnClosePage');
+    end;
+
+    var
+        QueryCloseCount: Integer;
+
+    procedure GetQueryCloseCount(): Integer
+    begin
+        exit(QueryCloseCount);
+    end;
+}
+
+page 88394 "LT RP Veto Lines"
+{
+    PageType = ListPart;
+    SourceTable = "LT RP Veto Row";
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Name; Rec.Name) { ApplicationArea = All; }
+            }
+        }
+    }
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        exit(RpLog.PartAnswer('lines', CloseAction));
+    end;
+
+    trigger OnClosePage()
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        RpLog.Add('lines OnClosePage');
+    end;
+}
+
+page 88395 "LT RP Veto Part Card"
+{
+    PageType = Card;
+    SourceTable = "LT RP Veto Row";
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            field(Id; Rec.Id) { ApplicationArea = All; }
+            part(Lines; "LT RP Veto Lines")
+            {
+                ApplicationArea = All;
+            }
+        }
+    }
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        QueryCloseCount += 1;
+        exit(RpLog.HostAnswer('card', CloseAction));
+    end;
+
+    trigger OnClosePage()
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        RpLog.Add('card OnClosePage');
+    end;
+
+    var
+        QueryCloseCount: Integer;
+
+    procedure GetQueryCloseCount(): Integer
+    begin
+        exit(QueryCloseCount);
+    end;
+}
+
+page 88397 "LT RP Veto By Part"
+{
+    PageType = List;
+    SourceTable = "LT RP Veto Row";
+    Editable = false;
+    UsageCategory = None;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field(Id; Rec.Id) { ApplicationArea = All; }
+            }
+        }
+        area(FactBoxes)
+        {
+            part(Details; "LT RP Veto FactBox")
+            {
+                ApplicationArea = All;
+                SubPageLink = Id = field(Id);
+            }
+        }
+    }
+
+    trigger OnQueryClosePage(CloseAction: Action): Boolean
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        QueryCloseCount += 1;
+        exit(RpLog.HostAnswer('host', CloseAction));
+    end;
+
+    trigger OnClosePage()
+    var
+        RpLog: Codeunit "LT RP Veto Log";
+    begin
+        RpLog.Add('host OnClosePage');
+    end;
+
+    var
+        QueryCloseCount: Integer;
+
+    procedure GetQueryCloseCount(): Integer
+    begin
+        exit(QueryCloseCount);
     end;
 }
