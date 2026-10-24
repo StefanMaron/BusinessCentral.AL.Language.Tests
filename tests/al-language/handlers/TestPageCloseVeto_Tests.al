@@ -294,7 +294,17 @@ codeunit 60419 "QCV Close Veto Tests"
         TableCard.Close();
         RpObserveClose(Observer, 'table_new');
         Observer.Observe('table_rows', Format(Row.Count()));
-        Observer.Finish();
+        Observer.Expect('view_err', 'The page cannot be closed at this time.');
+        Observer.Expect('view_code', 'FormCloseNotAllowed');
+        Observer.Expect('view_calls', '1/0');
+        Observer.Expect('table_view_err', 'The page cannot be closed at this time.');
+        Observer.Expect('table_view_code', 'FormCloseNotAllowed');
+        Observer.Expect('table_view_calls', '1/0');
+        Observer.Expect('table_new_err', 'The page cannot be closed at this time.');
+        Observer.Expect('table_new_code', 'FormCloseNotAllowed');
+        Observer.Expect('table_new_calls', '1/0');
+        Observer.Expect('table_rows', '1');
+        Observer.Verify();
     end;
 
     [Test]

@@ -4640,7 +4640,11 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         MainTestPage.UpdatePage.Invoke();
         Observer.Observe('after_main_update', RpObserve(MainTestPage, State));
         MainTestPage.Close();
-        Observer.Finish();
+        Observer.Expect('opened', 'test=0;main=0;subA=0;subB=0;factbox=0');
+        Observer.Expect('after_factbox_action_read', 'test=42;main=0;subA=0;subB=0;factbox=42');
+        Observer.Expect('after_factbox_action', 'test=42;main=0;subA=42;subB=0;factbox=42');
+        Observer.Expect('after_main_update', 'test=42;main=42;subA=42;subB=42;factbox=42');
+        Observer.Verify();
     end;
 
     [Test]
@@ -4655,7 +4659,9 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         Observer.Observe('main_factbox', StrSubstNo('main=%1;factbox=%2', MainTestPage.StateValue.Value(), MainTestPage.Factbox.StateValue.Value()));
         Observer.Observe('after_factbox_update', RpRead(MainTestPage, State));
         MainTestPage.Close();
-        Observer.Finish();
+        Observer.Expect('main_factbox', 'main=0;factbox=42');
+        Observer.Expect('after_factbox_update', 'test=42;main=0;subA=0;subB=0;factbox=42');
+        Observer.Verify();
     end;
 
     [Test]
@@ -4677,7 +4683,12 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         MainTestPage.UpdatePage.Invoke();
         Observer.Observe('after_main_update', RpRead(MainTestPage, State));
         MainTestPage.Close();
-        Observer.Finish();
+        Observer.Expect('after_set_read', 'test=7;main=0;subA=0;subB=0;factbox=0');
+        Observer.Expect('after_set', 'test=7;main=0;subA=7;subB=0;factbox=0');
+        Observer.Expect('after_sub_next', 'test=7;main=0;subA=7;subB=0;factbox=0');
+        Observer.Expect('after_main_next', 'test=7;main=0;subA=7;subB=0;factbox=0');
+        Observer.Expect('after_main_update', 'test=9;main=9;subA=9;subB=9;factbox=9');
+        Observer.Verify();
     end;
 
     [Test]
@@ -4693,7 +4704,9 @@ codeunit 86889 "LT QJ Part Propagation Tests"
         MainTestPage.SetState6AndUpdate.Invoke();
         Observer.Observe('after_main_action_update', RpRead(MainTestPage, State));
         MainTestPage.Close();
-        Observer.Finish();
+        Observer.Expect('after_main_action', 'test=5;main=5;subA=5;subB=5;factbox=5');
+        Observer.Expect('after_main_action_update', 'test=6;main=6;subA=6;subB=6;factbox=6');
+        Observer.Verify();
     end;
 }
 
