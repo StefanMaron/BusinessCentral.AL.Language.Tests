@@ -423,7 +423,11 @@ codeunit 75512 "LT Y Request Page Tests"
         Report.RunModal(Report::"LT RS RP Modify Unpositioned", true, false);
         ObserveSeen(Observer, 'open_rec,modify_bool,handler');
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('open_rec', '[/0] filters=[] count=3 temporary=No table=LT Y Line');
+        Observer.Expect('modify_bool', 'No');
+        Observer.Expect('handler', 'shown');
+        Observer.Expect('rows', 'A/10000/first;A/20000/second;B/10000/other;');
+        Observer.Verify();
     end;
 
     [RequestPageHandler]

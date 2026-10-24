@@ -415,6 +415,9 @@ xmlport 75565 "LT Y XP Heading ML"
 
 // al-runner issue 5756: the Rec of an xmlport request page that declares SourceTable is a record of that table. It compiles in the request page
 // triggers, in the xmlport triggers and in xmlport procedures (without a request page SourceTable there is no Rec: must-not-compile cases 2111 and 2112).
+// At run time (Export and Import, no request page shown) Rec in OnPreXmlPort is an unfiltered, unpositioned, non-temporary record of the table; Modify returns false,
+// Insert writes the row before the export reads the table (the export lists it), and OnPostXmlPort sees the same Rec. The request page OnOpenPage does not run.
+// With SourceTableTemporary = true Rec is temporary and the export does not see its rows.
 xmlport 88570 "LT RS XP Rec"
 {
     Format = Xml;
@@ -868,7 +871,14 @@ codeunit 75514 "LT Y XmlPort Tests"
             Observer.Observe('export', 'error:' + GetLastErrorText() + '|' + GetLastErrorCode());
         ObserveRsState(Observer);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('export', '<?xml version="1.0" encoding="UTF-16" standalone="no"?>|<Root>|  <Rw>|    <Id>1</Id>|  </Rw>|  <Rw>|    <Id>2</Id>|  </Rw>|  <Rw>|    <Id>50</Id>|  </Rw>|</Root>|');
+        Observer.Expect('xp_open', '-');
+        Observer.Expect('xp_pre_rec', '[0/] filters=[] count=2 temporary=No table=LT Y Item');
+        Observer.Expect('xp_modify_bool', 'No');
+        Observer.Expect('xp_insert', 'Yes');
+        Observer.Expect('xp_post_rec', '[50/xp] count=3');
+        Observer.Expect('rows', '1/one/5;2/two/6;50/xp/0;');
+        Observer.Verify();
     end;
 
     [Test]
@@ -881,7 +891,14 @@ codeunit 75514 "LT Y XmlPort Tests"
         Observer.Observe('import', ImportText(88570, '<Root><Rw><Id>7</Id></Rw></Root>'));
         ObserveRsState(Observer);
         Observer.Observe('rows', Rows());
-        Observer.Finish();
+        Observer.Expect('import', 'ok');
+        Observer.Expect('xp_open', '-');
+        Observer.Expect('xp_pre_rec', '[0/] filters=[] count=2 temporary=No table=LT Y Item');
+        Observer.Expect('xp_modify_bool', 'No');
+        Observer.Expect('xp_insert', 'Yes');
+        Observer.Expect('xp_post_rec', '[50/xp] count=4');
+        Observer.Expect('rows', '1/one/5;2/two/6;7//0;50/xp/0;');
+        Observer.Verify();
     end;
 
     [Test]
