@@ -477,7 +477,28 @@ codeunit 68751 "W2 Meta Tests"
         Observer.Observe('one_default_lookup', Format(PageManagement.GetDefaultLookupPageID(Database::"LT RP Meta Row"), 0, 9));
         Meta.SetRange(ID, Page::"LT RP Meta Sorted List");
         Observer.Observe('one_filtered_find', Format(Meta.FindFirst()) + '/' + Format(Meta.CardPageID, 0, 9));
-        Observer.Finish();
+        Observer.Expect('one_view', 'SORTING(Field2) ');
+        Observer.Expect('one_card', '88387');
+        Observer.Expect('one_source', '88385');
+        Observer.Expect('one_type', 'List');
+        Observer.Expect('one_editable', 'No');
+        Observer.Expect('two_view', 'SORTING(Field2,Field1) ORDER(1) ');
+        Observer.Expect('two_card', '88390');
+        Observer.Expect('two_source', '88389');
+        Observer.Expect('two_type', 'List');
+        Observer.Expect('two_editable', 'No');
+        Observer.Expect('card_view', '');
+        Observer.Expect('card_card', '0');
+        Observer.Expect('card_source', '88385');
+        Observer.Expect('card_type', 'Card');
+        Observer.Expect('card_editable', 'Yes');
+        Observer.Expect('one_table_lookup', '88386');
+        Observer.Expect('two_table_lookup', '88388');
+        Observer.Expect('one_default_card', '88387');
+        Observer.Expect('two_default_card', '88390');
+        Observer.Expect('one_default_lookup', '88386');
+        Observer.Expect('one_filtered_find', 'Yes/88387');
+        Observer.Verify();
     end;
 
     local procedure RpObserveMeta(var Observer: Codeunit "Probe Observer"; Name: Text; PageId: Integer)

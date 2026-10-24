@@ -782,7 +782,18 @@ codeunit 72410 "LT P106 Run Static"
         Report(Observer, 'cancel', Act);
         Observer.Observe('cancel_rec', Item."No." + '/' + Item.Name);
         Observer.Observe('cancel_filters', RpFilters(Item));
-        Observer.Finish();
+        Observer.Expect('ok_action', 'LookupOK');
+        Observer.Expect('ok_h', 'cur=C;editable=No;rows=CD;goto=Yes/D');
+        Observer.Expect('ok_log', 'RO OnOpenPage group=0 fg0= fg2=Qty: 3;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('ok_rec', 'D/Delta');
+        Observer.Expect('ok_filters', 'group=0;fg0=;fg2=Qty: 3');
+        Observer.Expect('ok_count', '2');
+        Observer.Expect('cancel_action', 'LookupCancel');
+        Observer.Expect('cancel_h', 'cur=C;editable=No;rows=CD;goto=Yes/D');
+        Observer.Expect('cancel_log', 'RO OnOpenPage group=0 fg0= fg2=Qty: 3;RO OnQueryClosePage(LookupCancel)');
+        Observer.Expect('cancel_rec', 'D/Delta');
+        Observer.Expect('cancel_filters', 'group=0;fg0=;fg2=Qty: 3');
+        Observer.Verify();
     end;
 
     [Test]
@@ -804,7 +815,12 @@ codeunit 72410 "LT P106 Run Static"
         Report(Observer, 'outside', Act);
         Observer.Observe('outside_rec', Item."No." + '/' + Item.Name);
         Observer.Observe('outside_err', GetLastErrorText());
-        Observer.Finish();
+        Observer.Expect('outside_action', 'LookupOK');
+        Observer.Expect('outside_h', 'cur=C;editable=No;rows=CD;goto=No/D');
+        Observer.Expect('outside_log', 'RO OnOpenPage group=0 fg0= fg2=Qty: 3;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('outside_rec', 'D/Delta');
+        Observer.Expect('outside_err', '');
+        Observer.Verify();
     end;
 
     [Test]
@@ -830,7 +846,19 @@ codeunit 72410 "LT P106 Run Static"
         Act := Page.RunModal(Page::"LT RP P106 RO List", Item);
         Report(Observer, 'norec_field', Act);
         Observer.Observe('norec_field_rec', Item."No." + '/' + Item.Name);
-        Observer.Finish();
+        Observer.Expect('field_action', 'LookupOK');
+        Observer.Expect('field_h', 'cur=A;editable=No;rows=ABCD;goto=Yes/C');
+        Observer.Expect('field_log', 'RO OnOpenPage group=0 fg0= fg2=;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('field_rec', 'C/Gamma');
+        Observer.Expect('fieldno_action', 'LookupOK');
+        Observer.Expect('fieldno_h', 'cur=C;editable=No;rows=ABCD;goto=Yes/B');
+        Observer.Expect('fieldno_log', 'RO OnOpenPage group=0 fg0= fg2=;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('fieldno_rec', 'B/Beta');
+        Observer.Expect('norec_field_action', 'LookupOK');
+        Observer.Expect('norec_field_h', 'cur=B;editable=No;rows=ABCD;goto=Yes/D');
+        Observer.Expect('norec_field_log', 'RO OnOpenPage group=0 fg0= fg2=;RO OnQueryClosePage(LookupOK)');
+        Observer.Expect('norec_field_rec', 'D/Delta');
+        Observer.Verify();
     end;
 
     [Test]
@@ -849,7 +877,11 @@ codeunit 72410 "LT P106 Run Static"
         ReportNoAction(Observer, 'run');
         Observer.Observe('run_rec', Item."No." + '/' + Item.Name);
         Observer.Observe('run_filters', RpFilters(Item));
-        Observer.Finish();
+        Observer.Expect('run_h', 'cur=C;goto=Yes/D');
+        Observer.Expect('run_log', 'RO OnOpenPage group=0 fg0= fg2=Qty: 3;RO OnQueryClosePage(OK)');
+        Observer.Expect('run_rec', '/');
+        Observer.Expect('run_filters', 'group=0;fg0=;fg2=Qty: 3');
+        Observer.Verify();
     end;
 
 }

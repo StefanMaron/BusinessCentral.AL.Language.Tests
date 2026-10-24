@@ -4595,7 +4595,8 @@ codeunit 86889 "LT QJ Part Propagation Tests"
     // State.GetValue() of ONE codeunit instance ("LT RP State", not SingleInstance) handed to all three pages. Pins when each
     // page shows a changed state: after a FactBox action (with and without CurrPage.Update(false) in it), after a main-page
     // action (with and without CurrPage.Update(false)), after test code changes the state, after navigating the main page
-    // or a part. RpObserve walks Sub A to its first row before it reads (the reporter's shape); RpRead does not navigate.
+    // or a part. Sub A declares an empty OnAfterGetCurrRecord (the reporter's shape), Sub B declares no trigger. RpObserve walks Sub A to its
+    // first row before it reads (the reporter's shape); RpRead does not navigate.
     local procedure RpOpenMain(var MainTestPage: TestPage "LT RP State Main"; var State: Codeunit "LT RP State")
     var
         TempParam: Record "LT RP Param" temporary;
@@ -4616,12 +4617,12 @@ codeunit 86889 "LT QJ Part Propagation Tests"
     local procedure RpObserve(var MainTestPage: TestPage "LT RP State Main"; var State: Codeunit "LT RP State"): Text
     begin
         MainTestPage.SubA.First();
-        exit(StrSubstNo('test=%1;main=%2;subA=%3;factbox=%4', State.GetValue(), MainTestPage.StateValue.Value(), MainTestPage.SubA.StateValue.Value(), MainTestPage.Factbox.StateValue.Value()));
+        exit(StrSubstNo('test=%1;main=%2;subA=%3;subB=%4;factbox=%5', State.GetValue(), MainTestPage.StateValue.Value(), MainTestPage.SubA.StateValue.Value(), MainTestPage.SubB.StateValue.Value(), MainTestPage.Factbox.StateValue.Value()));
     end;
 
     local procedure RpRead(var MainTestPage: TestPage "LT RP State Main"; var State: Codeunit "LT RP State"): Text
     begin
-        exit(StrSubstNo('test=%1;main=%2;subA=%3;factbox=%4', State.GetValue(), MainTestPage.StateValue.Value(), MainTestPage.SubA.StateValue.Value(), MainTestPage.Factbox.StateValue.Value()));
+        exit(StrSubstNo('test=%1;main=%2;subA=%3;subB=%4;factbox=%5', State.GetValue(), MainTestPage.StateValue.Value(), MainTestPage.SubA.StateValue.Value(), MainTestPage.SubB.StateValue.Value(), MainTestPage.Factbox.StateValue.Value()));
     end;
 
     [Test]
@@ -4748,6 +4749,7 @@ page 88401 "LT RP State Main"
                 field(StateValue; State.GetValue()) { }
             }
             part(SubA; "LT RP State Sub") { }
+            part(SubB; "LT RP State Sub Plain") { }
         }
         area(FactBoxes)
         {
@@ -4789,6 +4791,8 @@ page 88401 "LT RP State Main"
         Rec.Copy(TempParamSource, true);
         CurrPage.SubA.Page.SetSource(Rec);
         CurrPage.SubA.Page.SetState(State);
+        CurrPage.SubB.Page.SetSource(Rec);
+        CurrPage.SubB.Page.SetState(State);
         CurrPage.Factbox.Page.SetSource(Rec);
         CurrPage.Factbox.Page.SetState(State);
     end;
@@ -4809,6 +4813,43 @@ page 88401 "LT RP State Main"
 }
 
 page 88402 "LT RP State Sub"
+{
+    PageType = ListPart;
+    SourceTable = "LT RP Param";
+    SourceTableTemporary = true;
+    ApplicationArea = All;
+
+    layout
+    {
+        area(Content)
+        {
+            repeater(Rows)
+            {
+                field("Code"; Rec."Code") { }
+                field(StateValue; State.GetValue()) { }
+            }
+        }
+    }
+
+    trigger OnAfterGetCurrRecord()
+    begin
+    end;
+
+    var
+        State: Codeunit "LT RP State";
+
+    procedure SetSource(var TempParam: Record "LT RP Param" temporary)
+    begin
+        Rec.Copy(TempParam, true);
+    end;
+
+    procedure SetState(NewState: Codeunit "LT RP State")
+    begin
+        State := NewState;
+    end;
+}
+
+page 88404 "LT RP State Sub Plain"
 {
     PageType = ListPart;
     SourceTable = "LT RP Param";

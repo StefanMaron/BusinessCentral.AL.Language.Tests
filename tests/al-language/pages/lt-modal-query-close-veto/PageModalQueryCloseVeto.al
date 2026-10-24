@@ -450,7 +450,13 @@ codeunit 70867 "LT Modal Close Veto"
         Observer: Codeunit "Probe Observer";
     begin
         RpRun('noinvoke', 1, true, false, 0, Observer);
-        Observer.Finish();
+        Observer.Expect('noinvoke_ok', 'Yes');
+        Observer.Expect('noinvoke_result', 'None');
+        Observer.Expect('noinvoke_err', 'The page cannot be closed at this time.');
+        Observer.Expect('noinvoke_code', 'FormCloseNotAllowed');
+        Observer.Expect('noinvoke_hostcount', '1');
+        Observer.Expect('noinvoke_log', 'host OnOpenPage;part OnOpenPage;part OnQueryClosePage(None);host OnQueryClosePage(OK)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -460,7 +466,13 @@ codeunit 70867 "LT Modal Close Veto"
         Observer: Codeunit "Probe Observer";
     begin
         RpRun('ok', 1, true, false, 1, Observer);
-        Observer.Finish();
+        Observer.Expect('ok_ok', 'Yes');
+        Observer.Expect('ok_result', 'None');
+        Observer.Expect('ok_err', 'The page cannot be closed at this time.');
+        Observer.Expect('ok_code', 'FormCloseNotAllowed');
+        Observer.Expect('ok_hostcount', '2');
+        Observer.Expect('ok_log', 'host OnOpenPage;part OnOpenPage;part OnQueryClosePage(None);host OnQueryClosePage(OK);part OnQueryClosePage(None);host OnQueryClosePage(OK)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -470,7 +482,13 @@ codeunit 70867 "LT Modal Close Veto"
         Observer: Codeunit "Probe Observer";
     begin
         RpRun('cancel', 1, true, false, 2, Observer);
-        Observer.Finish();
+        Observer.Expect('cancel_ok', 'No');
+        Observer.Expect('cancel_result', '');
+        Observer.Expect('cancel_err', 'The built-in action = Cancel is not found on the page.');
+        Observer.Expect('cancel_code', 'TestActionNotFound');
+        Observer.Expect('cancel_hostcount', '-1');
+        Observer.Expect('cancel_log', 'host OnOpenPage;part OnOpenPage;part OnQueryClosePage(None);host OnQueryClosePage(OK)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -481,7 +499,19 @@ codeunit 70867 "LT Modal Close Veto"
     begin
         RpRun('allow_ok', 1, false, false, 1, Observer);
         RpRun('allow_noinvoke', 1, false, false, 0, Observer);
-        Observer.Finish();
+        Observer.Expect('allow_ok_ok', 'Yes');
+        Observer.Expect('allow_ok_result', 'OK');
+        Observer.Expect('allow_ok_err', '');
+        Observer.Expect('allow_ok_code', '');
+        Observer.Expect('allow_ok_hostcount', '1');
+        Observer.Expect('allow_ok_log', 'host OnOpenPage;part OnOpenPage;part OnQueryClosePage(None);host OnQueryClosePage(OK);part OnClosePage;host OnClosePage');
+        Observer.Expect('allow_noinvoke_ok', 'Yes');
+        Observer.Expect('allow_noinvoke_result', 'OK');
+        Observer.Expect('allow_noinvoke_err', '');
+        Observer.Expect('allow_noinvoke_code', '');
+        Observer.Expect('allow_noinvoke_hostcount', '1');
+        Observer.Expect('allow_noinvoke_log', 'host OnOpenPage;part OnOpenPage;part OnQueryClosePage(None);host OnQueryClosePage(OK);part OnClosePage;host OnClosePage');
+        Observer.Verify();
     end;
 
     [Test]
@@ -492,7 +522,19 @@ codeunit 70867 "LT Modal Close Veto"
     begin
         RpRun('card_noinvoke', 2, true, false, 0, Observer);
         RpRun('card_ok', 2, true, false, 1, Observer);
-        Observer.Finish();
+        Observer.Expect('card_noinvoke_ok', 'Yes');
+        Observer.Expect('card_noinvoke_result', 'None');
+        Observer.Expect('card_noinvoke_err', 'The page cannot be closed at this time.');
+        Observer.Expect('card_noinvoke_code', 'FormCloseNotAllowed');
+        Observer.Expect('card_noinvoke_hostcount', '1');
+        Observer.Expect('card_noinvoke_log', 'lines OnQueryClosePage(None);card OnQueryClosePage(OK)');
+        Observer.Expect('card_ok_ok', 'Yes');
+        Observer.Expect('card_ok_result', 'None');
+        Observer.Expect('card_ok_err', 'The page cannot be closed at this time.');
+        Observer.Expect('card_ok_code', 'FormCloseNotAllowed');
+        Observer.Expect('card_ok_hostcount', '2');
+        Observer.Expect('card_ok_log', 'lines OnQueryClosePage(None);card OnQueryClosePage(OK);lines OnQueryClosePage(None);card OnQueryClosePage(OK)');
+        Observer.Verify();
     end;
 
     [Test]
@@ -503,7 +545,19 @@ codeunit 70867 "LT Modal Close Veto"
     begin
         RpRun('part_noinvoke', 3, false, true, 0, Observer);
         RpRun('part_ok', 3, false, true, 1, Observer);
-        Observer.Finish();
+        Observer.Expect('part_noinvoke_ok', 'Yes');
+        Observer.Expect('part_noinvoke_result', 'None');
+        Observer.Expect('part_noinvoke_err', 'The page cannot be closed at this time.');
+        Observer.Expect('part_noinvoke_code', 'FormCloseNotAllowed');
+        Observer.Expect('part_noinvoke_hostcount', '0');
+        Observer.Expect('part_noinvoke_log', 'part OnOpenPage;part OnQueryClosePage(None)');
+        Observer.Expect('part_ok_ok', 'Yes');
+        Observer.Expect('part_ok_result', 'None');
+        Observer.Expect('part_ok_err', 'The page cannot be closed at this time.');
+        Observer.Expect('part_ok_code', 'FormCloseNotAllowed');
+        Observer.Expect('part_ok_hostcount', '0');
+        Observer.Expect('part_ok_log', 'part OnOpenPage;part OnQueryClosePage(None);part OnQueryClosePage(None)');
+        Observer.Verify();
     end;
 
     [ModalPageHandler]

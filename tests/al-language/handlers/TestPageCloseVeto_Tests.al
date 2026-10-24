@@ -256,25 +256,44 @@ codeunit 60419 "QCV Close Veto Tests"
         ClearLastError();
         Observer.Observe('try_ok', Format(RpTryClose(Card)));
         RpObserveClose(Observer, 'try');
-        Observer.Finish();
+        Observer.Expect('direct_err', 'The page cannot be closed at this time.');
+        Observer.Expect('direct_code', 'FormCloseNotAllowed');
+        Observer.Expect('direct_calls', '1/0');
+        Observer.Expect('try_ok', 'Yes');
+        Observer.Expect('try_err', 'The page cannot be closed at this time.');
+        Observer.Expect('try_code', 'FormCloseNotAllowed');
+        Observer.Expect('try_calls', '1/0');
+        Observer.Verify();
     end;
 
     [Test]
     procedure RP_PlainVeto_LastErrorPerOpenMode()
     var
         Observer: Codeunit "Probe Observer";
+        Row: Record "LT RP Veto Row";
         Card: TestPage "QCV Veto Card";
+        TableCard: TestPage "LT RP QCV Table Card";
     begin
         Initialize(Probe.ModeVeto());
         Card.OpenView();
         ClearLastError();
         Card.Close();
         RpObserveClose(Observer, 'view');
+        Row.DeleteAll();
+        Row.Id := 1;
+        Row.Name := 'Q1';
+        Row.Insert();
         Initialize(Probe.ModeVeto());
-        Card.OpenNew();
+        TableCard.OpenView();
         ClearLastError();
-        Card.Close();
-        RpObserveClose(Observer, 'new');
+        TableCard.Close();
+        RpObserveClose(Observer, 'table_view');
+        Initialize(Probe.ModeVeto());
+        TableCard.OpenNew();
+        ClearLastError();
+        TableCard.Close();
+        RpObserveClose(Observer, 'table_new');
+        Observer.Observe('table_rows', Format(Row.Count()));
         Observer.Finish();
     end;
 
@@ -294,7 +313,13 @@ codeunit 60419 "QCV Close Veto Tests"
         asserterror Error('RP earlier error');
         Card.Close();
         RpObserveClose(Observer, 'allowed_earlier');
-        Observer.Finish();
+        Observer.Expect('allowed_err', '');
+        Observer.Expect('allowed_code', '');
+        Observer.Expect('allowed_calls', '1/1');
+        Observer.Expect('allowed_earlier_err', 'RP earlier error');
+        Observer.Expect('allowed_earlier_code', 'Dialog');
+        Observer.Expect('allowed_earlier_calls', '1/1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -308,7 +333,10 @@ codeunit 60419 "QCV Close Veto Tests"
         asserterror Error('RP earlier error');
         Card.Close();
         RpObserveClose(Observer, 'earlier');
-        Observer.Finish();
+        Observer.Expect('earlier_err', 'The page cannot be closed at this time.');
+        Observer.Expect('earlier_code', 'FormCloseNotAllowed');
+        Observer.Expect('earlier_calls', '1/0');
+        Observer.Verify();
     end;
 
     [Test]
@@ -324,7 +352,11 @@ codeunit 60419 "QCV Close Veto Tests"
         Card.Close();
         RpObserveClose(Observer, 'confirm_no');
         Observer.Observe('confirm_calls', Format(ConfirmCalls));
-        Observer.Finish();
+        Observer.Expect('confirm_no_err', 'The page cannot be closed at this time.');
+        Observer.Expect('confirm_no_code', 'FormCloseNotAllowed');
+        Observer.Expect('confirm_no_calls', '1/0');
+        Observer.Expect('confirm_calls', '1');
+        Observer.Verify();
     end;
 
     [Test]
@@ -343,7 +375,11 @@ codeunit 60419 "QCV Close Veto Tests"
         ClearLastError();
         Observer.Observe('table_try_ok', Format(RpTryCloseTable(Card)));
         RpObserveClose(Observer, 'table_try');
-        Observer.Finish();
+        Observer.Expect('table_try_ok', 'Yes');
+        Observer.Expect('table_try_err', 'The page cannot be closed at this time.');
+        Observer.Expect('table_try_code', 'FormCloseNotAllowed');
+        Observer.Expect('table_try_calls', '1/0');
+        Observer.Verify();
     end;
 }
 

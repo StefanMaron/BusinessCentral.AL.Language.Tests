@@ -576,7 +576,17 @@ codeunit 84362 "LT CE Page Run Tests"
         Observer.Observe('edit_row', Row."Code" + '/' + Row.Name);
         Row.Get('B');
         Observer.Observe('edit_stored', Row.Name);
-        Observer.Finish();
+        Observer.Expect('none_action', 'LookupCancel');
+        Observer.Expect('none_seen', 'card=B|Bravo');
+        Observer.Expect('ok_action', 'LookupOK');
+        Observer.Expect('ok_seen', 'card=B|Bravo');
+        Observer.Expect('edit_action', 'LookupOK');
+        Observer.Expect('edit_seen', 'card=B|Bravo');
+        Observer.Expect('edit_recref', 'B/Edited');
+        Observer.Expect('edit_variant', 'B/Edited');
+        Observer.Expect('edit_row', 'B/Bravo');
+        Observer.Expect('edit_stored', 'Edited');
+        Observer.Verify();
     end;
 
     [Test]
@@ -608,7 +618,14 @@ codeunit 84362 "LT CE Page Run Tests"
         Act := Page.RunModal(Page::"LT RP CE List", V, 0);
         Observer.Observe('zero_action', Format(Act));
         Observer.Observe('zero_seen', RpTake());
-        Observer.Finish();
+        Observer.Expect('pick_action', 'LookupOK');
+        Observer.Expect('pick_seen', 'cur=A;rows=AB;goto=Yes');
+        Observer.Expect('pick_recref', 'B/Bravo');
+        Observer.Expect('pick_variant', 'B/Bravo');
+        Observer.Expect('pick_filters', 'Code: A|B');
+        Observer.Expect('zero_action', 'LookupOK');
+        Observer.Expect('zero_seen', 'cur=B;rows=AB');
+        Observer.Verify();
     end;
 
     [Test]
@@ -628,7 +645,9 @@ codeunit 84362 "LT CE Page Run Tests"
         Observer.Observe('run_seen', RpTake());
         Page.Run(Page::"LT RP CE Card", V, Row.FieldNo(Name));
         Observer.Observe('run_field_seen', RpTake());
-        Observer.Finish();
+        Observer.Expect('run_seen', 'card=C|Charlie');
+        Observer.Expect('run_field_seen', 'card=C|Charlie');
+        Observer.Verify();
     end;
 
     [Test]
@@ -645,7 +664,11 @@ codeunit 84362 "LT CE Page Run Tests"
         V := 'B';
         asserterror Act := Page.RunModal(Page::"LT RP CE Card", V, 0);
         Observer.ObserveError('text');
-        Observer.Finish();
+        Observer.Expect('int|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavInteger to Microsoft.Dynamics.Nav.Runtime.INavRecordHandle.');
+        Observer.Expect('int|code', 'Conversion');
+        Observer.Expect('text|text', 'Unable to convert from Microsoft.Dynamics.Nav.Runtime.NavChar to Microsoft.Dynamics.Nav.Runtime.INavRecordHandle.');
+        Observer.Expect('text|code', 'Conversion');
+        Observer.Verify();
     end;
 
     [Test]
@@ -670,7 +693,18 @@ codeunit 84362 "LT CE Page Run Tests"
         Observer.Observe('list_ran', Format(PageManagement.PageRunListModal(Row)));
         Observer.Observe('list_seen', RpTake());
         Observer.Observe('list_row', Row."Code" + '/' + Row.Name);
-        Observer.Finish();
+        Observer.Expect('guiallowed', 'Yes');
+        Observer.Expect('card_page_id', 'Yes');
+        Observer.Expect('lookup_page_id', 'Yes');
+        Observer.Expect('page_id_card', 'Yes');
+        Observer.Expect('page_id_empty_list', 'Yes');
+        Observer.Expect('modal_ran', 'Yes');
+        Observer.Expect('modal_seen', 'card=B|Bravo');
+        Observer.Expect('modal_row', 'B/Bravo');
+        Observer.Expect('list_ran', 'Yes');
+        Observer.Expect('list_seen', 'cur=B;rows=ABC');
+        Observer.Expect('list_row', 'B/Bravo');
+        Observer.Verify();
     end;
 }
 
